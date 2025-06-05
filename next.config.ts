@@ -1,7 +1,15 @@
-import type { NextConfig } from "next";
+import { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    // @ts-expect-error -- allowedDevOrigins chưa có trong type nhưng có thật
+    allowedDevOrigins: [
+      "http://localhost:3002",
+      "http://192.168.1.6:3002", // thay bằng đúng IP bạn dùng
+    ],
+  },
 };
 
-export default nextConfig;
+const withNextIntl = createNextIntlPlugin();
+export default withNextIntl(nextConfig);

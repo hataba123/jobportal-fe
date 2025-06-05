@@ -15,13 +15,14 @@
     "incremental": true,
     "plugins": [
       {
-        "name": "next"
+        "name": "next",
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@config/intl": ["./next-intl.config.js"] // ✅ dùng đường dẫn tương đối có './'
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "next-intl.config.js", "next-intl.config.js", "next.config.js"],
   "exclude": ["node_modules"]
 }
