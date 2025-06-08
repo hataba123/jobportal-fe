@@ -5,8 +5,8 @@ const nextConfig: NextConfig = {
   experimental: {
     // @ts-expect-error -- allowedDevOrigins chưa có trong type nhưng có thật
     allowedDevOrigins: [
-      "http://localhost:3002",
-      "http://192.168.1.6:3002", // thay bằng đúng IP bạn dùng
+      "http://localhost:3000",
+      "http://192.168.1.6:3000", // thay bằng đúng IP bạn dùng
     ],
   },
 };

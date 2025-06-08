@@ -4,6 +4,13 @@
     "candidates": "Candidates",
     "recruiters": "Recruiters",
     "admin": "Admin",
-    "title": "English"
+    "all jobs": "All Jobs",
+    "it companies": "IT Companies",
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "profile": "Profile",
+    "settings": "Settings",
+    "search": "Search"
   }
 }

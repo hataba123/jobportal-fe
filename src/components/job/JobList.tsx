@@ -2,28 +2,17 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import JobItem from "./JobItem"; // Đường dẫn nếu cùng folder
-// Nếu đặt JobItem trong components/ thì dùng: '@/components/JobItem'
+import JobCard from "./JobCard";
+import { JobPost } from "@/types/job-post";
 
-// Kiểu dữ liệu của 1 job từ API
-interface Job {
-  id: string;
-  title: string;
-  company: string;
-  location: string;
-  type: string;
-  postedAt: string;
-}
-
-// Component hiển thị danh sách công việc
 export default function JobList() {
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobs, setJobs] = useState<JobPost[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Gọi API lấy danh sách công việc từ .NET Core
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL; // 👈 Lấy từ biến môi trường
     axios
-      .get("https://your-api.com/api/jobs") // 🔁 Thay bằng URL thật
+      .get<JobPost[]>(`${apiUrl}/api/JobPost`) // 👈 Sử dụng biến
       .then((res) => {
         setJobs(res.data);
       })
@@ -40,7 +29,7 @@ export default function JobList() {
   return (
     <div className="grid gap-4">
       {jobs.map((job) => (
-        <JobItem key={job.id} {...job} />
+        <JobCard key={job.id} {...job} />
       ))}
     </div>
   );
