@@ -7,9 +7,5 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <html>
-      <body className="min-h-screen flex flex-col">{children}</body>
-    </html>
-  );
+  return children;
 }

@@ -1,42 +1,58 @@
 // 📁 src/hooks/useAuth.ts
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getUser, loginUser, logoutUser } from "@/lib/api/auth";
 import type { User } from "@/types/user";
 import type { LoginCredentials } from "@/types/auth";
+import {
+  getAccessToken,
+  setAccessToken,
+  clearAccessToken,
+} from "@/utils/token";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Khi component mount, kiểm tra trạng thái đăng nhập
+  // Khi component mount, kiểm tra token và gọi API getUser
   useEffect(() => {
-    getUser()
+    const token = getAccessToken();
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    getUser(token) // truyền token nếu cần
       .then(setUser)
-      .catch(() => setUser(null)) // đảm bảo nếu getUser thất bại thì cũng xử lý đúng
+      .catch(() => setUser(null))
       .finally(() => setLoading(false));
+
+    // ❌ Nếu dùng cookie httpOnly:
+    // getUser() // credentials: 'include' bên trong
+    //   .then(setUser)
+    //   .catch(() => setUser(null))
+    //   .finally(() => setLoading(false));
   }, []);
 
   /**
    * Hàm xử lý đăng nhập
-   * @param credentials - email và password của người dùng
    */
   const login = async (credentials: LoginCredentials) => {
     try {
-      const loggedInUser = await loginUser(credentials);
-      setUser(loggedInUser); // Cập nhật state user với thông tin người dùng đã đăng nhập
-      //       Hiển thị tên người dùng
+      const { user: loggedInUser, accessToken } = await loginUser(credentials);
+      setUser(loggedInUser);
+      setAccessToken(accessToken); // lưu token vào localStorage
 
-      // Bảo vệ route
+      // ❌ Nếu dùng cookie httpOnly:
+      // Không cần lưu token, chỉ cần setUser()
 
-      // Sử dụng token cho các request sau
-      console.log("Đăng nhập thành công:", loggedInUser);
       router.push("/");
     } catch (err) {
       console.error("Đăng nhập thất bại:", err);
-      throw err; // cho phép UI xử lý lỗi nếu cần
+      throw err;
     }
   };
 
@@ -44,9 +60,10 @@ export function useAuth() {
    * Hàm xử lý đăng xuất
    */
   const logout = async () => {
-    await logoutUser();
+    await logoutUser(); // Nếu API hỗ trợ xoá session/token server-side
+    clearAccessToken(); // Xoá token trong localStorage
     setUser(null);
-    router.push("/login");
+    router.push("/");
   };
 
   return {

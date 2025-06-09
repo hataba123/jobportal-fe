@@ -4,9 +4,9 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 export default async function HomePage({
   params,
 }: {
-  params: { locale: string };
+  params: Promise<{ locale: string }>; // <-- Là Promise
 }) {
-  const { locale } = params;
+  const { locale } = await params;
   // Enable static rendering
   setRequestLocale(locale); // phải gọi trước useTranslations
 

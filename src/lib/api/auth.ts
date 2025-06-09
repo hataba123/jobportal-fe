@@ -1,33 +1,39 @@
 // 📁 src/lib/api/auth.ts
-import axios from "../axios"; // Sử dụng instance Axios đã cấu hình sẵn với baseURL và withCredentials
+import axios from "../axios"; // ✅ đây là instance bạn tạo sẵn
 import type { LoginCredentials } from "@/types/auth";
 import type { User } from "@/types/user";
+import type { AuthResponse } from "@/types/auth";
 
 /**
  * Gửi request đăng nhập đến backend.
- * @param credentials - thông tin đăng nhập gồm email và password. // parameters tag tham số credentials // comment
+ * @param credentials - thông tin đăng nhập gồm email và password.
  * @returns Thông tin người dùng sau khi đăng nhập thành công.
  */
-export async function loginUser(credentials: LoginCredentials): Promise<User> {
-  const res = await axios.post("api/auth/login", credentials);
-  return res.data;
+export async function loginUser(
+  credentials: LoginCredentials
+): Promise<AuthResponse> {
+  const res = await axios.post("/auth/login", credentials);
+  return res.data; // { user, accessToken }
 }
 
 /**
  * Gửi request đăng xuất tới backend.
- * Backend sẽ xóa JWT trong HttpOnly cookie.
+ * Backend sẽ xóa JWT hoặc phiên trên server.
  */
 export async function logoutUser() {
-  await axios.post("api/auth/logout"); // Gửi POST request tới /auth/logout
-  // Không cần trả dữ liệu vì backend chỉ cần xoá session/cookie
+  await axios.post("/auth/logout");
 }
 
 /**
- * Lấy thông tin người dùng hiện tại nếu đang đăng nhập (dựa vào cookie).
- * Backend sẽ xác thực JWT từ HttpOnly cookie.
- * @returns Thông tin người dùng (hoặc lỗi nếu chưa đăng nhập).
+ * Lấy thông tin người dùng hiện tại nếu đang đăng nhập.
+ * @param token - JWT token lưu trong localStorage
+ * @returns Thông tin người dùng nếu token hợp lệ.
  */
-export async function getUser() {
-  const res = await axios.get("api/auth/me"); // Gửi GET request tới /auth/me
-  return res.data; // Trả về object user nếu đang đăng nhập
+export async function getUser(token: string): Promise<User> {
+  const res = await axios.get("/auth/me", {
+    headers: {
+      Authorization: `Bearer ${token}`, // Gắn token vào header
+    },
+  });
+  return res.data;
 }
