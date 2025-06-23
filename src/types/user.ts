@@ -1,11 +1,16 @@
-// types/user.ts
+// Enum nhận từ backend (số)
+export enum RoleEnum {
+  ADMIN = 0,
+  RECRUITER = 1,
+  CANDIDATE = 2,
+}
 
-export type UserRole = "Admin" | "Recruiter" | "Candidate";
+// Kiểu dùng trong frontend (string)
+export type Role = "ADMIN" | "RECRUITER" | "CANDIDATE";
 
 export interface User {
-  id: string; // Guid
+  id: string;
   email: string;
-  //   passwordHash: string; // ⚠️ thường không nên truyền về frontend, trừ khi bạn chỉ dùng nội bộ
   fullName: string;
-  role: UserRole;
+  role: RoleEnum; // từ backend là số
 }

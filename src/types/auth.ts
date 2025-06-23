@@ -1,4 +1,4 @@
-import { User } from "./user";
+import { User } from "@/types/User";
 // 📁 src/types/auth.ts
 export interface LoginCredentials {
   email: string;
@@ -6,5 +6,5 @@ export interface LoginCredentials {
 }
 export interface AuthResponse {
   user: User;
-  accessToken: string;
+  token: string; // ✅ KHÔNG phải accessToken
 }

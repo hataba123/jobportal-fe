@@ -1,8 +1,8 @@
 // 📁 src/lib/api/auth.ts
 import axios from "../axios"; // ✅ đây là instance bạn tạo sẵn
-import type { LoginCredentials } from "@/types/auth";
-import type { User } from "@/types/user";
-import type { AuthResponse } from "@/types/auth";
+import type { LoginCredentials } from "@/types/Auth";
+import type { User } from "@/types/User";
+import type { AuthResponse } from "@/types/Auth";
 
 /**
  * Gửi request đăng nhập đến backend.
@@ -13,6 +13,8 @@ export async function loginUser(
   credentials: LoginCredentials
 ): Promise<AuthResponse> {
   const res = await axios.post("/auth/login", credentials);
+  console.log("✅ API /auth/login trả về:", res.data);
+
   return res.data; // { user, accessToken }
 }
 
@@ -20,9 +22,9 @@ export async function loginUser(
  * Gửi request đăng xuất tới backend.
  * Backend sẽ xóa JWT hoặc phiên trên server.
  */
-export async function logoutUser() {
-  await axios.post("/auth/logout");
-}
+// export async function logoutUser() {
+//   await axios.post("/auth/logout");
+// }
 
 /**
  * Lấy thông tin người dùng hiện tại nếu đang đăng nhập.
@@ -35,5 +37,7 @@ export async function getUser(token: string): Promise<User> {
       Authorization: `Bearer ${token}`, // Gắn token vào header
     },
   });
+  console.log("📥 getUser response:", res.data); // 👈 LOG NÀY RẤT QUAN TRỌNG
+
   return res.data;
 }

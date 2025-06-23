@@ -8,12 +8,15 @@ export default function LanguageSwitcher() {
   const pathname = usePathname();
 
   return (
-    <div className="flex items-center space-x-2 text-sm">
+    <div
+      className="flex items-center space-x-2 text-sm "
+      id="language-switcher"
+    >
       <Link
         href={pathname}
         locale="en"
         className={`${
-          locale === "en" ? "text-white font-bold" : "text-gray-400"
+          locale === "en" ? "text-white font-bold" : "text-gray-500"
         }`}
       >
         EN
