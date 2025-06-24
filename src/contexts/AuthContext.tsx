@@ -30,37 +30,53 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const token = getAccessToken();
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+    console.log("🌟 AuthProvider useEffect token:", token);
 
-    getUser(token)
-      .then((user) => setUser(user))
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+    if (token) {
+      getUser(token)
+        .then((user) => {
+          setUser(user);
+          console.log("📥 getUser response:", user);
+        })
+        .catch((err) => {
+          console.error("❌ Lỗi khi getUser:", err);
+          setUser(null);
+          clearAccessToken();
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const login = async (credentials: LoginCredentials) => {
     const { token, user } = await loginUser(credentials);
+
+    // ✅ Đảm bảo token được lưu vào localStorage
     setAccessToken(token);
     setUser(user);
 
-    const roleString = mapRoleEnumToString(user.role);
-    switch (roleString) {
-      case "ADMIN":
-        router.push("/admin/dashboard");
-        break;
-      case "RECRUITER":
-        router.push("/recruiter/dashboard");
-        break;
-      case "CANDIDATE":
-        router.push("/candidate/dashboard");
-        break;
-      default:
-        router.push("/");
-        break;
-    }
+    console.log("✅ Đã login, token:", token);
+    console.log("🧑‍💼 Role:", user.role);
+
+    // ✅ Trì hoãn redirect bằng setTimeout để đảm bảo localStorage được cập nhật
+    setTimeout(() => {
+      const roleString = mapRoleEnumToString(user.role);
+      switch (roleString) {
+        case "ADMIN":
+          router.push("/admin/dashboard");
+          break;
+        case "RECRUITER":
+          router.push("/recruiter/dashboard");
+          break;
+        case "CANDIDATE":
+          router.push("/candidate/dashboard");
+          break;
+        default:
+          router.push("/");
+          break;
+      }
+    }, 100); // 100ms delay
   };
 
   const register = async (data: RegisterRequest) => {

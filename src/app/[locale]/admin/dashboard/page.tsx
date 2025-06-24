@@ -2,196 +2,26 @@
 
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { DollarSign, Users, Briefcase, FileText } from "lucide-react";
-
-// Mock data interfaces
-interface Stats {
-  totalUsers: number;
-  totalCompanies: number;
-  totalJobPosts: number;
-  totalApplications: number;
-}
-
-interface JobPost {
-  Id: string;
-  Title: string;
-  Location: string;
-  Type: string;
-  Applicants: number;
-  CreatedAt: string;
-}
-
-interface Company {
-  Id: string;
-  Name: string;
-  Industry: string;
-  JobPostsCount: number;
-}
-
-interface User {
-  Id: string;
-  Email: string;
-  FullName: string;
-  Role: string;
-}
+import { Users, Briefcase, FileText, DollarSign } from "lucide-react";
+import Dashboard from "@/types/admin/DashboardDto";
+import axiosInstance from "@/lib/axios";
 
 export default function AdminDashboardPage() {
-  const [stats, setStats] = React.useState<Stats | null>(null);
-  const [recentJobs, setRecentJobs] = React.useState<JobPost[] | null>(null);
-  const [topCompanies, setTopCompanies] = React.useState<Company[] | null>(
-    null
-  );
-  const [recentUsers, setRecentUsers] = React.useState<User[] | null>(null);
-
+  const [stats, setStats] = React.useState<Dashboard | null>(null);
   const [isLoadingStats, setIsLoadingStats] = React.useState(true);
-  const [isLoadingRecentJobs, setIsLoadingRecentJobs] = React.useState(true);
-  const [isLoadingTopCompanies, setIsLoadingTopCompanies] =
-    React.useState(true);
-  const [isLoadingRecentUsers, setIsLoadingRecentUsers] = React.useState(true);
 
-  // Simulate API calls
   React.useEffect(() => {
-    const fetchStats = () => {
-      setIsLoadingStats(true);
-      setTimeout(() => {
-        setStats({
-          totalUsers: 1250,
-          totalCompanies: 180,
-          totalJobPosts: 560,
-          totalApplications: 3100,
-        });
+    const fetchDashboard = async () => {
+      try {
+        const res = await axiosInstance.get("/admin/dashboard");
+        setStats(res.data);
+      } catch (err) {
+        console.error("Lỗi khi gọi API dashboard:", err);
+      } finally {
         setIsLoadingStats(false);
-      }, 1000);
+      }
     };
-
-    const fetchRecentJobs = () => {
-      setIsLoadingRecentJobs(true);
-      setTimeout(() => {
-        setRecentJobs([
-          {
-            Id: "jp001",
-            Title: "Software Engineer",
-            Location: "Hanoi",
-            Type: "Full-time",
-            Applicants: 120,
-            CreatedAt: "2024-06-20",
-          },
-          {
-            Id: "jp002",
-            Title: "Marketing Specialist",
-            Location: "Ho Chi Minh",
-            Type: "Full-time",
-            Applicants: 85,
-            CreatedAt: "2024-06-19",
-          },
-          {
-            Id: "jp003",
-            Title: "UI/UX Designer",
-            Location: "Da Nang",
-            Type: "Contract",
-            Applicants: 60,
-            CreatedAt: "2024-06-18",
-          },
-          {
-            Id: "jp004",
-            Title: "Data Analyst",
-            Location: "Hanoi",
-            Type: "Full-time",
-            Applicants: 95,
-            CreatedAt: "2024-06-17",
-          },
-          {
-            Id: "jp005",
-            Title: "HR Manager",
-            Location: "Ho Chi Minh",
-            Type: "Part-time",
-            Applicants: 40,
-            CreatedAt: "2024-06-16",
-          },
-        ]);
-        setIsLoadingRecentJobs(false);
-      }, 1200);
-    };
-
-    const fetchTopCompanies = () => {
-      setIsLoadingTopCompanies(true);
-      setTimeout(() => {
-        setTopCompanies([
-          {
-            Id: "c001",
-            Name: "Tech Solutions Inc.",
-            Industry: "IT",
-            JobPostsCount: 50,
-          },
-          {
-            Id: "c002",
-            Name: "Global Marketing Co.",
-            Industry: "Marketing",
-            JobPostsCount: 35,
-          },
-          {
-            Id: "c003",
-            Name: "Creative Design Studio",
-            Industry: "Design",
-            JobPostsCount: 20,
-          },
-          {
-            Id: "c004",
-            Name: "Finance Hub Ltd.",
-            Industry: "Finance",
-            JobPostsCount: 45,
-          },
-        ]);
-        setIsLoadingTopCompanies(false);
-      }, 1100);
-    };
-
-    const fetchRecentUsers = () => {
-      setIsLoadingRecentUsers(true);
-      setTimeout(() => {
-        setRecentUsers([
-          {
-            Id: "u001",
-            Email: "john.doe@example.com",
-            FullName: "John Doe",
-            Role: "Candidate",
-          },
-          {
-            Id: "u002",
-            Email: "jane.smith@example.com",
-            FullName: "Jane Smith",
-            Role: "Employer",
-          },
-          {
-            Id: "u003",
-            Email: "peter.jones@example.com",
-            FullName: "Peter Jones",
-            Role: "Candidate",
-          },
-          {
-            Id: "u004",
-            Email: "admin@example.com",
-            FullName: "Admin User",
-            Role: "Admin",
-          },
-        ]);
-        setIsLoadingRecentUsers(false);
-      }, 1300);
-    };
-
-    fetchStats();
-    fetchRecentJobs();
-    fetchTopCompanies();
-    fetchRecentUsers();
+    fetchDashboard();
   }, []);
 
   return (
@@ -216,7 +46,10 @@ export default function AdminDashboardPage() {
                     : stats?.totalUsers.toLocaleString()}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  +20.1% từ tháng trước
+                  Hôm nay:{" "}
+                  {isLoadingStats
+                    ? "..."
+                    : stats?.newUsersToday.toLocaleString()}
                 </p>
               </CardContent>
             </Card>
@@ -233,9 +66,6 @@ export default function AdminDashboardPage() {
                     ? "Đang tải..."
                     : stats?.totalCompanies.toLocaleString()}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  +15.5% từ tháng trước
-                </p>
               </CardContent>
             </Card>
             <Card>
@@ -251,9 +81,6 @@ export default function AdminDashboardPage() {
                     ? "Đang tải..."
                     : stats?.totalJobPosts.toLocaleString()}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  +10.2% từ tháng trước
-                </p>
               </CardContent>
             </Card>
             <Card>
@@ -270,132 +97,31 @@ export default function AdminDashboardPage() {
                     : stats?.totalApplications.toLocaleString()}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  +30.5% từ tháng trước
+                  Hôm nay:{" "}
+                  {isLoadingStats
+                    ? "..."
+                    : stats?.applicationsToday.toLocaleString()}
                 </p>
               </CardContent>
             </Card>
-          </div>
-
-          <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-            <Card className="xl:col-span-2">
-              <CardHeader className="flex flex-row items-center">
-                <div className="grid gap-2">
-                  <CardTitle>Bài đăng tuyển dụng gần đây</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Các bài đăng mới nhất trên hệ thống.
-                  </p>
+            <Card className="col-span-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Tổng số đánh giá
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {isLoadingStats
+                    ? "Đang tải..."
+                    : stats?.totalReviews.toLocaleString()}
                 </div>
-              </CardHeader>
-              <CardContent>
-                {isLoadingRecentJobs ? (
-                  <div className="text-center py-4">Đang tải...</div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tiêu đề</TableHead>
-                        <TableHead>Địa điểm</TableHead>
-                        <TableHead>Loại</TableHead>
-                        <TableHead className="text-right">Ứng viên</TableHead>
-                        <TableHead className="text-right">Ngày tạo</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {recentJobs?.map((job) => (
-                        <TableRow key={job.Id}>
-                          <TableCell>
-                            <div className="font-medium">{job.Title}</div>
-                          </TableCell>
-                          <TableCell>{job.Location}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{job.Type}</Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {job.Applicants}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {job.CreatedAt}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Người dùng mới đăng ký</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Các tài khoản người dùng mới nhất.
+                <p className="text-xs text-muted-foreground">
+                  Đang chờ duyệt:{" "}
+                  {isLoadingStats
+                    ? "..."
+                    : stats?.pendingReviews.toLocaleString()}
                 </p>
-              </CardHeader>
-              <CardContent>
-                {isLoadingRecentUsers ? (
-                  <div className="text-center py-4">Đang tải...</div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Vai trò</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {recentUsers?.map((user) => (
-                        <TableRow key={user.Id}>
-                          <TableCell>
-                            <div className="font-medium">{user.FullName}</div>
-                            <div className="hidden text-sm text-muted-foreground md:inline">
-                              {user.Email}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{user.Role}</Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-            <Card className="xl:col-span-3">
-              <CardHeader>
-                <CardTitle>Các công ty hàng đầu</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Các công ty có nhiều bài đăng tuyển dụng nhất.
-                </p>
-              </CardHeader>
-              <CardContent>
-                {isLoadingTopCompanies ? (
-                  <div className="text-center py-4">Đang tải...</div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tên công ty</TableHead>
-                        <TableHead>Ngành</TableHead>
-                        <TableHead className="text-right">
-                          Số bài đăng
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {topCompanies?.map((company) => (
-                        <TableRow key={company.Id}>
-                          <TableCell>
-                            <div className="font-medium">{company.Name}</div>
-                          </TableCell>
-                          <TableCell>{company.Industry}</TableCell>
-                          <TableCell className="text-right">
-                            {company.JobPostsCount}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
               </CardContent>
             </Card>
           </div>

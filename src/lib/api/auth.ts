@@ -1,10 +1,8 @@
-// 📁 src/lib/api/auth.ts
-import axios from "../axios"; // ✅ đây là instance bạn tạo sẵn
 import type { LoginCredentials } from "@/types/Auth";
 import type { User } from "@/types/User";
 import type { AuthResponse } from "@/types/Auth";
 import { RegisterRequest } from "@/types/RegisterRequest"; // Nếu đã định nghĩa kiểu dữ liệu
-
+import axios from "axios";
 /**
  * Gửi request đăng nhập đến backend.
  * @param credentials - thông tin đăng nhập gồm email và password.

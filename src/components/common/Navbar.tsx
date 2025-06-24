@@ -35,26 +35,26 @@ const Navbar = () => {
             {/* Dropdown */}
             <HoverDropdown
               label="All Jobs"
-              mainHref="/candidate/dashboard"
+              mainHref="/candidate/job"
               items={[
                 {
                   label: "Công nghệ thông tin",
-                  href: "/jobs/category/cong-nghe-thong-tin",
+                  href: "/jobs/category/congnghethongtin",
                 },
-                { label: "Thiết kế", href: "/jobs/category/thiet-ke" },
+                { label: "Thiết kế", href: "/jobs/category/thietke" },
                 { label: "Marketing", href: "/jobs/category/marketing" },
-                { label: "Tài chính", href: "/jobs/category/tai-chinh" },
-                { label: "Nhân sự", href: "/jobs/category/nhan-su" },
-                { label: "Bán hàng", href: "/jobs/category/ban-hang" },
-                { label: "Bảo mật", href: "/jobs/category/bao-mat" },
+                { label: "Tài chính", href: "/jobs/category/taichinh" },
+                { label: "Nhân sự", href: "/jobs/category/nhansu" },
+                { label: "Bán hàng", href: "/jobs/category/banhang" },
+                { label: "Bảo mật", href: "/jobs/category/baomat" },
                 {
                   label: "Hỗ trợ khách hàng",
-                  href: "/jobs/category/ho-tro-khach-hang",
+                  href: "/jobs/category/hotrokhachhang",
                 },
               ]}
             />
             {/* Dropdown */}
-            <HoverDropdown
+            {/* <HoverDropdown
               label="All Companies"
               mainHref="/candidate/company"
               items={[
@@ -75,8 +75,14 @@ const Navbar = () => {
                 { label: "Công ty thiết kế", href: "/company?field=design" },
                 // Thêm các nhóm khác nếu cần
               ]}
-            />
+            /> */}
             {/* Dropdown */}
+            <Link
+              href={"/candidate/company"}
+              className="text-white hover:underline"
+            >
+              All Companies
+            </Link>
             <Link
               href={"/candidate/blog"}
               className="text-white hover:underline"
@@ -111,8 +117,9 @@ const Navbar = () => {
 
           <LanguageSwitcher />
         </div>
-        {/* Mobile Button - an tu kich thuoc 768px */}
-        <div className="md:hidden">
+
+        <div className="relative flex md:hidden w-full h-16 mx-auto px-1.5 py-3 items-center justify-between">
+          {/* Nút menu bên trái */}
           <button onClick={() => setIsOpen(!isOpen)}>
             {isOpen ? (
               <XMarkIcon className="w-6 h-6 text-white" />
@@ -120,6 +127,27 @@ const Navbar = () => {
               <Bars3Icon className="w-6 h-6 text-white" />
             )}
           </button>
+          {/* Logo ở giữa tuyệt đối */}
+          <Link
+            href="/"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            style={{ display: "flex", alignItems: "center" }}
+          >
+            <Image
+              src="/image/Image.jpg"
+              alt="Logo"
+              width={85}
+              height={32}
+              style={{ height: "32px", width: "85px", objectFit: "contain" }}
+            />
+          </Link>
+          {/* Sign in/Sign up bên phải */}
+          <Link
+            href="/candidate/auth/login"
+            className="text-white hover:underline ml-auto "
+          >
+            Sign in
+          </Link>
         </div>
       </div>
 
@@ -140,10 +168,6 @@ const Navbar = () => {
             >
               Mobile Dev
             </Link>
-          </div>
-          {/* 👉 Language Switcher ở mobile */}
-          <div>
-            <Link href="/candidate/auth/login">Sign in / Sign up</Link>
           </div>
           {/* 👉 Language Switcher ở mobile */}
           <div className="flex justify-center">

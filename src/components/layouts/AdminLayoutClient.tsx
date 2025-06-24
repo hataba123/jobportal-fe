@@ -1,10 +1,12 @@
 // src/components/layouts/AdminLayoutClient.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth, mapRoleEnumToString } from "@/contexts/AuthContext";
 import UserDropdown from "@/components/common/UserDropdown";
 import { Link } from "@/i18n/navigation";
+import { getAccessToken } from "@/utils/token";
+import { useRouter } from "@/i18n/navigation";
 
 export default function AdminLayoutClient({
   children,
@@ -13,6 +15,14 @@ export default function AdminLayoutClient({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout, loading } = useAuth();
+  const router = useRouter(); // <-- Thêm dòng này
+
+  useEffect(() => {
+    const token = getAccessToken();
+    if (!token) {
+      router.replace("/candidate/auth/login");
+    }
+  }, [router]);
 
   if (loading) return null;
 
