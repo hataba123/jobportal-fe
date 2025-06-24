@@ -3,6 +3,7 @@ import axios from "../axios"; // ✅ đây là instance bạn tạo sẵn
 import type { LoginCredentials } from "@/types/Auth";
 import type { User } from "@/types/User";
 import type { AuthResponse } from "@/types/Auth";
+import { RegisterRequest } from "@/types/RegisterRequest"; // Nếu đã định nghĩa kiểu dữ liệu
 
 /**
  * Gửi request đăng nhập đến backend.
@@ -40,4 +41,19 @@ export async function getUser(token: string): Promise<User> {
   console.log("📥 getUser response:", res.data); // 👈 LOG NÀY RẤT QUAN TRỌNG
 
   return res.data;
+}
+export async function registerUser(data: RegisterRequest) {
+  const res = await fetch("/api/auth/register", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    throw new Error("Đăng ký thất bại");
+  }
+
+  return await res.json();
 }

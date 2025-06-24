@@ -3,11 +3,7 @@
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "@/i18n/navigation";
-
-type FormValues = {
-  email: string;
-  password: string;
-};
+import { LoginRequest } from "@/types/LoginRequest";
 
 export default function HomePage() {
   const { login, loading } = useAuth();
@@ -16,9 +12,9 @@ export default function HomePage() {
     handleSubmit,
     formState: { errors },
     setError,
-  } = useForm<FormValues>();
+  } = useForm<LoginRequest>();
 
-  const onSubmit = async (data: FormValues) => {
+  const onSubmit = async (data: LoginRequest) => {
     try {
       await login(data);
     } catch {
@@ -97,7 +93,10 @@ export default function HomePage() {
 
         <p className="text-sm text-center text-gray-600 mt-4">
           Bạn chưa có tài khoản?{" "}
-          <Link href="/auth/register" className="text-blue-500 hover:underline">
+          <Link
+            href="/candidate/auth/register"
+            className="text-blue-500 hover:underline"
+          >
             Đăng ký
           </Link>
         </p>

@@ -1,8 +1,7 @@
 "use client";
-// 📁 src/contexts/AuthContext.tsx
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
-import { getUser, loginUser } from "@/lib/api/auth";
+import { getUser, loginUser, registerUser } from "@/lib/api/auth"; // 👈 THÊM registerUser
 import {
   getAccessToken,
   setAccessToken,
@@ -10,14 +9,16 @@ import {
 } from "@/utils/token";
 import { type Role, type User, RoleEnum } from "@/types/User";
 import type { LoginCredentials } from "@/types/Auth";
+import type { RegisterRequest } from "@/types/RegisterRequest"; // 👈 THÊM
 
 type AuthContextType = {
   user: User | null;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
+  register: (data: RegisterRequest) => Promise<void>; // ✅ THÊM VÀO TYPE
   loading: boolean;
   isAuthenticated: boolean;
-  role: Role | null; // 🔄 Đã là string rồi
+  role: Role | null;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,32 +30,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const token = getAccessToken();
-    console.log("🔑 Token từ localStorage:", token);
-
     if (!token) {
       setLoading(false);
       return;
     }
 
     getUser(token)
-      .then((user) => {
-        console.log("✅ User từ token:", user);
-        setUser(user);
-      })
-      .catch((err) => {
-        console.error("❌ Lỗi khi getUser:", err);
-        setUser(null);
-      })
+      .then((user) => setUser(user))
+      .catch(() => setUser(null))
       .finally(() => setLoading(false));
   }, []);
 
   const login = async (credentials: LoginCredentials) => {
-    const { token, user } = await loginUser(credentials); // 🔁 sửa lại tên
-    setAccessToken(token); // ✅ Đặt token trước
-    setUser(user); // ✅ Sau đó mới set user
-    // 🎯 Redirect theo vai trò
+    const { token, user } = await loginUser(credentials);
+    setAccessToken(token);
+    setUser(user);
+
     const roleString = mapRoleEnumToString(user.role);
-    console.log("🔄 Đang redirect đến:", roleString);
     switch (roleString) {
       case "ADMIN":
         router.push("/admin/dashboard");
@@ -66,13 +58,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         router.push("/candidate/dashboard");
         break;
       default:
-        router.push("/"); // hoặc trang lỗi
+        router.push("/");
         break;
     }
   };
 
-  const logout = async () => {
-    // await logoutUser();
+  const register = async (data: RegisterRequest) => {
+    await registerUser(data); // Gọi API
+    // ✅ Sau khi đăng ký thành công → chuyển sang trang đăng nhập
+    router.push("/auth/login");
+  };
+
+  const logout = () => {
     clearAccessToken();
     setUser(null);
     router.push("/candidate/dashboard");
@@ -83,16 +80,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       value={{
         user,
         login,
+        register, // ✅ Đưa vào context
         logout,
         loading,
         isAuthenticated: !!user,
-        role: user ? mapRoleEnumToString(user.role) : null, // 🔁 ánh xạ từ enum → string
+        role: user ? mapRoleEnumToString(user.role) : null,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
 };
+
 export const mapRoleEnumToString = (roleEnum: RoleEnum): Role => {
   switch (roleEnum) {
     case RoleEnum.ADMIN:
@@ -105,7 +104,7 @@ export const mapRoleEnumToString = (roleEnum: RoleEnum): Role => {
       throw new Error(`❌ Vai trò không hợp lệ: ${roleEnum}`);
   }
 };
-// ✅ Đây là hook bạn dùng trong mọi component:
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
