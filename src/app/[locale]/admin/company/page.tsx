@@ -71,73 +71,10 @@ import {
   Upload,
 } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import React from "react";
-
-// Types
-interface Company {
-  Id: number;
-  Name: string;
-  Logo: string;
-  Description: string;
-  Location: string;
-  Employees: string;
-  Industry: string;
-  OpenJobs: number;
-  Rating: number;
-  Website: string;
-  Founded: string;
-  Tags: string;
-}
-
-// Mock data
-const initialCompanies: Company[] = [
-  {
-    Id: 1,
-    Name: "TechCorp Vietnam",
-    Logo: "/placeholder.svg?height=60&width=60",
-    Description:
-      "Công ty công nghệ hàng đầu chuyên phát triển giải pháp phần mềm cho doanh nghiệp.",
-    Location: "Hồ Chí Minh",
-    Employees: "200-500",
-    Industry: "Công nghệ thông tin",
-    OpenJobs: 15,
-    Rating: 4.8,
-    Website: "https://techcorp.vn",
-    Founded: "2015",
-    Tags: "React,Node.js,AWS,Agile",
-  },
-  {
-    Id: 2,
-    Name: "StartupXYZ",
-    Logo: "/placeholder.svg?height=60&width=60",
-    Description:
-      "Startup công nghệ tập trung vào phát triển ứng dụng mobile và web innovative.",
-    Location: "Hà Nội",
-    Employees: "50-100",
-    Industry: "Startup",
-    OpenJobs: 8,
-    Rating: 4.6,
-    Website: "https://startupxyz.com",
-    Founded: "2020",
-    Tags: "Flutter,React Native,Firebase",
-  },
-  {
-    Id: 3,
-    Name: "Design Studio Pro",
-    Logo: "/placeholder.svg?height=60&width=60",
-    Description:
-      "Studio thiết kế chuyên nghiệp cung cấp dịch vụ UI/UX và branding.",
-    Location: "Đà Nẵng",
-    Employees: "20-50",
-    Industry: "Thiết kế",
-    OpenJobs: 5,
-    Rating: 4.9,
-    Website: "https://designstudio.vn",
-    Founded: "2018",
-    Tags: "Figma,Adobe Creative,UI/UX",
-  },
-];
+import { fetchAllCompanies, createCompany as apiCreateCompany, updateCompany as apiUpdateCompany, deleteCompany as apiDeleteCompany } from "@/lib/api/admin-company";
+import { Company } from "@/types/Company";
 
 const industries = [
   "Công nghệ thông tin",
@@ -161,17 +98,8 @@ const employeeSizes = [
   "1000+",
 ];
 
-// const cities = [
-//   "Hồ Chí Minh",
-//   "Hà Nội",
-//   "Đà Nẵng",
-//   "Cần Thơ",
-//   "Hải Phòng",
-//   "Khác",
-// ];
-
 export default function Page() {
-  const [companies, setCompanies] = useState<Company[]>(initialCompanies);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -183,78 +111,89 @@ export default function Page() {
 
   // Form state
   const [formData, setFormData] = useState<Partial<Company>>({
-    Name: "",
-    Description: "",
-    Location: "",
-    Employees: "",
-    Industry: "",
-    Website: "",
-    Founded: "",
-    Tags: "",
+    name: "",
+    description: "",
+    location: "",
+    employees: "",
+    industry: "",
+    website: "",
+    founded: "",
+    tags: [],
   });
+
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
+
+  const fetchCompanies = async () => {
+    try {
+      const data = await fetchAllCompanies();
+      setCompanies(data);
+    } catch {
+      // error handling if needed
+    }
+  };
 
   // Get all companies (with filters)
   const getFilteredCompanies = () => {
     return companies.filter((company) => {
       const matchesSearch =
-        company.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        company.Industry.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        company.Location.toLowerCase().includes(searchTerm.toLowerCase());
+        company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (company.industry && company.industry.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (company.location && company.location.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesIndustry =
-        filterIndustry === "all" || company.Industry === filterIndustry;
+        filterIndustry === "all" || company.industry === filterIndustry;
 
       return matchesSearch && matchesIndustry;
     });
   };
 
-  // Get company by ID
-  const getCompanyById = (id: number): Company | undefined => {
-    return companies.find((company) => company.Id === id);
-  };
-
   // Create new company
-  const createCompany = () => {
-    const newCompany: Company = {
-      ...formData,
-      Id: Math.max(...companies.map((c) => c.Id)) + 1,
-      Logo: "/placeholder.svg?height=60&width=60",
-      Rating: 0,
-      OpenJobs: 0,
-    } as Company;
-
-    setCompanies([...companies, newCompany]);
+  const handleCreateCompany = async () => {
+    try {
+      await apiCreateCompany(formData);
     setIsCreateDialogOpen(false);
     resetForm();
+      fetchCompanies();
+    } catch {
+      // error handling if needed
+    }
   };
 
   // Update company by ID
-  const updateCompany = (id: number) => {
-    setCompanies(
-      companies.map((company) =>
-        company.Id === id ? { ...company, ...formData } : company
-      )
-    );
+  const handleUpdateCompany = async (id: string) => {
+    try {
+      await apiUpdateCompany(id, formData);
     setIsEditDialogOpen(false);
     resetForm();
+      fetchCompanies();
+    } catch {
+      // error handling if needed
+    }
   };
 
   // Delete company by ID
-  const deleteCompany = (id: number) => {
-    setCompanies(companies.filter((company) => company.Id !== id));
+  const handleDeleteCompany = async (id: string) => {
+    try {
+      await apiDeleteCompany(id);
     setIsDeleteDialogOpen(false);
     setSelectedCompany(null);
+      fetchCompanies();
+    } catch {
+      // error handling if needed
+    }
   };
 
   const resetForm = () => {
     setFormData({
-      Name: "",
-      Description: "",
-      Location: "",
-      Employees: "",
-      Industry: "",
-      Website: "",
-      Founded: "",
-      Tags: "",
+      name: "",
+      description: "",
+      location: "",
+      employees: "",
+      industry: "",
+      website: "",
+      founded: "",
+      tags: [],
     });
   };
 
@@ -274,39 +213,24 @@ export default function Page() {
     setIsDeleteDialogOpen(true);
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return <Badge className="bg-green-100 text-green-800">Hoạt động</Badge>;
-      case "pending":
-        return (
-          <Badge className="bg-yellow-100 text-yellow-800">Chờ duyệt</Badge>
-        );
-      case "suspended":
-        return <Badge className="bg-red-100 text-red-800">Tạm ngưng</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
-  };
-
-  const CompanyForm = ({ isEdit = false }: { isEdit?: boolean }) => (
+  const CompanyForm = () => (
     <div className="grid gap-4 py-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="name">Tên công ty *</Label>
           <Input
             id="name"
-            value={formData.Name || ""}
-            onChange={(e) => setFormData({ ...formData, Name: e.target.value })}
+            value={formData.name || ""}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="VD: TechCorp Vietnam"
           />
         </div>
         <div>
           <Label htmlFor="industry">Ngành nghề *</Label>
           <Select
-            value={formData.Industry || ""}
+            value={formData.industry || ""}
             onValueChange={(value) =>
-              setFormData({ ...formData, Industry: value })
+              setFormData({ ...formData, industry: value })
             }
           >
             <SelectTrigger>
@@ -327,9 +251,9 @@ export default function Page() {
         <Label htmlFor="description">Mô tả công ty</Label>
         <Textarea
           id="description"
-          value={formData.Description || ""}
+          value={formData.description || ""}
           onChange={(e) =>
-            setFormData({ ...formData, Description: e.target.value })
+            setFormData({ ...formData, description: e.target.value })
           }
           placeholder="Mô tả về công ty..."
           rows={3}
@@ -341,9 +265,9 @@ export default function Page() {
           <Label htmlFor="website">Website</Label>
           <Input
             id="website"
-            value={formData.Website || ""}
+            value={formData.website || ""}
             onChange={(e) =>
-              setFormData({ ...formData, Website: e.target.value })
+              setFormData({ ...formData, website: e.target.value })
             }
             placeholder="https://company.com"
           />
@@ -352,9 +276,9 @@ export default function Page() {
           <Label htmlFor="location">Địa điểm *</Label>
           <Input
             id="location"
-            value={formData.Location || ""}
+            value={formData.location || ""}
             onChange={(e) =>
-              setFormData({ ...formData, Location: e.target.value })
+              setFormData({ ...formData, location: e.target.value })
             }
             placeholder="Hồ Chí Minh"
           />
@@ -365,9 +289,9 @@ export default function Page() {
         <div>
           <Label htmlFor="employees">Quy mô nhân sự</Label>
           <Select
-            value={formData.Employees || ""}
+            value={formData.employees || ""}
             onValueChange={(value) =>
-              setFormData({ ...formData, Employees: value })
+              setFormData({ ...formData, employees: value })
             }
           >
             <SelectTrigger>
@@ -386,9 +310,9 @@ export default function Page() {
           <Label htmlFor="founded">Năm thành lập</Label>
           <Input
             id="founded"
-            value={formData.Founded || ""}
+            value={formData.founded || ""}
             onChange={(e) =>
-              setFormData({ ...formData, Founded: e.target.value })
+              setFormData({ ...formData, founded: e.target.value })
             }
             placeholder="2020"
           />
@@ -399,8 +323,8 @@ export default function Page() {
         <Label htmlFor="tags">Tags (phân cách bằng dấu phẩy)</Label>
         <Input
           id="tags"
-          value={formData.Tags || ""}
-          onChange={(e) => setFormData({ ...formData, Tags: e.target.value })}
+          value={Array.isArray(formData.tags) ? formData.tags.join(", ") : formData.tags || ""}
+          onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(",").map(tag => tag.trim()) })}
           placeholder="React, Node.js, AWS, Agile"
         />
       </div>
@@ -456,7 +380,7 @@ export default function Page() {
                   >
                     Hủy
                   </Button>
-                  <Button onClick={createCompany}>Tạo công ty</Button>
+                  <Button onClick={handleCreateCompany}>Tạo công ty</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -486,7 +410,7 @@ export default function Page() {
                     Tổng việc làm
                   </p>
                   <p className="text-3xl font-bold text-green-600">
-                    {companies.reduce((sum, c) => sum + c.OpenJobs, 0)}
+                    {companies.reduce((sum, c) => sum + c.openJobs, 0)}
                   </p>
                 </div>
                 <Briefcase className="h-8 w-8 text-green-600" />
@@ -501,10 +425,10 @@ export default function Page() {
                     Rating trung bình
                   </p>
                   <p className="text-3xl font-bold text-yellow-600">
-                    {(
-                      companies.reduce((sum, c) => sum + c.Rating, 0) /
-                      companies.length
-                    ).toFixed(1)}
+                    {companies.length > 0
+                      ? (companies.reduce((sum, c) => sum + c.rating, 0) /
+                          companies.length).toFixed(1)
+                      : "0.0"}
                   </p>
                 </div>
                 <Star className="h-8 w-8 text-yellow-600" />
@@ -521,7 +445,7 @@ export default function Page() {
                   <p className="text-3xl font-bold text-purple-600">
                     {
                       companies.filter(
-                        (c) => Number.parseInt(c.Founded) >= 2020
+                        (c) => c.founded && Number.parseInt(c.founded) >= 2020
                       ).length
                     }
                   </p>
@@ -601,44 +525,44 @@ export default function Page() {
               </TableHeader>
               <TableBody>
                 {filteredCompanies.map((company) => (
-                  <TableRow key={company.Id}>
+                  <TableRow key={company.id}>
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         <Image
-                          src={company.Logo || "/placeholder.svg"}
-                          alt={company.Name}
+                          src={company.logo || "/placeholder.svg"}
+                          alt={company.name}
                           width={40}
                           height={40}
                           className="rounded-lg border"
                         />
                         <div>
-                          <p className="font-medium">{company.Name}</p>
+                          <p className="font-medium">{company.name}</p>
                           <p className="text-sm text-gray-500">
-                            {company.Website}
+                            {company.website}
                           </p>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>{company.Industry}</TableCell>
+                    <TableCell>{company.industry}</TableCell>
                     <TableCell>
                       <div className="flex items-center">
                         <MapPin className="h-4 w-4 mr-1 text-gray-400" />
-                        {company.Location}
+                        {company.location}
                       </div>
                     </TableCell>
-                    <TableCell>{company.Employees}</TableCell>
+                    <TableCell>{company.employees}</TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {company.OpenJobs} đang tuyển
+                        {company.openJobs} đang tuyển
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center">
                         <Star className="h-4 w-4 text-yellow-400 fill-current mr-1" />
-                        {company.Rating}
+                        {company.rating}
                       </div>
                     </TableCell>
-                    <TableCell>{company.Founded}</TableCell>
+                    <TableCell>{company.founded}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -683,20 +607,20 @@ export default function Page() {
               <div className="space-y-6">
                 <div className="flex items-center space-x-4">
                   <Image
-                    src={selectedCompany.Logo || "/placeholder.svg"}
-                    alt={selectedCompany.Name}
+                    src={selectedCompany.logo || "/placeholder.svg"}
+                    alt={selectedCompany.name}
                     width={80}
                     height={80}
                     className="rounded-lg border"
                   />
                   <div>
                     <h3 className="text-xl font-semibold">
-                      {selectedCompany.Name}
+                      {selectedCompany.name}
                     </h3>
-                    <p className="text-gray-600">{selectedCompany.Industry}</p>
+                    <p className="text-gray-600">{selectedCompany.industry}</p>
                     <div className="flex items-center mt-2">
                       <Star className="h-4 w-4 text-yellow-400 fill-current mr-1" />
-                      <span>{selectedCompany.Rating}</span>
+                      <span>{selectedCompany.rating}</span>
                     </div>
                   </div>
                 </div>
@@ -712,32 +636,32 @@ export default function Page() {
                     <div>
                       <Label>Mô tả</Label>
                       <p className="text-sm text-gray-600 mt-1">
-                        {selectedCompany.Description}
+                        {selectedCompany.description}
                       </p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label>Ngành nghề</Label>
                         <p className="text-sm mt-1">
-                          {selectedCompany.Industry}
+                          {selectedCompany.industry}
                         </p>
                       </div>
                       <div>
                         <Label>Địa điểm</Label>
                         <p className="text-sm mt-1">
-                          {selectedCompany.Location}
+                          {selectedCompany.location}
                         </p>
                       </div>
                       <div>
                         <Label>Quy mô</Label>
                         <p className="text-sm mt-1">
-                          {selectedCompany.Employees} nhân viên
+                          {selectedCompany.employees} nhân viên
                         </p>
                       </div>
                       <div>
                         <Label>Năm thành lập</Label>
                         <p className="text-sm mt-1">
-                          {selectedCompany.Founded}
+                          {selectedCompany.founded}
                         </p>
                       </div>
                     </div>
@@ -749,27 +673,30 @@ export default function Page() {
                         <Label>Website</Label>
                         <p className="text-sm mt-1">
                           <a
-                            href={selectedCompany.Website}
+                            href={selectedCompany.website}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:underline"
                           >
-                            {selectedCompany.Website}
+                            {selectedCompany.website}
                           </a>
                         </p>
                       </div>
                       <div>
                         <Label>Tags</Label>
                         <div className="flex flex-wrap gap-2 mt-2">
-                          {selectedCompany.Tags.split(",").map((tag, index) => (
+                          {selectedCompany.tags && selectedCompany.tags.length > 0
+                            ? selectedCompany.tags.map((tag: string, index: number) => (
                             <Badge
                               key={index}
                               variant="secondary"
                               className="text-xs"
                             >
-                              {tag.trim()}
+                                  {tag}
                             </Badge>
-                          ))}
+                              ))
+                            : <span className="text-sm text-gray-500">Không có tags</span>
+                          }
                         </div>
                       </div>
                     </div>
@@ -779,7 +706,7 @@ export default function Page() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="text-center p-4 border rounded-lg">
                         <p className="text-2xl font-bold text-blue-600">
-                          {selectedCompany.OpenJobs}
+                          {selectedCompany.openJobs}
                         </p>
                         <p className="text-sm text-gray-600">
                           Việc làm đang tuyển
@@ -787,7 +714,7 @@ export default function Page() {
                       </div>
                       <div className="text-center p-4 border rounded-lg">
                         <p className="text-2xl font-bold text-yellow-600">
-                          {selectedCompany.Rating}
+                          {selectedCompany.rating}
                         </p>
                         <p className="text-sm text-gray-600">
                           Đánh giá trung bình
@@ -795,14 +722,16 @@ export default function Page() {
                       </div>
                       <div className="text-center p-4 border rounded-lg">
                         <p className="text-2xl font-bold text-purple-600">
-                          {new Date().getFullYear() -
-                            Number.parseInt(selectedCompany.Founded)}
+                          {selectedCompany.founded
+                            ? new Date().getFullYear() -
+                              Number.parseInt(selectedCompany.founded)
+                            : 0}
                         </p>
                         <p className="text-sm text-gray-600">Năm hoạt động</p>
                       </div>
                       <div className="text-center p-4 border rounded-lg">
                         <p className="text-2xl font-bold text-green-600">
-                          {selectedCompany.Employees}
+                          {selectedCompany.employees}
                         </p>
                         <p className="text-sm text-gray-600">Quy mô nhân sự</p>
                       </div>
@@ -821,7 +750,7 @@ export default function Page() {
               <DialogTitle>Chỉnh sửa công ty</DialogTitle>
               <DialogDescription>Cập nhật thông tin công ty</DialogDescription>
             </DialogHeader>
-            <CompanyForm isEdit={true} />
+            <CompanyForm />
             <DialogFooter>
               <Button
                 variant="outline"
@@ -831,7 +760,7 @@ export default function Page() {
               </Button>
               <Button
                 onClick={() =>
-                  selectedCompany && updateCompany(selectedCompany.Id)
+                  selectedCompany && selectedCompany.id && handleUpdateCompany(selectedCompany.id.toString())
                 }
               >
                 Cập nhật
@@ -849,7 +778,7 @@ export default function Page() {
             <AlertDialogHeader>
               <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
               <AlertDialogDescription>
-                Bạn có chắc chắn muốn xóa công ty &quot;{selectedCompany?.Name}
+                Bạn có chắc chắn muốn xóa công ty &quot;{selectedCompany?.name}
                 &quot;? Hành động này không thể hoàn tác.
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -857,7 +786,7 @@ export default function Page() {
               <AlertDialogCancel>Hủy</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() =>
-                  selectedCompany && deleteCompany(selectedCompany.Id)
+                  selectedCompany && selectedCompany.id && handleDeleteCompany(selectedCompany.id.toString())
                 }
                 className="bg-red-600 hover:bg-red-700"
               >

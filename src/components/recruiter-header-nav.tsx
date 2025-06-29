@@ -22,7 +22,6 @@ export function RecruiterHeaderNav() {
     { href: "/recruiter/applications", label: "Đơn ứng tuyển" },
     { href: "/recruiter/candidates", label: "Tìm ứng viên" },
     { href: "/recruiter/company", label: "Hồ sơ công ty" },
-    { href: "/recruiter/analytics", label: "Báo cáo" },
     { href: "/recruiter/settings", label: "Cài đặt" },
     { href: "/recruiter/notifications", label: "Thông báo" },
   ];
@@ -34,8 +33,8 @@ export function RecruiterHeaderNav() {
           key={item.href}
           href={item.href}
           className={cn(
-            "text-sm font-medium transition-colors hover:text-primary",
-            pathname === item.href ? "text-primary" : "text-muted-foreground"
+            "text-sm font-medium text-white hover:text-white",
+            pathname === item.href ? "underline" : "opacity-80"
           )}
         >
           {item.label}

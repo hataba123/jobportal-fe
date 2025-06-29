@@ -9,11 +9,21 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import LanguageSwitcher from "./LanguageSwitcher"; // Import
 import { useAuth } from "@/contexts/AuthContext";
+import { useCategories } from "@/hooks/useCategories";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout, isAuthenticated, loading } = useAuth();
+  const { categories } = useCategories();
+
   if (loading) return null; // hoặc return <Loading />
+
+  // Transform categories for HoverDropdown
+  const categoryItems = categories.map((category) => ({
+    label: category.name,
+    href: `/candidate/category/${category.id}`,
+  }));
+
   console.log("✅ [Navbar] user:", user);
   console.log(user?.fullName);
   console.log("✅ [Navbar] isAuthenticated:", isAuthenticated);
@@ -36,22 +46,7 @@ const Navbar = () => {
             <HoverDropdown
               label="All Jobs"
               mainHref="/candidate/job"
-              items={[
-                {
-                  label: "Công nghệ thông tin",
-                  href: "/jobs/category/congnghethongtin",
-                },
-                { label: "Thiết kế", href: "/jobs/category/thietke" },
-                { label: "Marketing", href: "/jobs/category/marketing" },
-                { label: "Tài chính", href: "/jobs/category/taichinh" },
-                { label: "Nhân sự", href: "/jobs/category/nhansu" },
-                { label: "Bán hàng", href: "/jobs/category/banhang" },
-                { label: "Bảo mật", href: "/jobs/category/baomat" },
-                {
-                  label: "Hỗ trợ khách hàng",
-                  href: "/jobs/category/hotrokhachhang",
-                },
-              ]}
+              items={categoryItems}
             />
             {/* Dropdown */}
             {/* <HoverDropdown
@@ -155,18 +150,30 @@ const Navbar = () => {
       {isOpen && (
         <div className="md:hidden px-4 pb-4 space-y-2 text-white absolute top-16 left-0 w-3/5 bg-black">
           <div>
-            <p className="font-medium">Services</p>
+            <p className="font-medium">Danh mục việc làm</p>
+            {categoryItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="block ml-4 hover:text-blue-200"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+          <div>
+            <p className="font-medium">Liên kết</p>
             <Link
-              href="/services/web"
+              href="/candidate/company"
               className="block ml-4 hover:text-blue-200"
             >
-              Web Dev
+              Công ty
             </Link>
             <Link
-              href="/services/mobile"
+              href="/candidate/blog"
               className="block ml-4 hover:text-blue-200"
             >
-              Mobile Dev
+              Blog
             </Link>
           </div>
           {/* 👉 Language Switcher ở mobile */}

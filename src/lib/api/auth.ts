@@ -2,7 +2,7 @@ import type { LoginCredentials } from "@/types/Auth";
 import type { User } from "@/types/User";
 import type { AuthResponse } from "@/types/Auth";
 import { RegisterRequest } from "@/types/RegisterRequest"; // Nếu đã định nghĩa kiểu dữ liệu
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance"; // dùng alias @ là chuẩn
 /**
  * Gửi request đăng nhập đến backend.
  * @param credentials - thông tin đăng nhập gồm email và password.
@@ -11,7 +11,7 @@ import axios from "axios";
 export async function loginUser(
   credentials: LoginCredentials
 ): Promise<AuthResponse> {
-  const res = await axios.post("/auth/login", credentials);
+  const res = await axiosInstance.post("/auth/login", credentials);
   console.log("✅ API /auth/login trả về:", res.data);
 
   return res.data; // { user, accessToken }
@@ -31,7 +31,7 @@ export async function loginUser(
  * @returns Thông tin người dùng nếu token hợp lệ.
  */
 export async function getUser(token: string): Promise<User> {
-  const res = await axios.get("/auth/me", {
+  const res = await axiosInstance.get("/auth/me", {
     headers: {
       Authorization: `Bearer ${token}`, // Gắn token vào header
     },
@@ -40,18 +40,10 @@ export async function getUser(token: string): Promise<User> {
 
   return res.data;
 }
-export async function registerUser(data: RegisterRequest) {
-  const res = await fetch("/api/auth/register", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
-
-  if (!res.ok) {
-    throw new Error("Đăng ký thất bại");
-  }
-
-  return await res.json();
+export async function registerUser(
+  data: RegisterRequest
+): Promise<AuthResponse> {
+  const res = await axiosInstance.post("/auth/register", data);
+  console.log("✅ API /auth/register trả về:", res.data);
+  return res.data;
 }

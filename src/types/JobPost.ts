@@ -16,4 +16,6 @@ export interface JobPost {
   applicants?: number; // Số ứng viên
   createdAt: string;
   categoryName: string;
+  categoryId?: string; // Thêm categoryId
+  companyName?: string; // Thêm companyName
 }

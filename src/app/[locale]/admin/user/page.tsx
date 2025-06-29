@@ -64,50 +64,19 @@ import {
   Briefcase,
   Users,
 } from "lucide-react";
-import { useState } from "react";
-import React from "react";
-// Types
-interface UserData {
-  Id: number;
-  Email: string;
-  FullName: string;
-  Role: "admin" | "employer" | "candidate";
-}
+import { useState, useEffect } from "react";
+import { fetchAllUsers, createUser as apiCreateUser, updateUser as apiUpdateUser, deleteUser as apiDeleteUser } from "@/lib/api/admin-user";
+import { User as UserType, RoleEnum } from "@/types/User";
 
-// Mock Data
-const initialUsers: UserData[] = [
-  { Id: 1, Email: "admin@jobportal.vn", FullName: "Admin User", Role: "admin" },
-  {
-    Id: 2,
-    Email: "hr@techcorp.vn",
-    FullName: "Nguyễn Thị Tuyển Dụng",
-    Role: "employer",
-  },
-  {
-    Id: 3,
-    Email: "candidate.a@email.com",
-    FullName: "Trần Văn A",
-    Role: "candidate",
-  },
-  {
-    Id: 4,
-    Email: "candidate.b@email.com",
-    FullName: "Lê Thị B",
-    Role: "candidate",
-  },
-  {
-    Id: 5,
-    Email: "contact@startupxyz.com",
-    FullName: "Phạm Minh C",
-    Role: "employer",
-  },
+const userRoles = [
+  { value: RoleEnum.ADMIN, label: "Admin" },
+  { value: RoleEnum.RECRUITER, label: "Nhà tuyển dụng" },
+  { value: RoleEnum.CANDIDATE, label: "Ứng viên" },
 ];
 
-const userRoles = ["admin", "employer", "candidate"];
-
 export default function Page() {
-  const [users, setUsers] = useState<UserData[]>(initialUsers);
-  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+  const [users, setUsers] = useState<UserType[]>([]);
+  const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -116,96 +85,117 @@ export default function Page() {
   const [filterRole, setFilterRole] = useState("all");
 
   // Form state
-  const [formData, setFormData] = useState<Partial<UserData>>({
-    Email: "",
-    FullName: "",
-    Role: "candidate", // Default role
+  const [formData, setFormData] = useState<Partial<UserType>>({
+    email: "",
+    fullName: "",
+    role: RoleEnum.CANDIDATE, // Default role
   });
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const data = await fetchAllUsers();
+      setUsers(data);
+    } catch {
+      // error handling if needed
+    }
+  };
 
   const getFilteredUsers = () => {
     return users.filter((user) => {
       const matchesSearch =
-        user.Email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.FullName.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesRole = filterRole === "all" || user.Role === filterRole;
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.fullName.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesRole = filterRole === "all" || user.role.toString() === filterRole;
 
       return matchesSearch && matchesRole;
     });
   };
 
-  const createUser = () => {
-    const newUser: UserData = {
-      ...formData,
-      Id: Math.max(...users.map((u) => u.Id)) + 1,
-    } as UserData;
-
-    setUsers([...users, newUser]);
-    setIsCreateDialogOpen(false);
-    resetForm();
+  const handleCreateUser = async () => {
+    try {
+      await apiCreateUser(formData);
+      setIsCreateDialogOpen(false);
+      setFormData({ email: "", fullName: "", role: RoleEnum.CANDIDATE });
+      fetchUsers();
+    } catch {
+      // error handling if needed
+    }
   };
 
-  const updateUser = (id: number) => {
-    setUsers(
-      users.map((user) => (user.Id === id ? { ...user, ...formData } : user))
-    );
-    setIsEditDialogOpen(false);
-    resetForm();
+  const handleUpdateUser = async (id: string) => {
+    try {
+      await apiUpdateUser(id, formData);
+      setIsEditDialogOpen(false);
+      setFormData({ email: "", fullName: "", role: RoleEnum.CANDIDATE });
+      fetchUsers();
+    } catch {
+      // error handling if needed
+    }
   };
 
-  const deleteUser = (id: number) => {
-    setUsers(users.filter((user) => user.Id !== id));
-    setIsDeleteDialogOpen(false);
-    setSelectedUser(null);
+  const handleDeleteUser = async (id: string) => {
+    try {
+      await apiDeleteUser(id);
+      setIsDeleteDialogOpen(false);
+      setSelectedUser(null);
+      fetchUsers();
+    } catch {
+      // error handling if needed
+    }
   };
 
   const resetForm = () => {
     setFormData({
-      Email: "",
-      FullName: "",
-      Role: "candidate",
+      email: "",
+      fullName: "",
+      role: RoleEnum.CANDIDATE,
     });
   };
 
-  const handleEdit = (user: UserData) => {
+  const handleEdit = (user: UserType) => {
     setSelectedUser(user);
     setFormData(user);
     setIsEditDialogOpen(true);
   };
 
-  const handleView = (user: UserData) => {
+  const handleView = (user: UserType) => {
     setSelectedUser(user);
     setIsViewDialogOpen(true);
   };
 
-  const handleDelete = (user: UserData) => {
+  const handleDelete = (user: UserType) => {
     setSelectedUser(user);
     setIsDeleteDialogOpen(true);
   };
 
-  const getUserRoleBadge = (role: UserData["Role"]) => {
+  const getUserRoleBadge = (role: RoleEnum) => {
     switch (role) {
-      case "admin":
+      case RoleEnum.ADMIN:
         return <Badge className="bg-red-100 text-red-800">Admin</Badge>;
-      case "employer":
+      case RoleEnum.RECRUITER:
         return (
           <Badge className="bg-blue-100 text-blue-800">Nhà tuyển dụng</Badge>
         );
-      case "candidate":
+      case RoleEnum.CANDIDATE:
         return <Badge className="bg-green-100 text-green-800">Ứng viên</Badge>;
       default:
-        return <Badge variant="secondary">{role}</Badge>;
+        return <Badge variant="secondary">Unknown</Badge>;
     }
   };
 
-  const UserForm = ({ isEdit = false }: { isEdit?: boolean }) => (
+  const UserForm = () => (
     <div className="grid gap-4 py-4">
       <div>
         <Label htmlFor="email">Email *</Label>
         <Input
           id="email"
           type="email"
-          value={formData.Email || ""}
-          onChange={(e) => setFormData({ ...formData, Email: e.target.value })}
+          value={formData.email || ""}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           placeholder="user@example.com"
         />
       </div>
@@ -213,9 +203,9 @@ export default function Page() {
         <Label htmlFor="fullName">Họ và tên</Label>
         <Input
           id="fullName"
-          value={formData.FullName || ""}
+          value={formData.fullName || ""}
           onChange={(e) =>
-            setFormData({ ...formData, FullName: e.target.value })
+            setFormData({ ...formData, fullName: e.target.value })
           }
           placeholder="Nguyễn Văn A"
         />
@@ -223,9 +213,9 @@ export default function Page() {
       <div>
         <Label htmlFor="role">Vai trò *</Label>
         <Select
-          value={formData.Role || "candidate"}
+          value={formData.role?.toString() || RoleEnum.CANDIDATE.toString()}
           onValueChange={(value) =>
-            setFormData({ ...formData, Role: value as UserData["Role"] })
+            setFormData({ ...formData, role: Number.parseInt(value) as RoleEnum })
           }
         >
           <SelectTrigger>
@@ -233,12 +223,8 @@ export default function Page() {
           </SelectTrigger>
           <SelectContent>
             {userRoles.map((role) => (
-              <SelectItem key={role} value={role}>
-                {role === "admin"
-                  ? "Admin"
-                  : role === "employer"
-                  ? "Nhà tuyển dụng"
-                  : "Ứng viên"}
+              <SelectItem key={role.value} value={role.value.toString()}>
+                {role.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -287,7 +273,7 @@ export default function Page() {
                 >
                   Hủy
                 </Button>
-                <Button onClick={createUser}>Tạo người dùng</Button>
+                <Button onClick={handleCreateUser}>Tạo người dùng</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -316,7 +302,7 @@ export default function Page() {
                     Nhà tuyển dụng
                   </p>
                   <p className="text-3xl font-bold text-purple-600">
-                    {users.filter((u) => u.Role === "employer").length}
+                    {users.filter((u) => u.role === RoleEnum.RECRUITER).length}
                   </p>
                 </div>
                 <Briefcase className="h-8 w-8 text-purple-600" />
@@ -329,7 +315,7 @@ export default function Page() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Ứng viên</p>
                   <p className="text-3xl font-bold text-green-600">
-                    {users.filter((u) => u.Role === "candidate").length}
+                    {users.filter((u) => u.role === RoleEnum.CANDIDATE).length}
                   </p>
                 </div>
                 <User className="h-8 w-8 text-green-600" />
@@ -358,12 +344,8 @@ export default function Page() {
                 <SelectContent>
                   <SelectItem value="all">Tất cả vai trò</SelectItem>
                   {userRoles.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {role === "admin"
-                        ? "Admin"
-                        : role === "employer"
-                        ? "Nhà tuyển dụng"
-                        : "Ứng viên"}
+                    <SelectItem key={role.value} value={role.value.toString()}>
+                      {role.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -397,16 +379,16 @@ export default function Page() {
               </TableHeader>
               <TableBody>
                 {filteredUsers.map((user) => (
-                  <TableRow key={user.Id}>
-                    <TableCell>{user.Id}</TableCell>
+                  <TableRow key={user.id}>
+                    <TableCell>{user.id}</TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
                         <Mail className="h-4 w-4 text-gray-500" />
-                        <span>{user.Email}</span>
+                        <span>{user.email}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{user.FullName}</TableCell>
-                    <TableCell>{getUserRoleBadge(user.Role)}</TableCell>
+                    <TableCell>{user.fullName}</TableCell>
+                    <TableCell>{getUserRoleBadge(user.role)}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -451,20 +433,20 @@ export default function Page() {
               <div className="space-y-4">
                 <div>
                   <Label>ID</Label>
-                  <p className="text-sm mt-1">{selectedUser.Id}</p>
+                  <p className="text-sm mt-1">{selectedUser.id}</p>
                 </div>
                 <div>
                   <Label>Email</Label>
-                  <p className="text-sm mt-1">{selectedUser.Email}</p>
+                  <p className="text-sm mt-1">{selectedUser.email}</p>
                 </div>
                 <div>
                   <Label>Họ và tên</Label>
-                  <p className="text-sm mt-1">{selectedUser.FullName}</p>
+                  <p className="text-sm mt-1">{selectedUser.fullName}</p>
                 </div>
                 <div>
                   <Label>Vai trò</Label>
                   <p className="text-sm mt-1">
-                    {getUserRoleBadge(selectedUser.Role)}
+                    {getUserRoleBadge(selectedUser.role)}
                   </p>
                 </div>
               </div>
@@ -481,7 +463,7 @@ export default function Page() {
                 Cập nhật thông tin người dùng
               </DialogDescription>
             </DialogHeader>
-            <UserForm isEdit={true} />
+            <UserForm />
             <DialogFooter>
               <Button
                 variant="outline"
@@ -490,7 +472,7 @@ export default function Page() {
                 Hủy
               </Button>
               <Button
-                onClick={() => selectedUser && updateUser(selectedUser.Id)}
+                onClick={() => selectedUser && handleUpdateUser(selectedUser.id)}
               >
                 Cập nhật
               </Button>
@@ -508,14 +490,14 @@ export default function Page() {
               <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
               <AlertDialogDescription>
                 Bạn có chắc chắn muốn xóa người dùng &quot;
-                {selectedUser?.FullName}&quot; (Email: {selectedUser?.Email})?
+                {selectedUser?.fullName}&quot; (Email: {selectedUser?.email})?
                 Hành động này không thể hoàn tác.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Hủy</AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => selectedUser && deleteUser(selectedUser.Id)}
+                onClick={() => selectedUser && handleDeleteUser(selectedUser.id)}
                 className="bg-red-600 hover:bg-red-700"
               >
                 Xóa

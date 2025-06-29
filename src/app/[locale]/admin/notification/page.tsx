@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -66,87 +66,15 @@ import {
   CheckCircle,
   Clock,
 } from "lucide-react";
-import { useState } from "react";
+import { fetchAllNotifications, createNotification as apiCreateNotification, markNotificationAsRead, deleteNotification as apiDeleteNotification } from "@/lib/api/admin-notification";
+import { Notification } from "@/types/Notification";
 
-// Types
-interface Notification {
-  Id: number;
-  UserId: number;
-  Message: string;
-  Read: boolean;
-  CreatedAt: string;
-  Type:
-    | "system"
-    | "job_application"
-    | "interview_invite"
-    | "offer"
-    | "other"
-    | string; // Added string for flexibility
-}
-
-// Mock Data
-const initialNotifications: Notification[] = [
-  {
-    Id: 1,
-    UserId: 101,
-    Message:
-      "Chúng tôi đã ra mắt Dashboard Recruiter với nhiều tính năng quản lý ứng viên mạnh mẽ.",
-    Read: false,
-    CreatedAt: "2024-06-20",
-    Type: "system",
-  },
-  {
-    Id: 2,
-    UserId: 102,
-    Message:
-      "Hệ thống sẽ được bảo trì vào lúc 2h sáng ngày 25/06/2024. Vui lòng lưu ý.",
-    Read: false,
-    CreatedAt: "2024-06-19",
-    Type: "system",
-  },
-  {
-    Id: 3,
-    UserId: 103,
-    Message:
-      "Bạn đã được TechCorp Vietnam chọn vào vòng phỏng vấn cho vị trí Senior Frontend Developer.",
-    Read: true,
-    CreatedAt: "2024-06-18",
-    Type: "interview_invite",
-  },
-  {
-    Id: 4,
-    UserId: 104,
-    Message:
-      "Báo cáo hiệu suất tuyển dụng tuần này đã có sẵn trên Dashboard Admin.",
-    Read: false,
-    CreatedAt: "2024-06-17",
-    Type: "system",
-  },
-  {
-    Id: 5,
-    UserId: 105,
-    Message:
-      "Đăng ký ngay để nhận gói ưu đãi đăng tin tuyển dụng miễn phí trong 30 ngày.",
-    Read: true,
-    CreatedAt: "2024-06-15",
-    Type: "system",
-  },
-];
-
-const notificationTypes = [
-  "system",
-  "job_application",
-  "interview_invite",
-  "offer",
-  "other",
-];
+const notificationTypes = ["system", "job_application", "interview_invite", "offer", "other"];
 const readStatuses = ["read", "unread"];
 
 export default function AdminNotificationDashboard() {
-  const [notifications, setNotifications] =
-    useState<Notification[]>(initialNotifications);
-  const [selectedNotification, setSelectedNotification] =
-    useState<Notification | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -154,87 +82,72 @@ export default function AdminNotificationDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [filterReadStatus, setFilterReadStatus] = useState("all");
-
-  // Form state
   const [formData, setFormData] = useState<Partial<Notification>>({
-    UserId: 0,
-    Message: "",
-    Read: false,
-    Type: "system",
+    userId: "",
+    message: "",
+    read: false,
+    type: "system",
   });
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      const data = await fetchAllNotifications();
+      setNotifications(data);
+    } catch {
+      // error handling if needed
+    }
+  };
 
   const getFilteredNotifications = () => {
     return notifications.filter((notification) => {
       const matchesSearch =
-        notification.Message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        notification.Type.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesType =
-        filterType === "all" || notification.Type === filterType;
+        notification.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (notification.type || "").toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = filterType === "all" || notification.type === filterType;
       const matchesReadStatus =
         filterReadStatus === "all" ||
-        notification.Read === (filterReadStatus === "read");
-
+        notification.read === (filterReadStatus === "read");
       return matchesSearch && matchesType && matchesReadStatus;
     });
   };
 
-  const createNotification = () => {
-    const newNotification: Notification = {
-      ...formData,
-      Id: Math.max(...notifications.map((n) => n.Id)) + 1,
-      CreatedAt: new Date().toISOString().split("T")[0], // Current date
-      UserId: formData.UserId || 0,
-      Read: formData.Read ?? false,
-      Type: formData.Type ?? "system",
-    } as Notification;
-
-    setNotifications([...notifications, newNotification]);
+  const handleCreateNotification = async () => {
+    try {
+      await apiCreateNotification(formData);
     setIsCreateDialogOpen(false);
-    resetForm();
+      setFormData({ userId: "", message: "", read: false, type: "system" });
+      fetchNotifications();
+    } catch {
+      // error handling if needed
+    }
   };
 
-  const updateNotification = (id: number) => {
-    setNotifications(
-      notifications.map((notification) =>
-        notification.Id === id
-          ? {
-              ...notification,
-              ...formData,
-              UserId: formData.UserId || notification.UserId,
-              Read: formData.Read ?? notification.Read,
-              Type: formData.Type ?? notification.Type,
-              CreatedAt: notification.CreatedAt,
-            }
-          : notification
-      )
-    );
-    setIsEditDialogOpen(false);
-    resetForm();
-  };
-
-  const deleteNotification = (id: number) => {
-    setNotifications(
-      notifications.filter((notification) => notification.Id !== id)
-    );
+  const handleDeleteNotification = async (id: string) => {
+    try {
+      await apiDeleteNotification(id);
     setIsDeleteDialogOpen(false);
     setSelectedNotification(null);
+      fetchNotifications();
+    } catch {
+      // error handling if needed
+    }
   };
 
-  const markAsRead = (id: number) => {
-    setNotifications(
-      notifications.map((notification) =>
-        notification.Id === id ? { ...notification, Read: true } : notification
-      )
-    );
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await markNotificationAsRead(id);
+      fetchNotifications();
+    } catch {
+      // error handling if needed
+    }
   };
 
   const resetForm = () => {
-    setFormData({
-      UserId: 0,
-      Message: "",
-      Read: false,
-      Type: "system",
-    });
+    setFormData({ userId: "", message: "", read: false, type: "system" });
   };
 
   const handleEdit = (notification: Notification) => {
@@ -246,7 +159,7 @@ export default function AdminNotificationDashboard() {
   const handleView = (notification: Notification) => {
     setSelectedNotification(notification);
     setIsViewDialogOpen(true);
-    markAsRead(notification.Id); // Mark as read when viewed
+    handleMarkAsRead(notification.id); // Mark as read when viewed
   };
 
   const handleDelete = (notification: Notification) => {
@@ -254,7 +167,7 @@ export default function AdminNotificationDashboard() {
     setIsDeleteDialogOpen(true);
   };
 
-  const getTypeBadge = (type: Notification["Type"]) => {
+  const getTypeBadge = (type: Notification["type"]) => {
     switch (type) {
       case "system":
         return <Badge variant="outline">Hệ thống</Badge>;
@@ -275,7 +188,7 @@ export default function AdminNotificationDashboard() {
     }
   };
 
-  const getReadStatusBadge = (read: Notification["Read"]) => {
+  const getReadStatusBadge = (read: Notification["read"]) => {
     return read ? (
       <Badge variant="secondary">Đã đọc</Badge>
     ) : (
@@ -321,11 +234,11 @@ export default function AdminNotificationDashboard() {
                   <Input
                     id="userId"
                     type="number"
-                    value={formData.UserId || ""}
+                    value={formData.userId || ""}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        UserId: Number.parseInt(e.target.value) || 0,
+                        userId: e.target.value,
                       })
                     }
                     placeholder="VD: 123"
@@ -335,9 +248,9 @@ export default function AdminNotificationDashboard() {
                   <Label htmlFor="message">Nội dung thông báo *</Label>
                   <Textarea
                     id="message"
-                    value={formData.Message || ""}
+                    value={formData.message || ""}
                     onChange={(e) =>
-                      setFormData({ ...formData, Message: e.target.value })
+                      setFormData({ ...formData, message: e.target.value })
                     }
                     placeholder="Nhập nội dung thông báo..."
                     rows={4}
@@ -346,11 +259,11 @@ export default function AdminNotificationDashboard() {
                 <div>
                   <Label htmlFor="type">Loại thông báo *</Label>
                   <Select
-                    value={formData.Type || "system"}
+                    value={formData.type || "system"}
                     onValueChange={(value) =>
                       setFormData({
                         ...formData,
-                        Type: value as Notification["Type"],
+                        type: value as Notification["type"],
                       })
                     }
                   >
@@ -377,9 +290,9 @@ export default function AdminNotificationDashboard() {
                 <div>
                   <Label htmlFor="readStatus">Trạng thái đọc ban đầu</Label>
                   <Select
-                    value={formData.Read ? "read" : "unread"}
+                    value={formData.read ? "read" : "unread"}
                     onValueChange={(value) =>
-                      setFormData({ ...formData, Read: value === "read" })
+                      setFormData({ ...formData, read: value === "read" })
                     }
                   >
                     <SelectTrigger>
@@ -402,7 +315,7 @@ export default function AdminNotificationDashboard() {
                 >
                   Hủy
                 </Button>
-                <Button onClick={createNotification}>Tạo thông báo</Button>
+                <Button onClick={handleCreateNotification}>Tạo thông báo</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -431,7 +344,7 @@ export default function AdminNotificationDashboard() {
                     Thông báo chưa đọc
                   </p>
                   <p className="text-3xl font-bold text-yellow-600">
-                    {notifications.filter((n) => n.Read === false).length}
+                    {notifications.filter((n) => n.read === false).length}
                   </p>
                 </div>
                 <Mail className="h-8 w-8 text-yellow-600" />
@@ -449,7 +362,7 @@ export default function AdminNotificationDashboard() {
                     {
                       notifications.filter(
                         (n) =>
-                          new Date(n.CreatedAt).getMonth() ===
+                          new Date(n.createdAt).getMonth() ===
                           new Date().getMonth()
                       ).length
                     }
@@ -539,19 +452,19 @@ export default function AdminNotificationDashboard() {
               </TableHeader>
               <TableBody>
                 {filteredNotifications.map((notification) => (
-                  <TableRow key={notification.Id}>
-                    <TableCell>{notification.Id}</TableCell>
-                    <TableCell>{notification.UserId}</TableCell>
+                  <TableRow key={notification.id}>
+                    <TableCell>{notification.id}</TableCell>
+                    <TableCell>{notification.userId}</TableCell>
                     <TableCell className="font-medium">
-                      {notification.Message.length > 70
-                        ? notification.Message.substring(0, 70) + "..."
-                        : notification.Message}
+                      {notification.message.length > 70
+                        ? notification.message.substring(0, 70) + "..."
+                        : notification.message}
                     </TableCell>
-                    <TableCell>{getTypeBadge(notification.Type)}</TableCell>
+                    <TableCell>{getTypeBadge(notification.type)}</TableCell>
                     <TableCell>
-                      {getReadStatusBadge(notification.Read)}
+                      {getReadStatusBadge(notification.read)}
                     </TableCell>
-                    <TableCell>{notification.CreatedAt}</TableCell>
+                    <TableCell>{notification.createdAt}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -572,9 +485,9 @@ export default function AdminNotificationDashboard() {
                             <Edit className="h-4 w-4 mr-2" />
                             Chỉnh sửa
                           </DropdownMenuItem>
-                          {notification.Read === false && (
+                          {notification.read === false && (
                             <DropdownMenuItem
-                              onClick={() => markAsRead(notification.Id)}
+                              onClick={() => handleMarkAsRead(notification.id)}
                             >
                               <CheckCircle className="h-4 w-4 mr-2" />
                               Đánh dấu đã đọc
@@ -608,34 +521,34 @@ export default function AdminNotificationDashboard() {
               <div className="space-y-4">
                 <div>
                   <Label>ID</Label>
-                  <p className="text-sm mt-1">{selectedNotification.Id}</p>
+                  <p className="text-sm mt-1">{selectedNotification.id}</p>
                 </div>
                 <div>
                   <Label>ID Người dùng</Label>
-                  <p className="text-sm mt-1">{selectedNotification.UserId}</p>
+                  <p className="text-sm mt-1">{selectedNotification.userId}</p>
                 </div>
                 <div>
                   <Label>Nội dung</Label>
                   <p className="text-sm text-gray-700 mt-1">
-                    {selectedNotification.Message}
+                    {selectedNotification.message}
                   </p>
                 </div>
                 <div>
                   <Label>Loại</Label>
                   <p className="text-sm mt-1">
-                    {getTypeBadge(selectedNotification.Type)}
+                    {getTypeBadge(selectedNotification.type)}
                   </p>
                 </div>
                 <div>
                   <Label>Trạng thái đọc</Label>
                   <p className="text-sm mt-1">
-                    {getReadStatusBadge(selectedNotification.Read)}
+                    {getReadStatusBadge(selectedNotification.read)}
                   </p>
                 </div>
                 <div>
                   <Label>Ngày tạo</Label>
                   <p className="text-sm mt-1">
-                    {selectedNotification.CreatedAt}
+                    {selectedNotification.createdAt}
                   </p>
                 </div>
               </div>
@@ -658,11 +571,11 @@ export default function AdminNotificationDashboard() {
                 <Input
                   id="edit-userId"
                   type="number"
-                  value={formData.UserId || ""}
+                  value={formData.userId || ""}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      UserId: Number.parseInt(e.target.value) || 0,
+                      userId: e.target.value,
                     })
                   }
                   placeholder="VD: 123"
@@ -672,9 +585,9 @@ export default function AdminNotificationDashboard() {
                 <Label htmlFor="edit-message">Nội dung thông báo *</Label>
                 <Textarea
                   id="edit-message"
-                  value={formData.Message || ""}
+                  value={formData.message || ""}
                   onChange={(e) =>
-                    setFormData({ ...formData, Message: e.target.value })
+                    setFormData({ ...formData, message: e.target.value })
                   }
                   placeholder="Nhập nội dung thông báo..."
                   rows={4}
@@ -683,11 +596,11 @@ export default function AdminNotificationDashboard() {
               <div>
                 <Label htmlFor="edit-type">Loại thông báo *</Label>
                 <Select
-                  value={formData.Type || "system"}
+                  value={formData.type || "system"}
                   onValueChange={(value) =>
                     setFormData({
                       ...formData,
-                      Type: value as Notification["Type"],
+                      type: value as Notification["type"],
                     })
                   }
                 >
@@ -714,9 +627,9 @@ export default function AdminNotificationDashboard() {
               <div>
                 <Label htmlFor="edit-readStatus">Trạng thái đọc</Label>
                 <Select
-                  value={formData.Read ? "read" : "unread"}
+                  value={formData.read ? "read" : "unread"}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, Read: value === "read" })
+                    setFormData({ ...formData, read: value === "read" })
                   }
                 >
                   <SelectTrigger>
@@ -742,7 +655,7 @@ export default function AdminNotificationDashboard() {
               <Button
                 onClick={() =>
                   selectedNotification &&
-                  updateNotification(selectedNotification.Id)
+                  handleEdit(selectedNotification)
                 }
               >
                 Cập nhật
@@ -761,7 +674,7 @@ export default function AdminNotificationDashboard() {
               <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
               <AlertDialogDescription>
                 Bạn có chắc chắn muốn xóa thông báo có ID:{" "}
-                {selectedNotification?.Id} (Loại: {selectedNotification?.Type})?
+                {selectedNotification?.id} (Loại: {selectedNotification?.type})?
                 Hành động này không thể hoàn tác.
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -770,7 +683,7 @@ export default function AdminNotificationDashboard() {
               <AlertDialogAction
                 onClick={() =>
                   selectedNotification &&
-                  deleteNotification(selectedNotification.Id)
+                  handleDeleteNotification(selectedNotification.id)
                 }
                 className="bg-red-600 hover:bg-red-700"
               >

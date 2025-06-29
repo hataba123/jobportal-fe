@@ -7,6 +7,10 @@ import Image from "next/image";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RecruiterHeaderNav } from "@/components/recruiter-header-nav"; // Import new header nav
+import { useAuth } from "@/contexts/AuthContext";
+import { mapRoleEnumToString } from "@/contexts/AuthContext";
+import UserDropdown from "@/components/common/UserDropdown";
+import { Link } from "@/i18n/navigation";
 
 export default function RecruiterLayout({
   children,
@@ -14,6 +18,9 @@ export default function RecruiterLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { user, logout, isAuthenticated, loading } = useAuth();
+
+  if (loading) return null; // hoặc return <Loading />
 
   const getTitle = (path: string) => {
     switch (path) {
@@ -43,7 +50,7 @@ export default function RecruiterLayout({
       {" "}
       {/* Changed to flex-col */}
       {/* Top Header */}
-      <header className="bg-white border-b px-6 py-4">
+      <header className="bg-black text-white border-b px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-6">
             {" "}
@@ -56,8 +63,8 @@ export default function RecruiterLayout({
                 height={32}
                 className="rounded-full"
               />
-              <span className="text-xl font-bold text-gray-900">
-                IT Job Recruiter
+              <span className="text-xl font-bold text-white">
+                <Link href="/recruiter/dashboard">IT Job Recruiter</Link>
               </span>
             </div>
             <RecruiterHeaderNav /> {/* Place header navigation here */}
@@ -66,19 +73,23 @@ export default function RecruiterLayout({
             <Button variant="ghost" size="sm">
               <Bell className="h-5 w-5" />
             </Button>
-            <div className="flex items-center space-x-2">
-              <Image
-                src="/placeholder.svg?height=32&width=32"
-                alt="Recruiter"
-                width={32}
-                height={32}
-                className="rounded-full"
+            {/* Auth Section */}
+            {isAuthenticated ? (
+              <UserDropdown
+                user={{
+                  fullName: user!.fullName,
+                  role: mapRoleEnumToString(user!.role), // 🔁 ánh xạ enum → string
+                }}
+                onLogout={logout}
               />
-              <div className="text-right">
-                <p className="text-sm font-medium">TechCorp Vietnam</p>
-                <p className="text-xs text-gray-500">Recruiter</p>
-              </div>
-            </div>
+            ) : (
+              <Link
+                href="/candidate/auth/login"
+                className="text-white hover:text-white hover:underline"
+              >
+                Sign in / Sign up
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -86,7 +97,7 @@ export default function RecruiterLayout({
       <main className="flex-1 p-6 overflow-auto">
         {" "}
         {/* Removed ml-64 */}
-        <h1 className="text-2xl font-semibold text-gray-900 mb-6">
+        <h1 className="text-2xl font-semibold text-white mb-6">
           {getTitle(pathname)}
         </h1>{" "}
         {/* Title moved here */}

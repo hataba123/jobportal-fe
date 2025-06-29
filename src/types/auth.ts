@@ -6,5 +6,5 @@ export interface LoginCredentials {
 }
 export interface AuthResponse {
   user: User;
-  token: string; // ✅ KHÔNG phải accessToken
+  token: string;
 }

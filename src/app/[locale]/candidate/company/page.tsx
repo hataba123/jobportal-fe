@@ -18,469 +18,335 @@ import {
   Star,
   Building2,
   ArrowRight,
-  Filter,
   Grid3X3,
   List,
-  ExternalLink,
 } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
-
-// Mock data for companies
-const companies = [
-  {
-    id: 1,
-    name: "TechCorp Vietnam",
-    logo: "/placeholder.svg?height=80&width=80",
-    description:
-      "Công ty công nghệ hàng đầu chuyên phát triển giải pháp phần mềm cho doanh nghiệp.",
-    location: "Hồ Chí Minh",
-    employees: "200-500",
-    industry: "Công nghệ thông tin",
-    openJobs: 15,
-    rating: 4.8,
-    website: "techcorp.vn",
-    founded: "2015",
-    tags: ["React", "Node.js", "AWS", "Agile"],
-  },
-  {
-    id: 2,
-    name: "StartupXYZ",
-    logo: "/placeholder.svg?height=80&width=80",
-    description:
-      "Startup công nghệ tập trung vào phát triển ứng dụng mobile và web innovative.",
-    location: "Hà Nội",
-    employees: "50-100",
-    industry: "Startup",
-    openJobs: 8,
-    rating: 4.6,
-    website: "startupxyz.com",
-    founded: "2020",
-    tags: ["Flutter", "React Native", "Firebase"],
-  },
-  {
-    id: 3,
-    name: "Design Studio Pro",
-    logo: "/placeholder.svg?height=80&width=80",
-    description:
-      "Studio thiết kế chuyên nghiệp cung cấp dịch vụ UI/UX và branding cho các doanh nghiệp.",
-    location: "Đà Nẵng",
-    employees: "20-50",
-    industry: "Thiết kế",
-    openJobs: 5,
-    rating: 4.9,
-    website: "designstudio.vn",
-    founded: "2018",
-    tags: ["Figma", "Adobe Creative", "UI/UX"],
-  },
-  {
-    id: 4,
-    name: "CloudTech Solutions",
-    logo: "/placeholder.svg?height=80&width=80",
-    description:
-      "Chuyên gia về cloud computing và DevOps, cung cấp giải pháp hạ tầng cho doanh nghiệp.",
-    location: "Remote",
-    employees: "100-200",
-    industry: "Cloud Computing",
-    openJobs: 12,
-    rating: 4.7,
-    website: "cloudtech.io",
-    founded: "2017",
-    tags: ["AWS", "Docker", "Kubernetes", "DevOps"],
-  },
-  {
-    id: 5,
-    name: "InnovateCorp",
-    logo: "/placeholder.svg?height=80&width=80",
-    description:
-      "Tập đoàn công nghệ đa quốc gia với focus vào AI và machine learning solutions.",
-    location: "Hồ Chí Minh",
-    employees: "500+",
-    industry: "AI & Machine Learning",
-    openJobs: 25,
-    rating: 4.5,
-    website: "innovatecorp.com",
-    founded: "2012",
-    tags: ["Python", "TensorFlow", "AI", "Data Science"],
-  },
-  {
-    id: 6,
-    name: "AppFactory Vietnam",
-    logo: "/placeholder.svg?height=80&width=80",
-    description:
-      "Nhà phát triển ứng dụng mobile hàng đầu với hơn 100 ứng dụng thành công.",
-    location: "Hà Nội",
-    employees: "100-200",
-    industry: "Mobile Development",
-    openJobs: 10,
-    rating: 4.8,
-    website: "appfactory.vn",
-    founded: "2016",
-    tags: ["iOS", "Android", "React Native", "Swift"],
-  },
-  {
-    id: 7,
-    name: "DataMining Co.",
-    logo: "/placeholder.svg?height=80&width=80",
-    description:
-      "Công ty chuyên về phân tích dữ liệu và business intelligence cho các tập đoàn lớn.",
-    location: "Hồ Chí Minh",
-    employees: "50-100",
-    industry: "Data Analytics",
-    openJobs: 7,
-    rating: 4.4,
-    website: "datamining.vn",
-    founded: "2019",
-    tags: ["Python", "SQL", "Tableau", "Power BI"],
-  },
-  {
-    id: 8,
-    name: "GameStudio Elite",
-    logo: "/placeholder.svg?height=80&width=80",
-    description:
-      "Studio phát triển game mobile và PC với nhiều tựa game nổi tiếng trên thị trường.",
-    location: "Đà Nẵng",
-    employees: "100-200",
-    industry: "Game Development",
-    openJobs: 9,
-    rating: 4.6,
-    website: "gamestudio.vn",
-    founded: "2014",
-    tags: ["Unity", "C#", "3D Modeling", "Game Design"],
-  },
-  {
-    id: 9,
-    name: "FinTech Solutions",
-    logo: "/placeholder.svg?height=80&width=80",
-    description:
-      "Công ty fintech hàng đầu cung cấp giải pháp thanh toán và ngân hàng số.",
-    location: "Hồ Chí Minh",
-    employees: "200-500",
-    industry: "FinTech",
-    openJobs: 18,
-    rating: 4.7,
-    website: "fintech.vn",
-    founded: "2018",
-    tags: ["Blockchain", "Java", "Spring", "Security"],
-  },
-];
-
-const industries = [
-  "Tất cả",
-  "Công nghệ thông tin",
-  "Startup",
-  "Thiết kế",
-  "Cloud Computing",
-  "AI & Machine Learning",
-  "Mobile Development",
-  "Data Analytics",
-  "Game Development",
-  "FinTech",
-];
-
-const locations = ["Tất cả", "Hồ Chí Minh", "Hà Nội", "Đà Nẵng", "Remote"];
-
-const companySizes = [
-  "Tất cả",
-  "1-20",
-  "20-50",
-  "50-100",
-  "100-200",
-  "200-500",
-  "500+",
-];
+import { useState, useMemo } from "react";
+import { useRouter } from "@/i18n/navigation";
+import { useCompanies } from "@/hooks/useCompanies";
+import { useJobPosts } from "@/hooks/useJobPosts";
+import { useReviews } from "@/hooks/useReviews";
+import { useTranslations } from 'next-intl';
 
 export default function AllCompaniesPage() {
+  const router = useRouter();
+  const { companies, loading } = useCompanies();
+  const { jobPosts } = useJobPosts();
+  const { reviews } = useReviews();
+  const t = useTranslations();
+  
+  const [searchTerm, setSearchTerm] = useState("");
+  const [industryFilter, setIndustryFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
+  const [sizeFilter, setSizeFilter] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [currentPage, setCurrentPage] = useState(1);
+  const companiesPerPage = 9;
+
+  // Calculate company statistics
+  const companiesWithStats = useMemo(() => {
+    return companies.map((company) => {
+      const companyJobs = jobPosts.filter((job) => job.companyId === company.id);
+      const companyReviews = reviews.filter((review) => review.companyId === company.id);
+      const averageRating = companyReviews.length > 0 
+        ? companyReviews.reduce((sum, review) => sum + review.rating, 0) / companyReviews.length 
+        : 0;
+
+      return {
+        ...company,
+        openJobs: companyJobs.length,
+        rating: averageRating,
+        reviewCount: companyReviews.length,
+      };
+    });
+  }, [companies, jobPosts, reviews]);
+
+  const filteredCompanies = useMemo(() => {
+    let filtered = companiesWithStats;
+
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (company) =>
+          company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          company.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          company.industry?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (Array.isArray(company.tags) && company.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()))),
+      );
+    }
+
+    if (industryFilter !== "all") {
+      filtered = filtered.filter((company) => company.industry === industryFilter);
+    }
+
+    if (locationFilter !== "all") {
+      filtered = filtered.filter((company) => company.location === locationFilter);
+    }
+
+    if (sizeFilter !== "all") {
+      filtered = filtered.filter((company) => company.employees === sizeFilter);
+    }
+
+    return filtered;
+  }, [companiesWithStats, searchTerm, industryFilter, locationFilter, sizeFilter]);
+
+  const totalPages = Math.ceil(filteredCompanies.length / companiesPerPage);
+  const currentCompanies = useMemo(() => {
+    const startIndex = (currentPage - 1) * companiesPerPage;
+    const endIndex = startIndex + companiesPerPage;
+    return filteredCompanies.slice(startIndex, endIndex);
+  }, [filteredCompanies, currentPage, companiesPerPage]);
+
+  const uniqueIndustries = useMemo(() => {
+    const industries = new Set(
+      companies
+        .map((company) => company.industry)
+        .filter((ind): ind is string => Boolean(ind))
+    );
+    return ["all", ...Array.from(industries)];
+  }, [companies]);
+
+  const uniqueLocations = useMemo(() => {
+    const locations = new Set(
+      companies
+        .map((company) => company.location)
+        .filter((loc): loc is string => Boolean(loc))
+    );
+    return ["all", ...Array.from(locations)];
+  }, [companies]);
+
+  const uniqueSizes = useMemo(() => {
+    const sizes = new Set(
+      companies
+        .map((company) => company.employees)
+        .filter((size): size is string => Boolean(size))
+    );
+    return ["all", ...Array.from(sizes)];
+  }, [companies]);
+
+  const handleCompanyClick = (companyId: string) => {
+    router.push(`/candidate/company/${companyId}`);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="h-12 bg-gray-200 rounded mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-64 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <section className="bg-white border-b">
         <div className="container mx-auto px-4 py-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Khám phá các công ty
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              {t('AllCompaniesPage.title')}
             </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Tìm hiểu về các công ty hàng đầu và cơ hội nghề nghiệp tại đây
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              {t('AllCompaniesPage.description')}
             </p>
           </div>
+        </div>
+      </section>
 
-          {/* Search and Filters */}
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-              <div className="md:col-span-2 relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input placeholder="Tìm kiếm công ty..." className="pl-10" />
-              </div>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Ngành nghề" />
+      {/* Filters */}
+      <section className="bg-white border-b">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex flex-col lg:flex-row gap-4 items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+              <Input
+                type="text"
+                placeholder={t('AllCompaniesPage.search_placeholder')}
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Select value={industryFilter} onValueChange={setIndustryFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder={t('AllCompaniesPage.industry')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {industries.map((industry) => (
-                    <SelectItem key={industry} value={industry.toLowerCase()}>
-                      {industry}
+                  {uniqueIndustries.map((industry) => (
+                    <SelectItem key={industry} value={industry}>
+                      {industry === "all" ? t('AllCompaniesPage.all_industries') : industry}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Địa điểm" />
+              <Select value={locationFilter} onValueChange={setLocationFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder={t('AllCompaniesPage.location')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {locations.map((location) => (
-                    <SelectItem key={location} value={location.toLowerCase()}>
-                      {location}
+                  {uniqueLocations.map((location) => (
+                    <SelectItem key={location} value={location}>
+                      {location === "all" ? t('AllCompaniesPage.all_locations') : location}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Quy mô" />
+              <Select value={sizeFilter} onValueChange={setSizeFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder={t('AllCompaniesPage.size')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {companySizes.map((size) => (
-                    <SelectItem key={size} value={size.toLowerCase()}>
-                      {size} nhân viên
+                  {uniqueSizes.map((size) => (
+                    <SelectItem key={size} value={size}>
+                      {size === "all" ? t('AllCompaniesPage.all_sizes') : size}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Results Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <p className="text-gray-600">
-                  Hiển thị{" "}
-                  <span className="font-semibold">{companies.length}</span> công
-                  ty
-                </p>
-                <Button variant="outline" size="sm">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Bộ lọc
-                </Button>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setViewMode("list")}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === "grid" ? "default" : "outline"}
+                onClick={() => setViewMode("grid")}
+                size="icon"
+              >
+                <Grid3X3 className="h-5 w-5" />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "default" : "outline"}
+                onClick={() => setViewMode("list")}
+                size="icon"
+              >
+                <List className="h-5 w-5" />
+              </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Companies Grid/List */}
-      <section className="py-8">
-        <div className="container mx-auto px-4">
-          {viewMode === "grid" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {companies.map((company) => (
-                <Card
-                  key={company.id}
-                  className="hover:shadow-lg transition-shadow cursor-pointer group"
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-start space-x-4 mb-4">
-                      <Image
-                        src={company.logo || "/placeholder.svg"}
-                        alt={company.name}
-                        width={60}
-                        height={60}
-                        className="rounded-lg border"
-                      />
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg mb-1 group-hover:text-blue-600 transition-colors">
-                          {company.name}
-                        </h3>
-                        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
-                          <MapPin className="h-4 w-4" />
-                          <span>{company.location}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <div className="flex items-center">
-                            <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                            <span className="ml-1 text-sm font-semibold">
-                              {company.rating}
-                            </span>
-                          </div>
-                          <Badge variant="outline" className="text-xs">
-                            {company.industry}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                      {company.description}
-                    </p>
-
-                    <div className="space-y-3 mb-4">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Nhân viên:</span>
-                        <span className="font-medium">{company.employees}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Đang tuyển:</span>
-                        <span className="font-medium text-blue-600">
-                          {company.openJobs} vị trí
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Thành lập:</span>
-                        <span className="font-medium">{company.founded}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1 mb-4">
-                      {company.tags.slice(0, 3).map((tag) => (
-                        <Badge
-                          key={tag}
-                          variant="secondary"
-                          className="text-xs"
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                      {company.tags.length > 3 && (
-                        <Badge variant="secondary" className="text-xs">
-                          +{company.tags.length - 3}
-                        </Badge>
-                      )}
-                    </div>
-
-                    <div className="flex space-x-2">
-                      <Button size="sm" className="flex-1">
-                        Xem việc làm
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+      {/* Results */}
+      <section className="container mx-auto px-4 py-8">
+        {filteredCompanies.length === 0 ? (
+          <div className="text-center text-gray-500 py-10">
+            <Building2 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+            <h3 className="text-lg font-semibold mb-2">{t('AllCompaniesPage.no_companies')}</h3>
+            <p>{t('AllCompaniesPage.try_adjusting_filters')}</p>
+          </div>
+        ) : (
+          <>
+            <div className="mb-4">
+              <p className="text-gray-600">
+                {t('AllCompaniesPage.showing')} {currentCompanies.length} {t('AllCompaniesPage.of')} {filteredCompanies.length} {t('AllCompaniesPage.companies')}
+              </p>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {companies.map((company) => (
+
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                  : "grid grid-cols-1 gap-6"
+              }
+            >
+              {currentCompanies.map((company) => (
                 <Card
                   key={company.id}
-                  className="hover:shadow-lg transition-shadow cursor-pointer group"
+                  className={`hover:shadow-lg transition-shadow cursor-pointer ${
+                    viewMode === "list" ? "flex flex-col md:flex-row" : ""
+                  }`}
+                  onClick={() => handleCompanyClick(company.id as string)}
                 >
-                  <CardContent className="p-6">
-                    <div className="flex items-start space-x-6">
+                  <CardContent className={`p-6 ${viewMode === "list" ? "flex-1" : ""}`}>
+                    <div className={`flex ${viewMode === "list" ? "items-start space-x-4" : "flex-col"}`}>
                       <Image
                         src={company.logo || "/placeholder.svg"}
-                        alt={company.name}
+                        alt={`${company.name} Logo`}
                         width={80}
                         height={80}
-                        className="rounded-lg border"
+                        className={`object-contain rounded-lg border ${
+                          viewMode === "list" ? "w-20 h-20 flex-shrink-0" : "w-20 h-20 mx-auto mb-4"
+                        }`}
                       />
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h3 className="font-semibold text-xl mb-2 group-hover:text-blue-600 transition-colors">
-                              {company.name}
-                            </h3>
-                            <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
-                              <div className="flex items-center">
-                                <MapPin className="h-4 w-4 mr-1" />
-                                {company.location}
-                              </div>
-                              <div className="flex items-center">
-                                <Users className="h-4 w-4 mr-1" />
-                                {company.employees} nhân viên
-                              </div>
-                              <div className="flex items-center">
-                                <Building2 className="h-4 w-4 mr-1" />
-                                Từ {company.founded}
-                              </div>
-                            </div>
-                            <div className="flex items-center space-x-3 mb-3">
-                              <div className="flex items-center">
-                                <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                                <span className="ml-1 text-sm font-semibold">
-                                  {company.rating}
-                                </span>
-                              </div>
-                              <Badge variant="outline">
-                                {company.industry}
-                              </Badge>
-                              <Badge className="bg-green-100 text-green-800">
-                                {company.openJobs} việc làm
-                              </Badge>
-                            </div>
+                      <div className={`flex-1 ${viewMode === "list" ? "ml-4" : ""}`}>
+                        <h3 className="text-xl font-semibold mb-2">{company.name}</h3>
+                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                          {company.description || t('AllCompaniesPage.no_description')}
+                        </p>
+                        <div className="space-y-2 mb-4">
+                          <div className="flex items-center text-sm text-gray-500">
+                            <MapPin className="w-4 h-4 mr-2" />
+                            {company.location || "N/A"}
                           </div>
-                          <div className="flex space-x-2">
-                            <Button size="sm">
-                              Xem việc làm{" "}
-                              <ArrowRight className="h-4 w-4 ml-1" />
-                            </Button>
-                            <Button size="sm" variant="outline">
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
+                          <div className="flex items-center text-sm text-gray-500">
+                            <Users className="w-4 h-4 mr-2" />
+                            {company.employees || "N/A"} {t('AllCompaniesPage.employees')}
+                          </div>
+                          <div className="flex items-center text-sm text-gray-500">
+                            <Star className="w-4 h-4 mr-2 fill-yellow-400 text-yellow-400" />
+                            {company.rating.toFixed(1)}/5.0 ({company.reviewCount} {t('AllCompaniesPage.reviews')})
                           </div>
                         </div>
-
-                        <p className="text-gray-600 mb-4">
-                          {company.description}
-                        </p>
-
-                        <div className="flex flex-wrap gap-2">
-                          {company.tags.map((tag) => (
-                            <Badge
-                              key={tag}
-                              variant="secondary"
-                              className="text-xs"
-                            >
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {Array.isArray(company.tags) && company.tags.slice(0, 3).map((tag) => (
+                            <Badge key={tag} variant="secondary" className="text-xs">
                               {tag}
                             </Badge>
                           ))}
                         </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-blue-600">
+                            {company.openJobs} {t('AllCompaniesPage.open_jobs')}
+                          </span>
+                          <Button size="sm" variant="outline">
+                            {t('AllCompaniesPage.view_details')}
+                            <ArrowRight className="w-4 h-4 ml-1" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          )}
 
-          {/* Pagination */}
-          <div className="flex justify-center mt-12">
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" disabled>
-                Trước
-              </Button>
-              <Button size="sm">1</Button>
-              <Button variant="outline" size="sm">
-                2
-              </Button>
-              <Button variant="outline" size="sm">
-                3
-              </Button>
-              <Button variant="outline" size="sm">
-                Sau
-              </Button>
-            </div>
-          </div>
-        </div>
+            {totalPages > 1 && (
+              <div className="flex justify-center mt-8 space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  {t('AllCompaniesPage.previous')}
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <Button
+                    key={i + 1}
+                    variant={currentPage === i + 1 ? "default" : "outline"}
+                    onClick={() => setCurrentPage(i + 1)}
+                  >
+                    {i + 1}
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                >
+                  {t('AllCompaniesPage.next')}
+                </Button>
+              </div>
+            )}
+          </>
+        )}
       </section>
     </div>
   );

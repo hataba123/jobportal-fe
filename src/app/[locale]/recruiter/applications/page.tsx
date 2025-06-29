@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
+import { useState, useEffect } from "react";
 import {
   Download,
   Eye,
   MessageSquare,
   MoreHorizontal,
   UserCheck,
-  Calendar,
   Send,
   UserX,
+  Briefcase,
+  Search,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -22,109 +22,103 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { getStatusBadge } from "@/lib/utils/status-badge"; // Assuming this utility exists
+import { Input } from "@/components/ui/input";
+import { fetchMyJobPosts } from "@/lib/api/recruiter-jobpost";
+import { fetchCandidatesForJob, updateApplicationStatus as apiUpdateStatus } from "@/lib/api/recruiter-application";
+import { JobPost } from "@/types/JobPost";
+import { JobApplication, UpdateApplyStatusRequest } from "@/types/JobApplication";
+import { ApplicationStatus } from "@/types/ApplyStatus";
 
-interface Application {
-  id: number;
-  candidateName: string;
-  candidateEmail: string;
-  jobTitle: string;
-  appliedDate: string;
-  status: "pending" | "shortlisted" | "interviewed" | "rejected" | "hired";
-  experience: string;
-  skills: string[];
-  avatar?: string;
-  resume: string;
-  coverLetter: string;
-}
-
-// Mock data for applications
-const applications: Application[] = [
-  {
-    id: 1,
-    candidateName: "Nguyễn Văn A",
-    candidateEmail: "nguyenvana@email.com",
-    jobTitle: "Senior Frontend Developer",
-    appliedDate: "2024-01-16",
-    status: "pending",
-    experience: "5 năm",
-    skills: ["React", "TypeScript", "Next.js", "Tailwind CSS"],
-    avatar: "/placeholder.svg?height=40&width=40",
-    resume: "resume_nguyen_van_a.pdf",
-    coverLetter:
-      "Tôi rất quan tâm đến vị trí này và tin rằng kinh nghiệm của mình phù hợp với yêu cầu của công ty.",
-  },
-  {
-    id: 2,
-    candidateName: "Trần Thị B",
-    candidateEmail: "tranthib@email.com",
-    jobTitle: "Backend Developer",
-    appliedDate: "2024-01-15",
-    status: "shortlisted",
-    experience: "3 năm",
-    skills: ["Node.js", "MongoDB", "Express", "REST API"],
-    avatar: "/placeholder.svg?height=40&width=40",
-    resume: "resume_tran_thi_b.pdf",
-    coverLetter:
-      "Với kinh nghiệm 3 năm trong lĩnh vực phát triển backend, tôi tự tin có thể đóng góp vào sự phát triển của dự án.",
-  },
-  {
-    id: 3,
-    candidateName: "Lê Văn C",
-    candidateEmail: "levanc@email.com",
-    jobTitle: "UI/UX Designer",
-    appliedDate: "2024-01-14",
-    status: "interviewed",
-    experience: "4 năm",
-    skills: ["Figma", "Adobe XD", "Sketch", "User Research"],
-    avatar: "/placeholder.svg?height=40&width=40",
-    resume: "resume_le_van_c.pdf",
-    coverLetter:
-      "Tôi có passion mạnh mẽ về design và luôn tìm kiếm những giải pháp sáng tạo để cải thiện trải nghiệm người dùng.",
-  },
-  {
-    id: 4,
-    candidateName: "Phạm Thị D",
-    candidateEmail: "phamthid@email.com",
-    jobTitle: "Senior Frontend Developer",
-    appliedDate: "2024-01-13",
-    status: "rejected",
-    experience: "2 năm",
-    skills: ["React", "Vue.js", "CSS", "JavaScript"],
-    avatar: "/placeholder.svg?height=40&width=40",
-    resume: "resume_pham_thi_d.pdf",
-    coverLetter:
-      "Mặc dù kinh nghiệm chưa nhiều, tôi luôn sẵn sàng học hỏi và phát triển bản thân để đáp ứng yêu cầu công việc.",
-  },
-  {
-    id: 5,
-    candidateName: "Hoàng Văn E",
-    candidateEmail: "hoangvane@email.com",
-    jobTitle: "Data Scientist",
-    appliedDate: "2024-01-12",
-    status: "pending",
-    experience: "6 năm",
-    skills: ["Python", "Machine Learning", "SQL", "Pandas"],
-    avatar: "/placeholder.svg?height=40&width=40",
-    resume: "resume_hoang_van_e.pdf",
-    coverLetter:
-      "Tôi có kinh nghiệm sâu rộng trong phân tích dữ liệu và xây dựng mô hình dự đoán.",
-  },
+const applicationStatuses: { value: ApplicationStatus; label: string; color: string }[] = [
+  { value: "pending", label: "Chờ xử lý", color: "bg-yellow-100 text-yellow-800" },
+  { value: "reviewed", label: "Đã xem xét", color: "bg-blue-100 text-blue-800" },
+  { value: "accepted", label: "Chấp nhận", color: "bg-green-100 text-green-800" },
+  { value: "rejected", label: "Từ chối", color: "bg-red-100 text-red-800" },
 ];
 
 export default function RecruiterApplicationsPage() {
-  const [currentApplications, setCurrentApplications] =
-    useState<Application[]>(applications);
+  const [jobPosts, setJobPosts] = useState<JobPost[]>([]);
+  const [selectedJobPost, setSelectedJobPost] = useState<string>("");
+  const [applications, setApplications] = useState<JobApplication[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const handleStatusChange = (id: number, newStatus: Application["status"]) => {
-    setCurrentApplications((prevApps) =>
-      prevApps.map((app) =>
-        app.id === id ? { ...app, status: newStatus } : app
-      )
+  useEffect(() => {
+    fetchJobPosts();
+  }, []);
+
+  useEffect(() => {
+    if (selectedJobPost) {
+      fetchApplications(selectedJobPost);
+    }
+  }, [selectedJobPost]);
+
+  const fetchJobPosts = async () => {
+    try {
+      const data = await fetchMyJobPosts();
+      setJobPosts(data);
+    } catch {
+      // error handling if needed
+    }
+  };
+
+  const fetchApplications = async (jobPostId: string) => {
+    try {
+      const data = await fetchCandidatesForJob(jobPostId);
+      setApplications(data);
+    } catch {
+      // error handling if needed
+    }
+  };
+
+  const handleStatusChange = async (id: string, newStatus: ApplicationStatus) => {
+    try {
+      const updateData: UpdateApplyStatusRequest = { status: newStatus };
+      await apiUpdateStatus(id, updateData);
+      if (selectedJobPost) {
+        fetchApplications(selectedJobPost);
+      }
+    } catch {
+      // error handling if needed
+    }
+  };
+
+  const getStatusBadge = (status: ApplicationStatus) => {
+    const statusConfig = applicationStatuses.find(s => s.value === status);
+    return (
+      <Badge className={statusConfig?.color || "bg-gray-100 text-gray-800"}>
+        {statusConfig?.label || status}
+      </Badge>
     );
   };
+
+  const getFilteredApplications = () => {
+    return applications.filter((app) => {
+      const matchesSearch =
+        app.candidate?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.candidate?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.jobPost?.title?.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesSearch;
+    });
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const filteredApplications = getFilteredApplications();
 
   return (
     <div className="space-y-6">
@@ -141,163 +135,186 @@ export default function RecruiterApplicationsPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="all" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="all">Tất cả ({applications.length})</TabsTrigger>
-          <TabsTrigger value="pending">
-            Chờ xét duyệt (
-            {applications.filter((app) => app.status === "pending").length})
-          </TabsTrigger>
-          <TabsTrigger value="shortlisted">
-            Đã sàng lọc (
-            {applications.filter((app) => app.status === "shortlisted").length})
-          </TabsTrigger>
-          <TabsTrigger value="interviewed">
-            Đã phỏng vấn (
-            {applications.filter((app) => app.status === "interviewed").length})
-          </TabsTrigger>
-          <TabsTrigger value="rejected">
-            Đã từ chối (
-            {applications.filter((app) => app.status === "rejected").length})
-          </TabsTrigger>
-          <TabsTrigger value="hired">
-            Đã tuyển (
-            {applications.filter((app) => app.status === "hired").length})
-          </TabsTrigger>
-        </TabsList>
+      {/* Job Post Selection */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center space-x-4">
+            <Briefcase className="h-5 w-5 text-gray-500" />
+            <div className="flex-1">
+              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                Chọn việc làm
+              </label>
+              <Select value={selectedJobPost} onValueChange={setSelectedJobPost}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn việc làm để xem đơn ứng tuyển" />
+                </SelectTrigger>
+                <SelectContent>
+                  {jobPosts.map((job) => (
+                    <SelectItem key={job.id} value={job.id}>
+                      {job.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-        {[
-          "all",
-          "pending",
-          "shortlisted",
-          "interviewed",
-          "rejected",
-          "hired",
-        ].map((tabValue) => (
-          <TabsContent key={tabValue} value={tabValue} className="space-y-4">
-            {currentApplications
-              .filter((app) =>
-                tabValue === "all" ? true : app.status === tabValue
-              )
-              .map((app) => (
-                <Card key={app.id}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-4">
-                        <Image
-                          src={app.avatar || "/placeholder.svg"}
-                          alt={app.candidateName}
-                          width={60}
-                          height={60}
-                          className="rounded-full object-cover"
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h3 className="text-lg font-semibold">
-                              {app.candidateName}
-                            </h3>
-                            {getStatusBadge(app.status)}
+      {selectedJobPost && (
+        <>
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Tìm kiếm ứng viên..."
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <Tabs defaultValue="all" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="all">Tất cả ({filteredApplications.length})</TabsTrigger>
+              <TabsTrigger value="pending">
+                Chờ xử lý (
+                {filteredApplications.filter((app) => app.status === "pending").length})
+              </TabsTrigger>
+              <TabsTrigger value="reviewed">
+                Đã xem xét (
+                {filteredApplications.filter((app) => app.status === "reviewed").length})
+              </TabsTrigger>
+              <TabsTrigger value="accepted">
+                Chấp nhận (
+                {filteredApplications.filter((app) => app.status === "accepted").length})
+              </TabsTrigger>
+              <TabsTrigger value="rejected">
+                Từ chối (
+                {filteredApplications.filter((app) => app.status === "rejected").length})
+              </TabsTrigger>
+            </TabsList>
+
+            {[
+              "all",
+              "pending",
+              "reviewed",
+              "accepted",
+              "rejected",
+            ].map((tabValue) => (
+              <TabsContent key={tabValue} value={tabValue} className="space-y-4">
+                {filteredApplications
+                  .filter((app) =>
+                    tabValue === "all" ? true : app.status === tabValue
+                  )
+                  .map((app) => (
+                    <Card key={app.id}>
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start space-x-4">
+                            <div className="w-15 h-15 rounded-full bg-gray-200 flex items-center justify-center">
+                              <UserCheck className="h-8 w-8 text-gray-400" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <h3 className="text-lg font-semibold">
+                                  {app.candidate?.fullName || "N/A"}
+                                </h3>
+                                {getStatusBadge(app.status)}
+                              </div>
+                              <p className="text-gray-600 mb-1">
+                                {app.candidate?.email || "N/A"}
+                              </p>
+                              <p className="text-sm text-gray-500 mb-2">
+                                Ứng tuyển:{" "}
+                                <span className="font-medium text-gray-700">
+                                  {app.jobPost?.title || "N/A"}
+                                </span>
+                              </p>
+                              {app.coverLetter && (
+                                <p className="text-sm text-gray-700 italic line-clamp-2">
+                                  &quot;{app.coverLetter}&quot;
+                                </p>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-gray-600 mb-1">
-                            {app.candidateEmail}
-                          </p>
-                          <p className="text-sm text-gray-500 mb-2">
-                            Ứng tuyển:{" "}
-                            <span className="font-medium text-gray-700">
-                              {app.jobTitle}
-                            </span>
-                          </p>
-                          <p className="text-sm text-gray-500 mb-3">
-                            Kinh nghiệm:{" "}
-                            <span className="font-medium text-gray-700">
-                              {app.experience}
-                            </span>
-                          </p>
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            {app.skills.map((skill) => (
-                              <Badge
-                                key={skill}
-                                variant="secondary"
-                                className="text-xs"
-                              >
-                                {skill}
-                              </Badge>
-                            ))}
-                          </div>
-                          <p className="text-sm text-gray-700 italic line-clamp-2">
-                            &quot;{app.coverLetter}&quot;
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end space-y-2">
-                        <p className="text-sm text-gray-500">
-                          Ngày ứng tuyển: {app.appliedDate}
-                        </p>
-                        <div className="flex space-x-2">
-                          <Button size="sm" variant="outline">
-                            <Eye className="h-4 w-4 mr-1" />
-                            Xem CV
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <MessageSquare className="h-4 w-4 mr-1" />
-                            Nhắn tin
-                          </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
+                          <div className="flex flex-col items-end space-y-2">
+                            <p className="text-sm text-gray-500">
+                              Ngày ứng tuyển: {formatDate(app.appliedAt)}
+                            </p>
+                            <div className="flex space-x-2">
                               <Button size="sm" variant="outline">
-                                <MoreHorizontal className="h-4 w-4" />
+                                <Eye className="h-4 w-4 mr-1" />
+                                Xem chi tiết
                               </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleStatusChange(app.id, "shortlisted")
-                                }
-                              >
-                                <UserCheck className="h-4 w-4 mr-2" />
-                                Sàng lọc
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleStatusChange(app.id, "interviewed")
-                                }
-                              >
-                                <Calendar className="h-4 w-4 mr-2" />
-                                Lên lịch phỏng vấn
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleStatusChange(app.id, "hired")
-                                }
-                              >
-                                <UserCheck className="h-4 w-4 mr-2" />
-                                Tuyển dụng
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Send className="h-4 w-4 mr-2" />
-                                Gửi email
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-red-600"
-                                onClick={() =>
-                                  handleStatusChange(app.id, "rejected")
-                                }
-                              >
-                                <UserX className="h-4 w-4 mr-2" />
-                                Từ chối
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                              <Button size="sm" variant="outline">
+                                <MessageSquare className="h-4 w-4 mr-1" />
+                                Nhắn tin
+                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button size="sm" variant="outline">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      handleStatusChange(app.id, "reviewed")
+                                    }
+                                  >
+                                    <UserCheck className="h-4 w-4 mr-2" />
+                                    Đã xem xét
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      handleStatusChange(app.id, "accepted")
+                                    }
+                                  >
+                                    <UserCheck className="h-4 w-4 mr-2" />
+                                    Chấp nhận
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <Send className="h-4 w-4 mr-2" />
+                                    Gửi email
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-red-600"
+                                    onClick={() =>
+                                      handleStatusChange(app.id, "rejected")
+                                    }
+                                  >
+                                    <UserX className="h-4 w-4 mr-2" />
+                                    Từ chối
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-          </TabsContent>
-        ))}
-      </Tabs>
+                      </CardContent>
+                    </Card>
+                  ))}
+              </TabsContent>
+            ))}
+          </Tabs>
+        </>
+      )}
+
+      {!selectedJobPost && (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Chọn việc làm
+            </h3>
+            <p className="text-gray-600">
+              Vui lòng chọn một việc làm để xem danh sách đơn ứng tuyển
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Briefcase, FileText, DollarSign } from "lucide-react";
 import Dashboard from "@/types/admin/DashboardDto";
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/axiosInstance";
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = React.useState<Dashboard | null>(null);
@@ -116,12 +116,6 @@ export default function AdminDashboardPage() {
                     ? "Đang tải..."
                     : stats?.totalReviews.toLocaleString()}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Đang chờ duyệt:{" "}
-                  {isLoadingStats
-                    ? "..."
-                    : stats?.pendingReviews.toLocaleString()}
-                </p>
               </CardContent>
             </Card>
           </div>

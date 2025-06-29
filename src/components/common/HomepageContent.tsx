@@ -45,220 +45,106 @@ import { useCompanies } from "@/hooks/useCompanies";
 import { useReviews } from "@/hooks/useReviews";
 import { Company } from "@/types/Company";
 import { Review } from "@/types/Review";
-import { useMemo } from "react";
-
-// Mock data
-// const featuredJobs = [
-//   {
-//     id: 1,
-//     title: "Senior Frontend Developer",
-//     company: "TechCorp Vietnam",
-//     logo: "/placeholder.svg?height=60&width=60",
-//     location: "Hồ Chí Minh",
-//     salary: "$1,500 - $2,500",
-//     type: "Full-time",
-//     tags: ["React", "TypeScript", "Next.js"],
-//     postedDays: 2,
-//     applicants: 45,
-//   },
-//   {
-//     id: 2,
-//     title: "Backend Developer",
-//     company: "StartupXYZ",
-//     logo: "/placeholder.svg?height=60&width=60",
-//     location: "Hà Nội",
-//     salary: "$1,200 - $2,000",
-//     type: "Full-time",
-//     tags: ["Node.js", "MongoDB", "Express"],
-//     postedDays: 1,
-//     applicants: 32,
-//   },
-//   {
-//     id: 3,
-//     title: "UI/UX Designer",
-//     company: "Design Studio",
-//     logo: "/placeholder.svg?height=60&width=60",
-//     location: "Đà Nẵng",
-//     salary: "$800 - $1,500",
-//     type: "Full-time",
-//     tags: ["Figma", "Adobe XD", "Sketch"],
-//     postedDays: 3,
-//     applicants: 28,
-//   },
-//   {
-//     id: 4,
-//     title: "DevOps Engineer",
-//     company: "CloudTech",
-//     logo: "/placeholder.svg?height=60&width=60",
-//     location: "Remote",
-//     salary: "$2,000 - $3,000",
-//     type: "Full-time",
-//     tags: ["AWS", "Docker", "Kubernetes"],
-//     postedDays: 1,
-//     applicants: 18,
-//   },
-//   {
-//     id: 5,
-//     title: "Product Manager",
-//     company: "InnovateCorp",
-//     logo: "/placeholder.svg?height=60&width=60",
-//     location: "Hồ Chí Minh",
-//     salary: "$1,800 - $2,800",
-//     type: "Full-time",
-//     tags: ["Product Strategy", "Agile", "Analytics"],
-//     postedDays: 4,
-//     applicants: 22,
-//   },
-//   {
-//     id: 6,
-//     title: "Mobile Developer",
-//     company: "AppFactory",
-//     logo: "/placeholder.svg?height=60&width=60",
-//     location: "Hà Nội",
-//     salary: "$1,300 - $2,200",
-//     type: "Full-time",
-//     tags: ["React Native", "Flutter", "iOS"],
-//     postedDays: 2,
-//     applicants: 35,
-//   },
-// ];
-
-// const jobCategories = [
-//   {
-//     name: "Công nghệ thông tin",
-//     icon: Code,
-//     jobs: 1234,
-//     color: "bg-blue-100 text-blue-600",
-//   },
-//   {
-//     name: "Thiết kế",
-//     icon: Palette,
-//     jobs: 567,
-//     color: "bg-purple-100 text-purple-600",
-//   },
-//   {
-//     name: "Marketing",
-//     icon: BarChart3,
-//     jobs: 890,
-//     color: "bg-green-100 text-green-600",
-//   },
-//   {
-//     name: "Tài chính",
-//     icon: DollarSign,
-//     jobs: 432,
-//     color: "bg-yellow-100 text-yellow-600",
-//   },
-//   {
-//     name: "Nhân sự",
-//     icon: Users,
-//     jobs: 321,
-//     color: "bg-pink-100 text-pink-600",
-//   },
-//   {
-//     name: "Bán hàng",
-//     icon: TrendingUp,
-//     jobs: 654,
-//     color: "bg-orange-100 text-orange-600",
-//   },
-//   {
-//     name: "Bảo mật",
-//     icon: Shield,
-//     jobs: 234,
-//     color: "bg-red-100 text-red-600",
-//   },
-//   {
-//     name: "Hỗ trợ khách hàng",
-//     icon: Headphones,
-//     jobs: 345,
-//     color: "bg-indigo-100 text-indigo-600",
-//   },
-// ];
-
-// const topCompanies = [
-//   {
-//     name: "TechCorp Vietnam",
-//     logo: "/placeholder.svg?height=80&width=80",
-//     employees: "200-500",
-//     openJobs: 15,
-//     rating: 4.8,
-//   },
-//   {
-//     name: "StartupXYZ",
-//     logo: "/placeholder.svg?height=80&width=80",
-//     employees: "50-100",
-//     openJobs: 8,
-//     rating: 4.6,
-//   },
-//   {
-//     name: "Design Studio",
-//     logo: "/placeholder.svg?height=80&width=80",
-//     employees: "20-50",
-//     openJobs: 5,
-//     rating: 4.9,
-//   },
-//   {
-//     name: "CloudTech",
-//     logo: "/placeholder.svg?height=80&width=80",
-//     employees: "100-200",
-//     openJobs: 12,
-//     rating: 4.7,
-//   },
-//   {
-//     name: "InnovateCorp",
-//     logo: "/placeholder.svg?height=80&width=80",
-//     employees: "500+",
-//     openJobs: 25,
-//     rating: 4.5,
-//   },
-//   {
-//     name: "AppFactory",
-//     logo: "/placeholder.svg?height=80&width=80",
-//     employees: "100-200",
-//     openJobs: 10,
-//     rating: 4.8,
-//   },
-// ];
+import { useMemo, useState } from "react";
+import { useRouter } from "@/i18n/navigation";
 
 function getTopCompanies(companies: Company[], reviews: Review[], topN = 6) {
-  // Tạo map companyId -> [review...]
-  const reviewMap = reviews.reduce((acc, review) => {
-    if (!acc[review.companyId]) acc[review.companyId] = [];
-    acc[review.companyId].push(review.rating);
-    return acc;
-  }, {} as Record<string, number[]>);
+  return companies
+    .map((company) => {
+      const companyReviews = reviews.filter(
+        (review) => review.companyId === company.id
+      );
+      const averageRating =
+        companyReviews.length > 0
+          ? companyReviews.reduce((sum, review) => sum + review.rating, 0) /
+            companyReviews.length
+          : 0;
 
-  // Gắn rating trung bình vào từng công ty
-  const companiesWithRating = companies.map((company) => {
-    const companyId = String(company.id); // Đảm bảo là string
-    const ratings = reviewMap[companyId] || [];
-    const avgRating =
-      ratings.length > 0
-        ? ratings.reduce((a, b) => a + b, 0) / ratings.length
-        : 0;
-    return { ...company, avgRating, reviewCount: ratings.length };
-  });
-
-  // Sắp xếp theo rating giảm dần, lấy topN
-  return companiesWithRating
-    .sort((a, b) => b.avgRating - a.avgRating)
+      return {
+        ...company,
+        averageRating,
+        reviewCount: companyReviews.length,
+      };
+    })
+    .sort((a, b) => b.averageRating - a.averageRating)
     .slice(0, topN);
 }
+
 export default function HomepageContent() {
+  const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [location, setLocation] = useState("");
+  const [useComplexSearch, setUseComplexSearch] = useState(false);
+
   const { jobs: featuredJobs, loading } = useFeaturedJobs();
   const { categories, loading: loadingCategories } = useCategories();
   const { jobPosts } = useJobPosts();
   const { companies, loading: loadingCompanies } = useCompanies();
   const { reviews, loading: loadingReviews } = useReviews();
-  const topCompanies = useMemo(
-    () => getTopCompanies(companies, reviews, 6),
-    [companies, reviews]
-  );
-  // Tính số lượng jobs cho từng category
+  const handleCompanyClick = (companyId: string) => {
+    router.push(`/candidate/company/${companyId}`);
+  };
+  const handleCategoryClick = (categoryId: string | number) => {
+    router.push(`/candidate/category/${categoryId}`);
+  };
 
-  const categoriesWithJobs = categories.map((category) => ({
-    ...category,
-    jobs: jobPosts.filter((job) => job.categoryName === category.name).length,
-  }));
+  const handleSearch = () => {
+    if (!searchTerm.trim() && !location.trim()) return;
+
+    // Navigate to search results page with query parameters
+    const params = new URLSearchParams();
+    if (searchTerm.trim()) params.append("q", searchTerm.trim());
+    if (location.trim()) params.append("location", location.trim());
+    if (useComplexSearch) params.append("algorithm", "complex");
+
+    router.push(`/candidate/search?${params.toString()}`);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
+  // Get search suggestions based on current input
+  const searchSuggestions = useMemo(() => {
+    if (!searchTerm.trim() || searchTerm.length < 2) return [];
+
+    const suggestions = new Set<string>();
+    const searchLower = searchTerm.toLowerCase();
+
+    // Add job title suggestions
+    jobPosts.forEach((job) => {
+      if (job.title.toLowerCase().includes(searchLower)) {
+        suggestions.add(job.title);
+      }
+    });
+
+    // Add company name suggestions
+    jobPosts.forEach((job) => {
+      if (job.employer?.fullName?.toLowerCase().includes(searchLower)) {
+        suggestions.add(job.employer.fullName);
+      }
+    });
+
+    return Array.from(suggestions).slice(0, 5);
+  }, [searchTerm, jobPosts]);
+
+  // Get location suggestions
+  const locationSuggestions = useMemo(() => {
+    if (!location.trim() || location.length < 2) return [];
+
+    const suggestions = new Set<string>();
+    const locationLower = location.toLowerCase();
+
+    jobPosts.forEach((job) => {
+      if (job.location?.toLowerCase().includes(locationLower)) {
+        suggestions.add(job.location);
+      }
+    });
+
+    return Array.from(suggestions).slice(0, 5);
+  }, [location, jobPosts]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -276,27 +162,99 @@ export default function HomepageContent() {
           {/* Search Bar */}
           <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-4 mb-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 relative">
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     placeholder="Tìm kiếm công việc, công ty..."
                     className="pl-10 border-0 focus:ring-0"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyPress={handleKeyPress}
                   />
                 </div>
+                {/* Search Suggestions */}
+                {searchSuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 mt-1">
+                    {searchSuggestions.map((suggestion, index) => (
+                      <div
+                        key={index}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                        onClick={() => {
+                          setSearchTerm(suggestion);
+                          // Hide suggestions after selection
+                          setTimeout(() => {
+                            const suggestions = document.querySelector(
+                              ".search-suggestions"
+                            );
+                            if (suggestions)
+                              suggestions.classList.add("hidden");
+                          }, 100);
+                        }}
+                      >
+                        {suggestion}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div>
+              <div className="relative">
                 <div className="relative">
                   <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     placeholder="Địa điểm"
                     className="pl-10 border-0 focus:ring-0"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    onKeyPress={handleKeyPress}
                   />
                 </div>
+                {/* Location Suggestions */}
+                {locationSuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 mt-1">
+                    {locationSuggestions.map((suggestion, index) => (
+                      <div
+                        key={index}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                        onClick={() => {
+                          setLocation(suggestion);
+                          // Hide suggestions after selection
+                          setTimeout(() => {
+                            const suggestions = document.querySelector(
+                              ".location-suggestions"
+                            );
+                            if (suggestions)
+                              suggestions.classList.add("hidden");
+                          }, 100);
+                        }}
+                      >
+                        {suggestion}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <Button size="lg" className="w-full">
+              <Button
+                size="lg"
+                className="w-full"
+                onClick={handleSearch}
+                disabled={!searchTerm.trim() && !location.trim()}
+              >
                 Tìm kiếm
               </Button>
+            </div>
+
+            {/* Search Algorithm Toggle */}
+            <div className="mt-3 flex items-center justify-center">
+              <label className="flex items-center space-x-2 text-sm text-gray-600">
+                <input
+                  type="checkbox"
+                  checked={useComplexSearch}
+                  onChange={(e) => setUseComplexSearch(e.target.checked)}
+                  className="rounded"
+                />
+                <span>Sử dụng thuật toán tìm kiếm nâng cao</span>
+              </label>
             </div>
           </div>
 
@@ -334,7 +292,10 @@ export default function HomepageContent() {
                 Khám phá những cơ hội việc làm tốt nhất
               </p>
             </div>
-            <Button variant="outline">
+            <Button
+              variant="outline"
+              onClick={() => router.push("/candidate/job")} // 👈 chuyển route tại đây
+            >
               Xem tất cả <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
@@ -349,6 +310,7 @@ export default function HomepageContent() {
                 <Card
                   key={job.id}
                   className="hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => router.push(`/candidate/job/${job.id}`)} // 👈 chuyển route khi click
                 >
                   <CardContent className="p-6">
                     {/* Render thông tin job từ API */}
@@ -430,7 +392,7 @@ export default function HomepageContent() {
             <p>Đang tải danh mục...</p>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {categoriesWithJobs.map((category) => {
+              {categories.map((category) => {
                 const IconComponent = category.icon
                   ? iconMap[category.icon]
                   : undefined;
@@ -438,6 +400,9 @@ export default function HomepageContent() {
                   <Card
                     key={category.name}
                     className="hover:shadow-lg transition-shadow cursor-pointer"
+                    onClick={() =>
+                      handleCategoryClick(category.id || category.name)
+                    }
                   >
                     <CardContent className="p-6 text-center">
                       <div
@@ -449,7 +414,12 @@ export default function HomepageContent() {
                       </div>
                       <h3 className="font-semibold mb-2">{category.name}</h3>
                       <p className="text-sm text-gray-600">
-                        {category.jobs.toLocaleString()} việc làm
+                        {
+                          jobPosts.filter(
+                            (job) => job.categoryName === category.name
+                          ).length
+                        }{" "}
+                        việc làm
                       </p>
                     </CardContent>
                   </Card>
@@ -476,10 +446,11 @@ export default function HomepageContent() {
             <p>Đang tải...</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {topCompanies.map((company) => (
+              {getTopCompanies(companies, reviews, 6).map((company) => (
                 <Card
                   key={company.id}
                   className="hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => handleCompanyClick(company.id as string)}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-center space-x-4 mb-4">
@@ -512,7 +483,7 @@ export default function HomepageContent() {
                       <div className="flex items-center">
                         <Star className="h-4 w-4 text-yellow-400 fill-current" />
                         <span className="ml-1 text-sm font-semibold">
-                          {company.avgRating.toFixed(1)}
+                          {company.averageRating.toFixed(1)}
                         </span>
                         <span className="ml-1 text-xs text-gray-500">
                           ({company.reviewCount} đánh giá)
