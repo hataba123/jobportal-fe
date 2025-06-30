@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,55 +11,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { fetchMyAppliedJobs, deleteJobApplication, fetchJobApplicationDetail } from "@/lib/api/job-application";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type Application = {
-  id: string;
-  jobTitle: string;
-  company: string;
-  appliedDate: string;
-  status: "PENDING" | "REVIEWING" | "ACCEPTED" | "REJECTED";
-  salary: string;
+  jobPostId: string;
+  title: string;
+  description: string;
+  skillsRequired: string;
   location: string;
+  salary: string;
+  appliedAt: string;
+  status: "PENDING" | "REVIEWING" | "ACCEPTED" | "REJECTED";
 };
-
-const mockApplications: Application[] = [
-  {
-    id: "1",
-    jobTitle: "Frontend Developer",
-    company: "TechCorp",
-    appliedDate: "2024-01-15",
-    status: "REVIEWING",
-    salary: "15-25 triệu",
-    location: "Hà Nội",
-  },
-  {
-    id: "2",
-    jobTitle: "React Developer",
-    company: "StartupXYZ",
-    appliedDate: "2024-01-10",
-    status: "PENDING",
-    salary: "20-30 triệu",
-    location: "TP.HCM",
-  },
-  {
-    id: "3",
-    jobTitle: "Fullstack Developer",
-    company: "BigTech Inc",
-    appliedDate: "2024-01-05",
-    status: "ACCEPTED",
-    salary: "25-35 triệu",
-    location: "Hà Nội",
-  },
-  {
-    id: "4",
-    jobTitle: "UI/UX Designer",
-    company: "Design Studio",
-    appliedDate: "2024-01-01",
-    status: "REJECTED",
-    salary: "18-25 triệu",
-    location: "Đà Nẵng",
-  },
-];
 
 const getStatusBadge = (status: Application["status"]) => {
   const statusConfig = {
@@ -80,7 +45,60 @@ const getStatusBadge = (status: Application["status"]) => {
 };
 
 export default function ApplicationsPage() {
-  const [applications] = useState<Application[]>(mockApplications);
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [selected, setSelected] = useState<Application | null>(null);
+  const [detail, setDetail] = useState<unknown>(null);
+  const [open, setOpen] = useState(false);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchMyAppliedJobs().then((data: unknown) => {
+      const arr = Array.isArray(data) ? data : [];
+      setApplications(
+        arr.map((item) => {
+          const app = item as Partial<Application>;
+          return {
+            jobPostId: app.jobPostId || "",
+            title: app.title || "(Không có tiêu đề)",
+            description: app.description || "",
+            skillsRequired: app.skillsRequired || "",
+            location: app.location || "",
+            salary: app.salary ? app.salary.toLocaleString() : "",
+            appliedAt: app.appliedAt || "",
+            status: (app.status as Application["status"]) || "PENDING",
+          };
+        })
+      );
+    });
+  }, []);
+
+  const handleViewDetail = async (app: Application) => {
+    setSelected(app);
+    setOpen(true);
+    setLoadingDetail(true);
+    try {
+      const data = await fetchJobApplicationDetail(app.jobPostId);
+      setDetail(data);
+    } catch {
+      setDetail(null);
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
+  const handleCancel = async (app: Application) => {
+    setDeletingId(app.jobPostId);
+    try {
+      await deleteJobApplication(app.jobPostId);
+      setApplications((prev) => prev.filter((a) => a.jobPostId !== app.jobPostId));
+      toast.success("Đã hủy đơn ứng tuyển.");
+    } catch {
+      toast.error("Hủy đơn thất bại. Vui lòng thử lại.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto my-9">
@@ -102,7 +120,6 @@ export default function ApplicationsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Vị trí công việc</TableHead>
-                <TableHead>Công ty</TableHead>
                 <TableHead>Địa điểm</TableHead>
                 <TableHead>Mức lương</TableHead>
                 <TableHead>Ngày ứng tuyển</TableHead>
@@ -112,22 +129,19 @@ export default function ApplicationsPage() {
             </TableHeader>
             <TableBody>
               {applications.map((application) => (
-                <TableRow key={application.id}>
+                <TableRow key={application.jobPostId}>
                   <TableCell className="font-medium">
-                    {application.jobTitle}
+                    {application.title}
                   </TableCell>
-                  <TableCell>{application.company}</TableCell>
                   <TableCell>{application.location}</TableCell>
                   <TableCell>{application.salary}</TableCell>
                   <TableCell>
-                    {new Date(application.appliedDate).toLocaleDateString(
-                      "vi-VN"
-                    )}
+                    {new Date(application.appliedAt).toLocaleDateString("vi-VN")}
                   </TableCell>
                   <TableCell>{getStatusBadge(application.status)}</TableCell>
                   <TableCell>
                     <div className="space-x-2">
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => handleViewDetail(application)}>
                         Xem chi tiết
                       </Button>
                       {application.status === "PENDING" && (
@@ -135,8 +149,10 @@ export default function ApplicationsPage() {
                           variant="outline"
                           size="sm"
                           className="text-red-600"
+                          onClick={() => handleCancel(application)}
+                          disabled={deletingId === application.jobPostId}
                         >
-                          Hủy đơn
+                          {deletingId === application.jobPostId ? "Đang hủy..." : "Hủy đơn"}
                         </Button>
                       )}
                     </div>
@@ -183,6 +199,38 @@ export default function ApplicationsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialog xem chi tiết */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Chi tiết đơn ứng tuyển</DialogTitle>
+          </DialogHeader>
+          {loadingDetail ? (
+            <div className="py-8 text-center text-gray-500">Đang tải...</div>
+          ) : detail ? (
+            (() => {
+              const d: Partial<Application> & { [key: string]: unknown } = detail as Partial<Application> & { [key: string]: unknown };
+              return (
+                <div className="space-y-2">
+                  <div><b>Vị trí:</b> {String(d.jobTitle || selected?.title || "")}</div>
+                  <div><b>Địa điểm:</b> {String(d.location || selected?.location || "")}</div>
+                  <div><b>Lương:</b> {String(d.salary || selected?.salary || "")}</div>
+                  <div><b>Ngày ứng tuyển:</b> {d.appliedAt ? new Date(String(d.appliedAt)).toLocaleDateString("vi-VN") : (selected?.appliedAt || "")}</div>
+                  <div><b>Trạng thái:</b> {d.status ? getStatusBadge(String(d.status) as Application["status"]) : getStatusBadge(selected?.status || "PENDING")}</div>
+                  <div><b>Mô tả:</b> {String(d.description || selected?.description || "")}</div>
+                  <div><b>Kỹ năng yêu cầu:</b> {String(d.skillsRequired || selected?.skillsRequired || "")}</div>
+                  {typeof d.cvUrl === "string" && d.cvUrl.length > 0 && (
+                    <div><b>CV đã nộp:</b> <a href={d.cvUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Xem CV</a></div>
+                  )}
+                </div>
+              );
+            })()
+          ) : (
+            <div className="py-8 text-center text-gray-500">Không tìm thấy chi tiết đơn ứng tuyển.</div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

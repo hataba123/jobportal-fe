@@ -1,28 +1,83 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { fetchMyProfile, updateMyProfile } from "@/lib/api/candidate-profile";
+import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function CandidateProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
-    fullName: "Nguyễn Văn A",
-    email: "nguyenvana@email.com",
-    phone: "0123456789",
-    address: "Hà Nội, Việt Nam",
-    dateOfBirth: "1990-01-01",
-    education: "Đại học Bách Khoa Hà Nội",
-    experience: "5 năm kinh nghiệm trong lĩnh vực IT",
-    skills: "JavaScript, React, Node.js, TypeScript",
-    bio: "Tôi là một lập trình viên fullstack với 5 năm kinh nghiệm...",
+    fullName: "",
+    email: "",
+    dob: "",
+    education: "",
+    experience: "",
+    skills: "",
+    gender: "",
+    portfolioUrl: "",
+    linkedinUrl: "",
+    githubUrl: "",
+    certificates: "",
+    summary: "",
   });
 
-  const handleSave = () => {
-    // TODO: Implement save logic
-    setIsEditing(false);
+  useEffect(() => {
+    fetchMyProfile().then(
+      (data: Partial<import("@/types/CandidateProfile").CandidateProfiles>) => {
+        setProfile({
+          fullName: data.fullName || "",
+          email: data.email || "",
+          dob: data.dob ? data.dob.slice(0, 10) : "",
+          education: data.education || "",
+          experience: data.experience || "",
+          skills: Array.isArray(data.skills)
+            ? data.skills.join(", ")
+            : data.skills || "",
+          gender: data.gender || "",
+          portfolioUrl: data.portfolioUrl || "",
+          linkedinUrl: data.linkedinUrl || "",
+          githubUrl: data.githubUrl || "",
+          certificates: Array.isArray(data.certificates)
+            ? data.certificates.join(", ")
+            : data.certificates || "",
+          summary: data.summary || "",
+        });
+      }
+    );
+  }, []);
+
+  const handleSave = async () => {
+    try {
+      await updateMyProfile({
+        fullName: profile.fullName,
+        email: profile.email,
+        dob: profile.dob,
+        education: profile.education,
+        experience: profile.experience,
+        skills: profile.skills, // giữ nguyên string
+        gender: profile.gender,
+        portfolioUrl: profile.portfolioUrl,
+        linkedinUrl: profile.linkedinUrl,
+        githubUrl: profile.githubUrl,
+        certificates: profile.certificates, // giữ nguyên string
+        summary: profile.summary,
+      });
+      toast.success("Cập nhật hồ sơ thành công!");
+      setIsEditing(false);
+    } catch {
+      toast.error("Cập nhật hồ sơ thất bại!");
+    }
   };
 
   const handleCancel = () => {
@@ -77,39 +132,36 @@ export default function CandidateProfilePage() {
                 />
               </div>
               <div>
-                <Label htmlFor="phone">Số điện thoại</Label>
-                <Input
-                  id="phone"
-                  value={profile.phone}
-                  disabled={!isEditing}
-                  onChange={(e) =>
-                    setProfile({ ...profile, phone: e.target.value })
-                  }
-                />
-              </div>
-              <div>
                 <Label htmlFor="dateOfBirth">Ngày sinh</Label>
                 <Input
                   id="dateOfBirth"
                   type="date"
-                  value={profile.dateOfBirth}
+                  value={profile.dob}
                   disabled={!isEditing}
                   onChange={(e) =>
-                    setProfile({ ...profile, dateOfBirth: e.target.value })
+                    setProfile({ ...profile, dob: e.target.value })
                   }
                 />
               </div>
-            </div>
-            <div>
-              <Label htmlFor="address">Địa chỉ</Label>
-              <Input
-                id="address"
-                value={profile.address}
-                disabled={!isEditing}
-                onChange={(e) =>
-                  setProfile({ ...profile, address: e.target.value })
-                }
-              />
+              <div>
+                <Label htmlFor="gender">Giới tính</Label>
+                <Select
+                  value={profile.gender}
+                  onValueChange={(value) =>
+                    setProfile({ ...profile, gender: value })
+                  }
+                  disabled={!isEditing}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Chọn giới tính" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Nam</SelectItem>
+                    <SelectItem value="female">Nữ</SelectItem>
+                    <SelectItem value="other">Khác</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -157,15 +209,76 @@ export default function CandidateProfilePage() {
               />
             </div>
             <div>
+              <Label htmlFor="certificates">Chứng chỉ</Label>
+              <Textarea
+                id="certificates"
+                value={profile.certificates}
+                disabled={!isEditing}
+                onChange={(e) =>
+                  setProfile({ ...profile, certificates: e.target.value })
+                }
+                rows={3}
+                placeholder="Ví dụ: AWS Solutions Architect, IELTS 7.0, JLPT N2"
+              />
+            </div>
+            <div>
               <Label htmlFor="bio">Giới thiệu bản thân</Label>
               <Textarea
                 id="bio"
-                value={profile.bio}
+                value={profile.summary}
                 disabled={!isEditing}
                 onChange={(e) =>
-                  setProfile({ ...profile, bio: e.target.value })
+                  setProfile({ ...profile, summary: e.target.value })
                 }
                 rows={4}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Liên kết */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Liên kết</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="portfolioUrl">Portfolio URL</Label>
+              <Input
+                id="portfolioUrl"
+                type="url"
+                value={profile.portfolioUrl}
+                disabled={!isEditing}
+                onChange={(e) =>
+                  setProfile({ ...profile, portfolioUrl: e.target.value })
+                }
+                placeholder="https://your-portfolio.com"
+              />
+            </div>
+            <div>
+              <Label htmlFor="linkedinUrl">LinkedIn URL</Label>
+              <Input
+                id="linkedinUrl"
+                type="url"
+                value={profile.linkedinUrl}
+                disabled={!isEditing}
+                onChange={(e) =>
+                  setProfile({ ...profile, linkedinUrl: e.target.value })
+                }
+                placeholder="https://linkedin.com/in/your-profile"
+              />
+            </div>
+            <div>
+              <Label htmlFor="githubUrl">GitHub URL</Label>
+              <Input
+                id="githubUrl"
+                type="url"
+                value={profile.githubUrl}
+                disabled={!isEditing}
+                onChange={(e) =>
+                  setProfile({ ...profile, githubUrl: e.target.value })
+                }
+                placeholder="https://github.com/your-username"
               />
             </div>
           </CardContent>

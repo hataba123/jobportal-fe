@@ -33,6 +33,8 @@ import {
 import Image from "next/image";
 import { fetchJobPostById, fetchAllJobPosts } from "@/lib/api/jobpost";
 import { JobPost } from "@/types/JobPost";
+import { fetchSavedJobs, saveJob, unsaveJob } from "@/lib/api/saved-job";
+import { toast } from "sonner";
 
 interface ApplicationForm {
   fullName: string;
@@ -98,6 +100,16 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
     if (jobId) {
       fetchJob();
     }
+
+    // Kiểm tra đã lưu chưa
+    fetchSavedJobs().then((data: unknown) => {
+      const arr = Array.isArray(data) ? data : [];
+      const found = arr.find((item) => {
+        const sj = item as { jobPostId?: string };
+        return sj.jobPostId === jobId;
+      });
+      setIsSaved(!!found);
+    });
   }, [jobId]);
 
   const handleApply = async () => {
@@ -125,11 +137,19 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
 
   const handleSave = async () => {
     try {
-      // TODO: Implement actual save job API
-      setIsSaved(!isSaved);
-      console.log("Saving job:", jobId);
-    } catch (error) {
-      console.error("Error saving job:", error);
+      if (isSaved) {
+        // Bỏ lưu
+        await unsaveJob(jobId);
+        setIsSaved(false);
+        toast.success("Đã bỏ lưu công việc.");
+      } else {
+        // Lưu job
+        await saveJob(jobId);
+        setIsSaved(true);
+        toast.success("Đã lưu công việc.");
+      }
+    } catch {
+      toast.error("Có lỗi khi lưu/bỏ lưu công việc.");
     }
   };
 

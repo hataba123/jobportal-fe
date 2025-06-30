@@ -140,13 +140,28 @@ const Navbar = () => {
               style={{ height: "32px", width: "85px", objectFit: "contain" }}
             />
           </Link>
-          {/* Sign in/Sign up bên phải */}
-          <Link
-            href="/candidate/auth/login"
-            className="text-white hover:underline ml-auto "
-          >
-            Sign in
-          </Link>
+          {/* UserDropdown hoặc Sign in/Sign up bên phải */}
+          <div className="ml-auto flex items-center space-x-2">
+            {isAuthenticated ? (
+              <>
+                <NotificationBell />
+                <UserDropdown
+                  user={{
+                    fullName: user!.fullName,
+                    role: mapRoleEnumToString(user!.role),
+                  }}
+                  onLogout={logout}
+                />
+              </>
+            ) : (
+              <Link
+                href="/candidate/auth/login"
+                className="text-white hover:underline ml-auto "
+              >
+                Sign in
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 

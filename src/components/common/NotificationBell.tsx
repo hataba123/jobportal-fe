@@ -2,7 +2,10 @@
 import { useState, useRef, useEffect } from "react";
 import { BellIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "@/i18n/navigation";
-import { fetchMyNotifications, markNotificationAsRead } from "@/lib/api/candidate-notification";
+import {
+  fetchMyNotifications,
+  markNotificationAsRead,
+} from "@/lib/api/candidate-notification";
 
 type Notification = {
   id: string;
@@ -60,12 +63,12 @@ export default function NotificationBell() {
       );
     }
     // Chuyển đến trang thông báo chi tiết
-    router.push("/candidate/notifications");
+    router.push("/candidate/userprofiles/notifications");
   };
 
   const handleViewAll = () => {
     setOpen(false);
-    router.push("/candidate/notifications");
+    router.push("/candidate/userprofiles/notifications");
   };
 
   const getNotificationIcon = (type: Notification["type"]) => {
@@ -102,10 +105,12 @@ export default function NotificationBell() {
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-lg font-semibold">Thông báo</h3>
               {unreadCount > 0 && (
-                <span className="text-sm text-gray-500">{unreadCount} chưa đọc</span>
+                <span className="text-sm text-gray-500">
+                  {unreadCount} chưa đọc
+                </span>
               )}
             </div>
-            
+
             <div className="max-h-64 overflow-y-auto">
               {notifications.length === 0 ? (
                 <div className="text-center py-4 text-gray-500">
@@ -118,17 +123,23 @@ export default function NotificationBell() {
                       key={notification.id}
                       onClick={() => handleNotificationClick(notification)}
                       className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                        notification.isRead 
-                          ? "bg-gray-50 hover:bg-gray-100" 
+                        notification.isRead
+                          ? "bg-gray-50 hover:bg-gray-100"
                           : "bg-blue-50 hover:bg-blue-100"
                       }`}
                     >
                       <div className="flex items-start space-x-3">
-                        <span className="text-lg">{getNotificationIcon(notification.type)}</span>
+                        <span className="text-lg">
+                          {getNotificationIcon(notification.type)}
+                        </span>
                         <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium ${
-                            notification.isRead ? "text-gray-900" : "text-blue-900"
-                          }`}>
+                          <p
+                            className={`text-sm font-medium ${
+                              notification.isRead
+                                ? "text-gray-900"
+                                : "text-blue-900"
+                            }`}
+                          >
                             {notification.title}
                           </p>
                           <p className="text-xs text-gray-600 mt-1 line-clamp-2">
@@ -147,7 +158,7 @@ export default function NotificationBell() {
                 </div>
               )}
             </div>
-            
+
             {notifications.length > 0 && (
               <div className="mt-3 pt-3 border-t border-gray-200">
                 <button
@@ -163,4 +174,4 @@ export default function NotificationBell() {
       )}
     </div>
   );
-} 
+}

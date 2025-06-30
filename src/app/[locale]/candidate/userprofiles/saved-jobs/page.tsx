@@ -1,70 +1,54 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   BookmarkIcon,
   MapPinIcon,
-  CurrencyDollarIcon,
   CalendarIcon,
 } from "@heroicons/react/24/outline";
+import { fetchSavedJobs, unsaveJob } from "@/lib/api/saved-job";
+import { toast } from "sonner";
+import { useRouter } from "@/i18n/navigation";
 
 type SavedJob = {
   id: string;
+  jobPostId: string;
   title: string;
-  company: string;
-  location: string;
-  salary: string;
-  type: string;
-  savedDate: string;
-  description: string;
+  location?: string;
+  savedAt: string;
 };
 
-const mockSavedJobs: SavedJob[] = [
-  {
-    id: "1",
-    title: "Senior Frontend Developer",
-    company: "TechCorp Vietnam",
-    location: "Hà Nội",
-    salary: "25-35 triệu VND",
-    type: "Full-time",
-    savedDate: "2024-01-15",
-    description:
-      "Chúng tôi đang tìm kiếm một Senior Frontend Developer có kinh nghiệm...",
-  },
-  {
-    id: "2",
-    title: "React Native Developer",
-    company: "StartupXYZ",
-    location: "TP.HCM",
-    salary: "20-30 triệu VND",
-    type: "Full-time",
-    savedDate: "2024-01-12",
-    description: "Tham gia phát triển ứng dụng mobile với React Native...",
-  },
-  {
-    id: "3",
-    title: "UI/UX Designer",
-    company: "Design Studio",
-    location: "Đà Nẵng",
-    salary: "18-25 triệu VND",
-    type: "Full-time",
-    savedDate: "2024-01-10",
-    description: "Thiết kế giao diện người dùng cho các sản phẩm digital...",
-  },
-];
-
 export default function SavedJobsPage() {
-  const [savedJobs, setSavedJobs] = useState<SavedJob[]>(mockSavedJobs);
+  const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
+  const router = useRouter();
 
-  const handleRemoveJob = (jobId: string) => {
-    setSavedJobs(savedJobs.filter((job) => job.id !== jobId));
-  };
+  useEffect(() => {
+    fetchSavedJobs().then((data: unknown) => {
+      const arr = Array.isArray(data) ? data : [];
+      setSavedJobs(
+        arr.map((item) => {
+          const sj = item as Partial<SavedJob> & { jobPost?: { title?: string; location?: string } };
+          return {
+            id: sj.id || "",
+            jobPostId: sj.jobPostId || "",
+            title: sj.title || sj.jobPost?.title || "(Không có tiêu đề)",
+            location: sj.location || sj.jobPost?.location || "",
+            savedAt: sj.savedAt || "",
+          };
+        })
+      );
+    });
+  }, []);
 
-  const handleApplyJob = (jobId: string) => {
-    // TODO: Implement apply logic
-    console.log("Apply for job:", jobId);
+  const handleRemoveJob = async (jobPostId: string) => {
+    try {
+      await unsaveJob(jobPostId);
+      setSavedJobs((prev) => prev.filter((job) => job.jobPostId !== jobPostId));
+      toast.success("Đã bỏ lưu công việc.");
+    } catch {
+      toast.error("Bỏ lưu thất bại. Vui lòng thử lại.");
+    }
   };
 
   return (
@@ -92,52 +76,40 @@ export default function SavedJobsPage() {
       ) : (
         <div className="grid gap-4">
           {savedJobs.map((job) => (
-            <Card key={job.id} className="hover:shadow-md transition-shadow">
+            <Card
+              key={job.id}
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => router.push(`/candidate/job/${job.jobPostId}`)}
+            >
               <CardContent className="p-6">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-xl font-semibold text-gray-900">
+                      <h3
+                        className="text-xl font-semibold text-gray-900 hover:underline"
+                        onClick={e => {
+                          e.stopPropagation();
+                          router.push(`/candidate/job/${job.jobPostId}`);
+                        }}
+                      >
                         {job.title}
                       </h3>
-                      <Badge variant="secondary">{job.type}</Badge>
                     </div>
-
-                    <p className="text-lg font-medium text-blue-600 mb-2">
-                      {job.company}
-                    </p>
-
                     <div className="flex items-center space-x-6 text-gray-600 mb-3">
                       <div className="flex items-center">
                         <MapPinIcon className="w-4 h-4 mr-1" />
                         {job.location}
                       </div>
                       <div className="flex items-center">
-                        <CurrencyDollarIcon className="w-4 h-4 mr-1" />
-                        {job.salary}
-                      </div>
-                      <div className="flex items-center">
                         <CalendarIcon className="w-4 h-4 mr-1" />
-                        Lưu ngày{" "}
-                        {new Date(job.savedDate).toLocaleDateString("vi-VN")}
+                        Lưu ngày {new Date(job.savedAt).toLocaleDateString("vi-VN")}
                       </div>
                     </div>
-
-                    <p className="text-gray-600 line-clamp-2">
-                      {job.description}
-                    </p>
                   </div>
-
                   <div className="flex flex-col space-y-2 ml-4">
                     <Button
-                      onClick={() => handleApplyJob(job.id)}
-                      className="w-full"
-                    >
-                      Ứng tuyển ngay
-                    </Button>
-                    <Button
                       variant="outline"
-                      onClick={() => handleRemoveJob(job.id)}
+                      onClick={() => handleRemoveJob(job.jobPostId)}
                       className="w-full text-red-600 hover:text-red-700"
                     >
                       Bỏ lưu

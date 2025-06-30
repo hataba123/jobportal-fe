@@ -12,10 +12,8 @@ export default async function CandidateLayout({
 }) {
   return (
     <>
-      <main className="flex-grow">
-        <CandidateHeader />
-        {children}
-      </main>
+      <CandidateHeader />
+      {children}
     </>
   );
 }
