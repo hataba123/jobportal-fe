@@ -1,113 +1,95 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  Download,
-  Eye,
-  MessageSquare,
-  MoreHorizontal,
-  UserCheck,
-  Send,
-  UserX,
-  Briefcase,
-  Search,
-} from "lucide-react";
-
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { fetchMyJobPosts } from "@/lib/api/recruiter-jobpost";
-import { fetchCandidatesForJob, updateApplicationStatus as apiUpdateStatus } from "@/lib/api/recruiter-application";
-import { JobPost } from "@/types/JobPost";
-import { JobApplication, UpdateApplyStatusRequest } from "@/types/JobApplication";
-import { ApplicationStatus } from "@/types/ApplyStatus";
+import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { getCandidatesAppliedToMyJobs, getCandidateApplications, CandidateProfileBriefDto, CandidateApplicationDto } from "@/lib/api/recruiter-candidates";
+import { Search, RefreshCw, FileText, User } from "lucide-react";
 
-const applicationStatuses: { value: ApplicationStatus; label: string; color: string }[] = [
-  { value: "pending", label: "Chờ xử lý", color: "bg-yellow-100 text-yellow-800" },
-  { value: "reviewed", label: "Đã xem xét", color: "bg-blue-100 text-blue-800" },
-  { value: "accepted", label: "Chấp nhận", color: "bg-green-100 text-green-800" },
-  { value: "rejected", label: "Từ chối", color: "bg-red-100 text-red-800" },
-];
+const ApplicationsPage = () => {
+  const [candidates, setCandidates] = useState<CandidateProfileBriefDto[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [selectedCandidate, setSelectedCandidate] = useState<CandidateProfileBriefDto | null>(null);
+  const [applications, setApplications] = useState<CandidateApplicationDto[]>([]);
+  const [open, setOpen] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-export default function RecruiterApplicationsPage() {
-  const [jobPosts, setJobPosts] = useState<JobPost[]>([]);
-  const [selectedJobPost, setSelectedJobPost] = useState<string>("");
-  const [applications, setApplications] = useState<JobApplication[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const fetchCandidates = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getCandidatesAppliedToMyJobs();
+      setCandidates(data);
+    } catch (error) {
+      console.error("Error fetching candidates:", error);
+      setError("Không thể tải danh sách ứng viên");
+      setCandidates([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetchJobPosts();
+    fetchCandidates();
   }, []);
 
-  useEffect(() => {
-    if (selectedJobPost) {
-      fetchApplications(selectedJobPost);
-    }
-  }, [selectedJobPost]);
-
-  const fetchJobPosts = async () => {
-    try {
-      const data = await fetchMyJobPosts();
-      setJobPosts(data);
-    } catch {
-      // error handling if needed
-    }
-  };
-
-  const fetchApplications = async (jobPostId: string) => {
-    try {
-      const data = await fetchCandidatesForJob(jobPostId);
-      setApplications(data);
-    } catch {
-      // error handling if needed
-    }
-  };
-
-  const handleStatusChange = async (id: string, newStatus: ApplicationStatus) => {
-    try {
-      const updateData: UpdateApplyStatusRequest = { status: newStatus };
-      await apiUpdateStatus(id, updateData);
-      if (selectedJobPost) {
-        fetchApplications(selectedJobPost);
-      }
-    } catch {
-      // error handling if needed
-    }
-  };
-
-  const getStatusBadge = (status: ApplicationStatus) => {
-    const statusConfig = applicationStatuses.find(s => s.value === status);
-    return (
-      <Badge className={statusConfig?.color || "bg-gray-100 text-gray-800"}>
-        {statusConfig?.label || status}
-      </Badge>
+  const handleSearch = () => {
+    // Simple search by name/skill/education
+    return candidates.filter(c =>
+      (c.fullName?.toLowerCase().includes(search.toLowerCase()) ||
+        c.skills?.toLowerCase().includes(search.toLowerCase()) ||
+        c.education?.toLowerCase().includes(search.toLowerCase()))
     );
   };
 
-  const getFilteredApplications = () => {
-    return applications.filter((app) => {
-      const matchesSearch =
-        app.candidate?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        app.candidate?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        app.jobPost?.title?.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesSearch;
-    });
+  const handleOpenDialog = async (candidate: CandidateProfileBriefDto) => {
+    setDetailLoading(true);
+    setOpen(true);
+    setSelectedCandidate(candidate);
+    setError(null);
+    try {
+      const apps = await getCandidateApplications(candidate.userId);
+      setApplications(apps);
+    } catch (error) {
+      console.error("Error fetching applications:", error);
+      setError("Không thể tải lịch sử ứng tuyển");
+      setApplications([]);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setOpen(false);
+    setSelectedCandidate(null);
+    setApplications([]);
+    setError(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -118,203 +100,217 @@ export default function RecruiterApplicationsPage() {
     });
   };
 
-  const filteredApplications = getFilteredApplications();
+  const filteredCandidates = search ? handleSearch() : candidates;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Đơn ứng tuyển</h2>
-          <p className="text-gray-600">Quản lý tất cả đơn ứng tuyển</p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Xuất danh sách
-          </Button>
-        </div>
-      </div>
-
-      {/* Job Post Selection */}
       <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-4">
-            <Briefcase className="h-5 w-5 text-gray-500" />
-            <div className="flex-1">
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
-                Chọn việc làm
-              </label>
-              <Select value={selectedJobPost} onValueChange={setSelectedJobPost}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Chọn việc làm để xem đơn ứng tuyển" />
-                </SelectTrigger>
-                <SelectContent>
-                  {jobPosts.map((job) => (
-                    <SelectItem key={job.id} value={job.id}>
-                      {job.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <FileText className="h-5 w-5 mr-2" />
+            Đơn ứng tuyển
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Tìm theo tên, kỹ năng, học vấn..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-10"
+              />
             </div>
+            <Button onClick={fetchCandidates} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? "Đang tải..." : "Làm mới"}
+            </Button>
+          </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
+          )}
+
+          <div className="border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Họ tên</TableHead>
+                  <TableHead>Kỹ năng</TableHead>
+                  <TableHead>Kinh nghiệm</TableHead>
+                  <TableHead>Học vấn</TableHead>
+                  <TableHead className="text-right">Thao tác</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8">
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 mr-2"></div>
+                        Đang tải...
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredCandidates.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                      {search ? 'Không tìm thấy ứng viên nào phù hợp' : 'Chưa có ứng viên nào ứng tuyển'}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredCandidates.map((c) => (
+                    <TableRow key={c.userId}>
+                      <TableCell className="font-medium">{c.fullName}</TableCell>
+                      <TableCell>
+                        {c.skills ? (
+                          <div className="flex flex-wrap gap-1">
+                            {c.skills.split(',').slice(0, 2).map((skill, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">
+                                {skill.trim()}
+                              </Badge>
+                            ))}
+                            {c.skills.split(',').length > 2 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{c.skills.split(',').length - 2}
+                              </Badge>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>{c.experience || "-"}</TableCell>
+                      <TableCell>{c.education || "-"}</TableCell>
+                      <TableCell className="text-right">
+                        <Button onClick={() => handleOpenDialog(c)} size="sm">
+                          <User className="h-4 w-4 mr-1" />
+                          Xem chi tiết
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
       </Card>
 
-      {selectedJobPost && (
-        <>
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Tìm kiếm ứng viên..."
-              className="pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Chi tiết ứng viên</DialogTitle>
+            <DialogDescription>Lịch sử ứng tuyển vào job của bạn</DialogDescription>
+          </DialogHeader>
+          
+          {detailLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mr-2"></div>
+              Đang tải thông tin...
+            </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <p className="text-red-600 mb-4">{error}</p>
+              <Button onClick={() => handleOpenDialog(selectedCandidate!)}>Thử lại</Button>
+            </div>
+          ) : selectedCandidate ? (
+            <div className="space-y-6">
+              {/* Candidate Basic Info */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Thông tin ứng viên</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Họ tên</Label>
+                    <Input value={selectedCandidate.fullName} disabled />
+                  </div>
+                  <div>
+                    <Label>Kỹ năng</Label>
+                    <Input value={selectedCandidate.skills || "-"} disabled />
+                  </div>
+                  <div>
+                    <Label>Kinh nghiệm</Label>
+                    <Input value={selectedCandidate.experience || "-"} disabled />
+                  </div>
+                  <div>
+                    <Label>Học vấn</Label>
+                    <Input value={selectedCandidate.education || "-"} disabled />
+                  </div>
+                </div>
+              </div>
 
-          <Tabs defaultValue="all" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="all">Tất cả ({filteredApplications.length})</TabsTrigger>
-              <TabsTrigger value="pending">
-                Chờ xử lý (
-                {filteredApplications.filter((app) => app.status === "pending").length})
-              </TabsTrigger>
-              <TabsTrigger value="reviewed">
-                Đã xem xét (
-                {filteredApplications.filter((app) => app.status === "reviewed").length})
-              </TabsTrigger>
-              <TabsTrigger value="accepted">
-                Chấp nhận (
-                {filteredApplications.filter((app) => app.status === "accepted").length})
-              </TabsTrigger>
-              <TabsTrigger value="rejected">
-                Từ chối (
-                {filteredApplications.filter((app) => app.status === "rejected").length})
-              </TabsTrigger>
-            </TabsList>
-
-            {[
-              "all",
-              "pending",
-              "reviewed",
-              "accepted",
-              "rejected",
-            ].map((tabValue) => (
-              <TabsContent key={tabValue} value={tabValue} className="space-y-4">
-                {filteredApplications
-                  .filter((app) =>
-                    tabValue === "all" ? true : app.status === tabValue
-                  )
-                  .map((app) => (
-                    <Card key={app.id}>
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start space-x-4">
-                            <div className="w-15 h-15 rounded-full bg-gray-200 flex items-center justify-center">
-                              <UserCheck className="h-8 w-8 text-gray-400" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-2">
-                                <h3 className="text-lg font-semibold">
-                                  {app.candidate?.fullName || "N/A"}
-                                </h3>
-                                {getStatusBadge(app.status)}
-                              </div>
-                              <p className="text-gray-600 mb-1">
-                                {app.candidate?.email || "N/A"}
-                              </p>
-                              <p className="text-sm text-gray-500 mb-2">
-                                Ứng tuyển:{" "}
-                                <span className="font-medium text-gray-700">
-                                  {app.jobPost?.title || "N/A"}
-                                </span>
-                              </p>
-                              {app.coverLetter && (
-                                <p className="text-sm text-gray-700 italic line-clamp-2">
-                                  &quot;{app.coverLetter}&quot;
-                                </p>
+              {/* Application History */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Lịch sử ứng tuyển</h3>
+                {applications.length === 0 ? (
+                  <div className="text-gray-500 text-center py-4">Chưa có đơn ứng tuyển nào</div>
+                ) : (
+                  <div className="border rounded-lg">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Vị trí</TableHead>
+                          <TableHead>Ngày ứng tuyển</TableHead>
+                          <TableHead>Trạng thái</TableHead>
+                          <TableHead>CV</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {applications.map(app => (
+                          <TableRow key={app.jobId}>
+                            <TableCell className="font-medium">{app.jobTitle}</TableCell>
+                            <TableCell>{formatDate(app.appliedAt)}</TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={
+                                  app.status === 'PENDING' ? 'secondary' : 
+                                  app.status === 'ACCEPTED' ? 'default' : 
+                                  app.status === 'REJECTED' ? 'destructive' :
+                                  'outline'
+                                }
+                              >
+                                {app.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {app.cvUrl ? (
+                                <a 
+                                  href={app.cvUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="flex items-center text-blue-600 hover:text-blue-800 underline"
+                                >
+                                  <FileText className="h-4 w-4 mr-1" />
+                                  Xem CV
+                                </a>
+                              ) : (
+                                <span className="text-gray-400">-</span>
                               )}
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-end space-y-2">
-                            <p className="text-sm text-gray-500">
-                              Ngày ứng tuyển: {formatDate(app.appliedAt)}
-                            </p>
-                            <div className="flex space-x-2">
-                              <Button size="sm" variant="outline">
-                                <Eye className="h-4 w-4 mr-1" />
-                                Xem chi tiết
-                              </Button>
-                              <Button size="sm" variant="outline">
-                                <MessageSquare className="h-4 w-4 mr-1" />
-                                Nhắn tin
-                              </Button>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button size="sm" variant="outline">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      handleStatusChange(app.id, "reviewed")
-                                    }
-                                  >
-                                    <UserCheck className="h-4 w-4 mr-2" />
-                                    Đã xem xét
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      handleStatusChange(app.id, "accepted")
-                                    }
-                                  >
-                                    <UserCheck className="h-4 w-4 mr-2" />
-                                    Chấp nhận
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem>
-                                    <Send className="h-4 w-4 mr-2" />
-                                    Gửi email
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    className="text-red-600"
-                                    onClick={() =>
-                                      handleStatusChange(app.id, "rejected")
-                                    }
-                                  >
-                                    <UserX className="h-4 w-4 mr-2" />
-                                    Từ chối
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-              </TabsContent>
-            ))}
-          </Tabs>
-        </>
-      )}
-
-      {!selectedJobPost && (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Chọn việc làm
-            </h3>
-            <p className="text-gray-600">
-              Vui lòng chọn một việc làm để xem danh sách đơn ứng tuyển
-            </p>
-          </CardContent>
-        </Card>
-      )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-red-500">Không thể tải thông tin ứng viên</div>
+          )}
+          
+          <DialogFooter>
+            <Button type="button" onClick={handleCloseDialog}>
+              Đóng
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
-}
+};
+
+export default ApplicationsPage;

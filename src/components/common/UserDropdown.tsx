@@ -15,21 +15,11 @@ type Props = {
 export default function UserDropdown({ user, onLogout }: Props) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null); // 👈 Ref để kiểm soát timeout
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleLogout = () => {
     onLogout?.();
-
-    switch (user.role) {
-      case "RECRUITER":
-        router.push("/candidate/auth/login");
-        break;
-      case "CANDIDATE":
-      case "ADMIN":
-      default:
-        router.push("/candidate/dashboard");
-        break;
-    }
+    router.push("/candidate/auth/login");
   };
 
   const handleMouseEnter = () => {
@@ -40,8 +30,83 @@ export default function UserDropdown({ user, onLogout }: Props) {
   const handleMouseLeave = () => {
     timeoutRef.current = setTimeout(() => {
       setOpen(false);
-    }, 50); // 👈 chờ 200ms rồi mới tắt dropdown
+    }, 50);
   };
+
+  const handleMenuClick = (path: string) => {
+    setOpen(false);
+    router.push(path);
+  };
+
+  // Menu items cho ứng viên
+  const candidateMenuItems = [
+    {
+      label: "Hồ sơ cá nhân",
+      path: "/candidate/userprofiles/profile",
+      icon: "👤",
+    },
+    {
+      label: "Việc làm đã ứng tuyển",
+      path: "/candidate/userprofiles/applications",
+      icon: "📝",
+    },
+    {
+      label: "Việc làm đã lưu",
+      path: "/candidate/userprofiles/saved-jobs",
+      icon: "💾",
+    },
+    {
+      label: "Thông báo",
+      path: "/candidate/userprofiles/notifications",
+      icon: "🔔",
+    },
+    {
+      label: "Cài đặt tài khoản",
+      path: "/candidate/userprofiles/settings",
+      icon: "⚙️",
+    },
+  ];
+
+  // Menu items cho nhà tuyển dụng
+  const recruiterMenuItems = [
+    { label: "Dashboard", path: "/recruiter/dashboard", icon: "📊" },
+
+    { label: "Quản lý công ty", path: "/recruiter/company", icon: "🏢" },
+    { label: "Đăng tin tuyển dụng", path: "/recruiter/jobs", icon: "📋" },
+    { label: "Ứng viên", path: "/recruiter/candidates", icon: "👥" },
+    { label: "Đơn ứng tuyển", path: "/recruiter/applications", icon: "📄" },
+    { label: "Thông báo", path: "/recruiter/notifications", icon: "🔔" },
+  ];
+
+  // Menu items cho admin
+  const adminMenuItems = [
+    { label: "Dashboard", path: "/admin/dashboard", icon: "📊" },
+
+    { label: "Quản lý người dùng", path: "/admin/user", icon: "👥" },
+    { label: "Quản lý công ty", path: "/admin/company", icon: "🏢" },
+    { label: "Quản lý tin tuyển dụng", path: "/admin/job-post", icon: "📋" },
+    {
+      label: "Quản lý đơn ứng tuyển",
+      path: "/admin/job-application",
+      icon: "📄",
+    },
+    { label: "Thông báo", path: "/admin/notification", icon: "🔔" },
+  ];
+
+  const getMenuItems = () => {
+    switch (user.role) {
+      case "CANDIDATE":
+        return candidateMenuItems;
+      case "RECRUITER":
+        return recruiterMenuItems;
+      case "ADMIN":
+        return adminMenuItems;
+      default:
+        return [];
+    }
+  };
+
+  const menuItems = getMenuItems();
 
   return (
     <div
@@ -62,13 +127,27 @@ export default function UserDropdown({ user, onLogout }: Props) {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-10 mt-2 w-40 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 text-black">
-          <button
-            onClick={handleLogout}
-            className="block w-full text-left px-4 py-2 hover:bg-gray-100"
-          >
-            Đăng xuất
-          </button>
+        <div className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 text-black">
+          <div className="py-1">
+            {menuItems.map((item, index) => (
+              <button
+                key={index}
+                onClick={() => handleMenuClick(item.path)}
+                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors"
+              >
+                <span className="mr-2">{item.icon}</span>
+                {item.label}
+              </button>
+            ))}
+            <div className="border-t border-gray-200 my-1"></div>
+            <button
+              onClick={handleLogout}
+              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors text-red-600"
+            >
+              <span className="mr-2">🚪</span>
+              Đăng xuất
+            </button>
+          </div>
         </div>
       )}
     </div>

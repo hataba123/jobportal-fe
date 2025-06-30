@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     console.log("✅ Đã login, token:", token);
     console.log("🧑‍💼 Role:", user.role);
 
-    // ✅ Trì hoãn redirect bằng setTimeout để đảm bảo localStorage được cập nhật
+    // ✅ Redirect về trang chủ sau khi login thành công
     setTimeout(() => {
       const roleString = mapRoleEnumToString(user.role);
       switch (roleString) {
@@ -70,10 +70,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           router.push("/recruiter/dashboard");
           break;
         case "CANDIDATE":
-          router.push("/candidate/dashboard");
+          router.push("/candidate");
           break;
         default:
-          router.push("/");
+          router.push("/candidate");
           break;
       }
     }, 100); // 100ms delay
@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = () => {
     clearAccessToken();
     setUser(null);
-    router.push("/candidate/dashboard");
+    router.push("/candidate");
   };
 
   return (

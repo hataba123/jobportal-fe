@@ -1,8 +1,8 @@
 // app/page.tsx
 // // tắt Static Generation (SSG) - HTML tạo trước, khi next build
 // export const dynamic = "force-dynamic";
-import Navbar from "@/components/common/Navbar";
-import Footer from "@/components/common/Footer";
+
+import CandidateHeader from "@/components/candidate/CandidateHeader";
 
 export default async function CandidateLayout({
   children,
@@ -12,9 +12,10 @@ export default async function CandidateLayout({
 }) {
   return (
     <>
-      <Navbar />
-      <main className="flex-grow">{children}</main>
-      <Footer />
+      <main className="flex-grow">
+        <CandidateHeader />
+        {children}
+      </main>
     </>
   );
 }

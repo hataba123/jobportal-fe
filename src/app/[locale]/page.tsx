@@ -9,7 +9,7 @@ export default async function RootPage({
   const { locale } = await params;
 
   redirect({
-    href: "/candidate/dashboard",
+    href: "/candidate",
     locale,
   });
   return null;

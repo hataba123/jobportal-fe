@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
-import { usePathname } from "next/navigation";
+import { usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 /*************  ✨ Windsurf Command ⭐  *************/
@@ -17,7 +17,7 @@ export function RecruiterHeaderNav() {
   const pathname = usePathname();
 
   const navItems = [
-    { href: "/recruiter", label: "Dashboard" },
+    { href: "/recruiter/dashboard", label: "Dashboard" },
     { href: "/recruiter/jobs", label: "Việc làm của tôi" },
     { href: "/recruiter/applications", label: "Đơn ứng tuyển" },
     { href: "/recruiter/candidates", label: "Tìm ứng viên" },

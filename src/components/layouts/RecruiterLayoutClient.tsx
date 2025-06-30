@@ -24,7 +24,7 @@ export default function RecruiterLayout({
 
   const getTitle = (path: string) => {
     switch (path) {
-      case "/recruiter":
+      case "/recruiter/dashboard":
         return "Dashboard";
       case "/recruiter/jobs":
         return "Việc làm của tôi";
@@ -57,7 +57,7 @@ export default function RecruiterLayout({
             {/* Added flex for logo and nav */}
             <div className="flex items-center space-x-2">
               <Image
-                src="/placeholder.svg?height=32&width=32"
+                src="/image/Image.jpg?height=32&width=32"
                 alt="Logo"
                 width={32}
                 height={32}

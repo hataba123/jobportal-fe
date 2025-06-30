@@ -54,7 +54,12 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { fetchMyJobPosts, createJobPost as apiCreateJobPost, updateJobPost as apiUpdateJobPost, deleteJobPost as apiDeleteJobPost } from "@/lib/api/recruiter-jobpost";
+import {
+  fetchMyJobPosts,
+  createJobPost as apiCreateJobPost,
+  updateJobPost as apiUpdateJobPost,
+  deleteJobPost as apiDeleteJobPost,
+} from "@/lib/api/recruiter-jobpost";
 import { JobPost } from "@/types/JobPost";
 
 export default function RecruiterJobsPage() {
@@ -84,7 +89,7 @@ export default function RecruiterJobsPage() {
   const handleCreateJobPost = async () => {
     try {
       await apiCreateJobPost(newJobPost);
-    setIsCreateDialogOpen(false);
+      setIsCreateDialogOpen(false);
       setNewJobPost({
         type: "Full-time",
         logo: "/placeholder.svg?height=32&width=32",
@@ -270,7 +275,11 @@ export default function RecruiterJobsPage() {
                 <Input
                   id="tags"
                   placeholder="VD: React, Frontend, Web"
-                  value={Array.isArray(newJobPost.tags) ? newJobPost.tags.join(", ") : newJobPost.tags || ""}
+                  value={
+                    Array.isArray(newJobPost.tags)
+                      ? newJobPost.tags.join(", ")
+                      : newJobPost.tags || ""
+                  }
                   onChange={(e) =>
                     setNewJobPost({
                       ...newJobPost,
@@ -337,7 +346,7 @@ export default function RecruiterJobsPage() {
                       <p className="text-sm text-gray-500">{job.type}</p>
                     </div>
                   </TableCell>
-                  <TableCell>{job.companyId}</TableCell>
+                  <TableCell>{job.companyName}</TableCell>
                   <TableCell>{job.location}</TableCell>
                   <TableCell>${job.salary}</TableCell>
                   <TableCell>
@@ -345,7 +354,9 @@ export default function RecruiterJobsPage() {
                   </TableCell>
                   <TableCell>{job.categoryName}</TableCell>
                   <TableCell>
-                    {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : "N/A"}
+                    {job.createdAt
+                      ? new Date(job.createdAt).toLocaleDateString()
+                      : "N/A"}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -368,9 +379,11 @@ export default function RecruiterJobsPage() {
                           Xem ứng tuyển
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           className="text-red-600"
-                          onClick={() => job.id && handleDeleteJobPost(job.id.toString())}
+                          onClick={() =>
+                            job.id && handleDeleteJobPost(job.id.toString())
+                          }
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
                           Xóa
@@ -390,9 +403,7 @@ export default function RecruiterJobsPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Chỉnh sửa việc làm</DialogTitle>
-            <DialogDescription>
-              Cập nhật thông tin việc làm
-            </DialogDescription>
+            <DialogDescription>Cập nhật thông tin việc làm</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
@@ -508,7 +519,11 @@ export default function RecruiterJobsPage() {
               <Input
                 id="edit-tags"
                 placeholder="VD: React, Frontend, Web"
-                value={Array.isArray(newJobPost.tags) ? newJobPost.tags.join(", ") : newJobPost.tags || ""}
+                value={
+                  Array.isArray(newJobPost.tags)
+                    ? newJobPost.tags.join(", ")
+                    : newJobPost.tags || ""
+                }
                 onChange={(e) =>
                   setNewJobPost({
                     ...newJobPost,
@@ -525,7 +540,13 @@ export default function RecruiterJobsPage() {
             >
               Hủy
             </Button>
-            <Button onClick={() => selectedJob && selectedJob.id && handleUpdateJobPost(selectedJob.id.toString())}>
+            <Button
+              onClick={() =>
+                selectedJob &&
+                selectedJob.id &&
+                handleUpdateJobPost(selectedJob.id.toString())
+              }
+            >
               Cập nhật
             </Button>
           </DialogFooter>

@@ -2,6 +2,7 @@
 import Image from "next/image";
 import HoverDropdown from "@/components/common/HoverDropdown";
 import UserDropdown from "@/components/common/UserDropdown";
+import NotificationBell from "@/components/common/NotificationBell";
 import { mapRoleEnumToString } from "@/contexts/AuthContext"; // nếu bạn đã export hàm map
 
 import { Link } from "@/i18n/navigation";
@@ -93,13 +94,16 @@ const Navbar = () => {
           </div> */}
           <div className="flex items-center space-x-4 mr-5.5 ml-auto">
             {isAuthenticated ? (
-              <UserDropdown
-                user={{
-                  fullName: user!.fullName,
-                  role: mapRoleEnumToString(user!.role), // 🔁 ánh xạ enum → string
-                }}
-                onLogout={logout}
-              />
+              <>
+                <NotificationBell />
+                <UserDropdown
+                  user={{
+                    fullName: user!.fullName,
+                    role: mapRoleEnumToString(user!.role), // 🔁 ánh xạ enum → string
+                  }}
+                  onLogout={logout}
+                />
+              </>
             ) : (
               <Link
                 href="/candidate/auth/login"
