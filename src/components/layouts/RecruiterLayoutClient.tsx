@@ -4,13 +4,12 @@ import type React from "react";
 
 import { usePathname } from "@/i18n/navigation";
 import Image from "next/image";
-import { Bell } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { RecruiterHeaderNav } from "@/components/recruiter-header-nav"; // Import new header nav
 import { useAuth } from "@/contexts/AuthContext";
 import { mapRoleEnumToString } from "@/contexts/AuthContext";
 import UserDropdown from "@/components/common/UserDropdown";
 import { Link } from "@/i18n/navigation";
+import NotificationBell from "@/components/common/NotificationBell";
 
 export default function RecruiterLayout({
   children,
@@ -70,18 +69,18 @@ export default function RecruiterLayout({
             <RecruiterHeaderNav /> {/* Place header navigation here */}
           </div>
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm">
-              <Bell className="h-5 w-5" />
-            </Button>
             {/* Auth Section */}
             {isAuthenticated ? (
-              <UserDropdown
-                user={{
-                  fullName: user!.fullName,
-                  role: mapRoleEnumToString(user!.role), // 🔁 ánh xạ enum → string
-                }}
-                onLogout={logout}
-              />
+              <>
+                <NotificationBell />
+                <UserDropdown
+                  user={{
+                    fullName: user!.fullName,
+                    role: mapRoleEnumToString(user!.role), // 🔁 ánh xạ enum → string
+                  }}
+                  onLogout={logout}
+                />
+              </>
             ) : (
               <Link
                 href="/candidate/auth/login"

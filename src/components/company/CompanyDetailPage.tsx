@@ -28,7 +28,11 @@ import { Company } from "@/types/Company";
 import { JobPost } from "@/types/JobPost";
 import { Review } from "@/types/Review";
 import { fetchCompanyById, fetchJobsByCompany } from "@/lib/api/company";
-import { fetchReviewsByCompany } from "@/lib/api/review";
+import { fetchReviewsByCompany, createReview } from "@/lib/api/review";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 interface CompanyDetailPageProps {
   companyId: string;
@@ -43,6 +47,11 @@ export default function CompanyDetailPage({
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const { isAuthenticated } = useAuth();
+  const [reviewRating, setReviewRating] = useState<number>(5);
+  const [hoverRating, setHoverRating] = useState<number>(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     const fetchCompanyData = async () => {
@@ -323,6 +332,86 @@ export default function CompanyDetailPage({
                   <CardTitle>Đánh giá từ nhân viên</CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {/* FORM REVIEW */}
+                  <div className="mb-8">
+                    {isAuthenticated ? (
+                      <form
+                        onSubmit={async (e) => {
+                          e.preventDefault();
+                          if (!reviewRating) {
+                            toast.error("Vui lòng chọn số sao.");
+                            return;
+                          }
+                          setSubmittingReview(true);
+                          try {
+                            await createReview({
+                              companyId,
+                              rating: reviewRating,
+                              comment: reviewComment,
+                            });
+                            toast.success("Gửi đánh giá thành công!");
+                            setReviewComment("");
+                            setReviewRating(5);
+                            // Reload reviews
+                            const newReviews = await fetchReviewsByCompany(companyId);
+                            setReviews(newReviews);
+                          } catch (err: unknown) {
+                            const errorMsg = err && typeof err === "object" && "message" in err ? (err as { message?: string }).message : undefined;
+                            toast.error(errorMsg || "Gửi đánh giá thất bại!");
+                          } finally {
+                            setSubmittingReview(false);
+                          }
+                        }}
+                        className="mb-6 bg-gray-50 rounded-lg p-4 border"
+                      >
+                        <div className="flex flex-col md:flex-row gap-4 items-center mb-2">
+                          <Label htmlFor="rating">Số sao:</Label>
+                          <div
+                            className="flex items-center gap-1"
+                            onMouseLeave={() => setHoverRating(0)}
+                          >
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                type="button"
+                                key={star}
+                                onClick={() => setReviewRating(star)}
+                                onMouseEnter={() => setHoverRating(star)}
+                                className="focus:outline-none"
+                                aria-label={`Chọn ${star} sao`}
+                              >
+                                <Star
+                                  className={`w-7 h-7 transition-colors ${
+                                    (hoverRating || reviewRating) >= star
+                                      ? "fill-yellow-400 text-yellow-400"
+                                      : "text-gray-300"
+                                  }`}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="mb-2">
+                          <Label htmlFor="comment">Nhận xét:</Label>
+                          <Textarea
+                            id="comment"
+                            value={reviewComment}
+                            onChange={(e) => setReviewComment(e.target.value)}
+                            placeholder="Nhận xét của bạn về công ty này..."
+                            required
+                            className="mt-1"
+                          />
+                        </div>
+                        <Button type="submit" disabled={submittingReview} className="mt-2">
+                          {submittingReview ? "Đang gửi..." : "Gửi đánh giá"}
+                        </Button>
+                      </form>
+                    ) : (
+                      <div className="mb-6 text-center text-gray-500">
+                        Vui lòng đăng nhập để gửi đánh giá cho công ty này.
+                      </div>
+                    )}
+                  </div>
+                  {/* END FORM REVIEW */}
                   {reviews.length === 0 ? (
                     <div className="text-center py-8">
                       <p className="text-gray-500">

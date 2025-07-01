@@ -281,6 +281,8 @@ export default function CategoryJobsPage({
                   className={viewMode === "list" ? "flex-shrink-0 p-4" : ""}
                 >
                   <Image
+                    width={80}
+                    height={80}
                     src={job.logo || "/placeholder.svg"}
                     alt={`${job.employer?.fullName || "Company"} Logo`}
                     className="w-16 h-16 object-contain rounded-full mx-auto md:mx-0"

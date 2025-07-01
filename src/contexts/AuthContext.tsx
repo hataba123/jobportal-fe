@@ -10,6 +10,7 @@ import {
 import { type Role, type User, RoleEnum } from "@/types/User";
 import type { LoginCredentials } from "@/types/Auth";
 import type { RegisterRequest } from "@/types/RegisterRequest"; // 👈 THÊM
+import { useSession } from "next-auth/react";
 
 type AuthContextType = {
   user: User | null;
@@ -27,6 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { data: session } = useSession();
 
   useEffect(() => {
     const token = getAccessToken();
@@ -44,10 +46,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           clearAccessToken();
         })
         .finally(() => setLoading(false));
+    } else if (session?.backendUser) {
+      setUser(session.backendUser);
+      setLoading(false);
     } else {
       setLoading(false);
     }
-  }, []);
+  }, [session]);
 
   const login = async (credentials: LoginCredentials) => {
     const { token, user } = await loginUser(credentials);

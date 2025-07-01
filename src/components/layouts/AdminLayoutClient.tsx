@@ -7,6 +7,7 @@ import UserDropdown from "@/components/common/UserDropdown";
 import { Link } from "@/i18n/navigation";
 import { getAccessToken } from "@/utils/token";
 import { useRouter } from "@/i18n/navigation";
+import NotificationBell from "../common/NotificationBell";
 
 export default function AdminLayoutClient({
   children,
@@ -102,20 +103,17 @@ export default function AdminLayoutClient({
           <h1 className="text-xl font-semibold text-gray-800">Dashboard</h1>
 
           <div className="flex items-center space-x-4">
-            <button
-              className="text-gray-600 hover:text-gray-900"
-              aria-label="Notifications"
-            >
-              🔔
-            </button>
             {user && (
-              <UserDropdown
-                user={{
-                  fullName: user.fullName,
-                  role: mapRoleEnumToString(user.role),
-                }}
-                onLogout={logout}
-              />
+              <>
+                <NotificationBell />
+                <UserDropdown
+                  user={{
+                    fullName: user.fullName,
+                    role: mapRoleEnumToString(user.role),
+                  }}
+                  onLogout={logout}
+                />
+              </>
             )}
           </div>
         </header>
