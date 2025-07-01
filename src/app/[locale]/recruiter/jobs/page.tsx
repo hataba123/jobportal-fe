@@ -61,6 +61,18 @@ import {
   deleteJobPost as apiDeleteJobPost,
 } from "@/lib/api/recruiter-jobpost";
 import { JobPost } from "@/types/JobPost";
+import { fetchCandidatesForJob, updateJobApplicationStatus } from "@/lib/api/job-application";
+import { toast } from "sonner";
+
+interface CandidateApplicationDto {
+  id: string;
+  fullName?: string;
+  candidateName?: string;
+  email: string;
+  appliedAt: string;
+  cvUrl?: string;
+  status: "Pending" | "Reviewed" | "Accepted" | "Rejected";
+}
 
 export default function RecruiterJobsPage() {
   const [jobs, setJobs] = useState<JobPost[]>([]);
@@ -72,6 +84,11 @@ export default function RecruiterJobsPage() {
     logo: "/placeholder.svg?height=32&width=32",
     tags: [],
   });
+  const [selectedJobForCandidates, setSelectedJobForCandidates] = useState<JobPost | null>(null);
+  const [candidates, setCandidates] = useState<CandidateApplicationDto[]>([]);
+  const [candidatesDialogOpen, setCandidatesDialogOpen] = useState(false);
+  const [loadingCandidates, setLoadingCandidates] = useState(false);
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchJobs();
@@ -138,6 +155,37 @@ export default function RecruiterJobsPage() {
       logo: "/placeholder.svg?height=32&width=32",
       tags: [],
     });
+  };
+
+  const handleViewCandidates = async (job: JobPost) => {
+    setSelectedJobForCandidates(job);
+    setCandidatesDialogOpen(true);
+    setLoadingCandidates(true);
+    try {
+      const data = await fetchCandidatesForJob(job.id);
+      
+      setCandidates(data);
+    } catch {
+      setCandidates([]);
+    } finally {
+      setLoadingCandidates(false);
+    }
+  };
+
+  const handleUpdateStatus = async (applicationId: string, status: string) => {
+    setUpdatingStatusId(applicationId);
+    try {
+      await updateJobApplicationStatus(applicationId, status as "Pending" | "Reviewed" | "Accepted" | "Rejected");
+      if (selectedJobForCandidates) {
+        const data = await fetchCandidatesForJob(selectedJobForCandidates.id);
+        setCandidates(data);
+      }
+      toast.success("Cập nhật trạng thái thành công!");
+    } catch {
+      toast.error("Cập nhật trạng thái thất bại!");
+    } finally {
+      setUpdatingStatusId(null);
+    }
   };
 
   return (
@@ -374,9 +422,9 @@ export default function RecruiterJobsPage() {
                           <Edit className="h-4 w-4 mr-2" />
                           Chỉnh sửa
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleViewCandidates(job)}>
                           <FileText className="h-4 w-4 mr-2" />
-                          Xem ứng tuyển
+                          Xem ứng viên
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
@@ -550,6 +598,65 @@ export default function RecruiterJobsPage() {
               Cập nhật
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog danh sách ứng viên ứng tuyển */}
+      <Dialog open={candidatesDialogOpen} onOpenChange={setCandidatesDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Ứng viên ứng tuyển cho: {selectedJobForCandidates?.title}</DialogTitle>
+          </DialogHeader>
+          {loadingCandidates ? (
+            <div className="py-8 text-center text-gray-500">Đang tải...</div>
+          ) : candidates.length === 0 ? (
+            <div className="py-8 text-center text-gray-500">Chưa có ứng viên nào ứng tuyển.</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Họ tên</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Ngày ứng tuyển</TableHead>
+                  <TableHead>CV</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead>Cập nhật</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {candidates.map((c) => (
+                  <TableRow key={c.id}>
+                    <TableCell>{c.fullName || c.candidateName}</TableCell>
+                    <TableCell>{c.email}</TableCell>
+                    <TableCell>{c.appliedAt ? new Date(c.appliedAt).toLocaleDateString("vi-VN") : ""}</TableCell>
+                    <TableCell>
+                      {c.cvUrl ? (
+                        <a href={c.cvUrl.startsWith("http") ? c.cvUrl : `https://localhost:7146${c.cvUrl}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Xem CV</a>
+                      ) : "—"}
+                    </TableCell>
+                    <TableCell>{c.status}</TableCell>
+                    <TableCell>
+                      <Select
+                        value={c.status}
+                        onValueChange={(value) => handleUpdateStatus(c.id, value)}
+                        disabled={updatingStatusId === c.id}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue placeholder="Chọn trạng thái" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Pending">Chờ xử lý</SelectItem>
+                          <SelectItem value="Reviewed">Đang xem xét</SelectItem>
+                          <SelectItem value="Accepted">Chấp nhận</SelectItem>
+                          <SelectItem value="Rejected">Từ chối</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </DialogContent>
       </Dialog>
     </div>

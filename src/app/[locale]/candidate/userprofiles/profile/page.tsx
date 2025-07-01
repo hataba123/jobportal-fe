@@ -1,11 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { fetchMyProfile, updateMyProfile } from "@/lib/api/candidate-profile";
+import { fetchMyProfile, updateMyProfile, uploadCv, deleteCv } from "@/lib/api/candidate-profile";
 import { toast } from "sonner";
 import {
   Select,
@@ -31,6 +31,8 @@ export default function CandidateProfilePage() {
     certificates: "",
     summary: "",
   });
+  const [cvUrl, setCvUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchMyProfile().then(
@@ -53,6 +55,7 @@ export default function CandidateProfilePage() {
             : data.certificates || "",
           summary: data.summary || "",
         });
+        setCvUrl(data.resumeUrl || null);
       }
     );
   }, []);
@@ -65,12 +68,12 @@ export default function CandidateProfilePage() {
         dob: profile.dob,
         education: profile.education,
         experience: profile.experience,
-        skills: profile.skills, // giữ nguyên string
+        skills: profile.skills,
         gender: profile.gender,
         portfolioUrl: profile.portfolioUrl,
         linkedinUrl: profile.linkedinUrl,
         githubUrl: profile.githubUrl,
-        certificates: profile.certificates, // giữ nguyên string
+        certificates: profile.certificates,
         summary: profile.summary,
       });
       toast.success("Cập nhật hồ sơ thành công!");
@@ -82,6 +85,28 @@ export default function CandidateProfilePage() {
 
   const handleCancel = () => {
     setIsEditing(false);
+  };
+
+  const handleUploadCv = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const url = await uploadCv(file);
+      setCvUrl(url);
+      toast.success("Tải lên CV thành công!");
+    } catch {
+      toast.error("Tải lên CV thất bại!");
+    }
+  };
+
+  const handleDeleteCv = async () => {
+    try {
+      await deleteCv();
+      setCvUrl(null);
+      toast.success("Đã xóa CV!");
+    } catch {
+      toast.error("Xóa CV thất bại!");
+    }
   };
 
   return (
@@ -96,6 +121,45 @@ export default function CandidateProfilePage() {
               Hủy
             </Button>
             <Button onClick={handleSave}>Lưu thay đổi</Button>
+          </div>
+        )}
+      </div>
+
+      {/* Quản lý CV */}
+      <div className="mb-6">
+        <h2 className="font-bold mb-2">CV của bạn</h2>
+        {cvUrl ? (
+          <div className="flex items-center space-x-4">
+            <a
+              href={`https://localhost:7146${cvUrl}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+            >
+              Xem CV
+            </a>
+            <button
+              onClick={handleDeleteCv}
+              className="text-red-600 hover:underline"
+            >
+              Xóa CV
+            </button>
+          </div>
+        ) : (
+          <div>
+            <input
+              type="file"
+              accept="application/pdf"
+              ref={fileInputRef}
+              onChange={handleUploadCv}
+              className="hidden"
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              Nộp CV (PDF)
+            </button>
           </div>
         )}
       </div>

@@ -29,6 +29,7 @@ export interface CandidateProfileDetailDto {
 }
 
 export interface CandidateApplicationDto {
+  id: string;
   jobId: string;
   jobPostId: string;
   jobTitle: string;

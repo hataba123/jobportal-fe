@@ -2,6 +2,7 @@ import { User } from "@/types/User";
 
 export interface CandidateProfiles extends User {
   resumeUrl?: string; // Đường dẫn CV
+  cvUrl?: string; // Đường dẫn CV (đồng bộ với backend)
   experience?: string; // Kinh nghiệm làm việc (mô tả ngắn)
   skills?: string[]; // Danh sách kỹ năng
   education?: string; // Trình độ học vấn

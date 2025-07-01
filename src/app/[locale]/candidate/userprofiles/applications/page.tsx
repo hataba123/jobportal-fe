@@ -11,11 +11,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { fetchMyAppliedJobs, deleteJobApplication, fetchJobApplicationDetail } from "@/lib/api/job-application";
+import {
+  fetchMyAppliedJobs,
+  deleteJobApplication,
+  fetchJobApplicationDetail,
+} from "@/lib/api/job-application";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import axiosInstance from "@/lib/axiosInstance";
 
 type Application = {
+  id: string; // ← cần thêm
   jobPostId: string;
   title: string;
   description: string;
@@ -41,6 +52,11 @@ const getStatusBadge = (status: Application["status"]) => {
   };
 
   const config = statusConfig[status];
+
+  if (!config) {
+    return <Badge className="bg-gray-100 text-gray-800">Không rõ</Badge>;
+  }
+
   return <Badge className={config.className}>{config.label}</Badge>;
 };
 
@@ -51,14 +67,20 @@ export default function ApplicationsPage() {
   const [open, setOpen] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [newCvFile, setNewCvFile] = useState<File | null>(null);
+  const [updatingCv, setUpdatingCv] = useState(false);
 
   useEffect(() => {
     fetchMyAppliedJobs().then((data: unknown) => {
       const arr = Array.isArray(data) ? data : [];
+  
+      const statusMap = ["PENDING", "REVIEWING", "ACCEPTED", "REJECTED"] as const;
+  
       setApplications(
         arr.map((item) => {
-          const app = item as Partial<Application>;
+          const app = item as Partial<Application> & { status?: number };
           return {
+            id: app.id || "", // ✅ thêm dòng này
             jobPostId: app.jobPostId || "",
             title: app.title || "(Không có tiêu đề)",
             description: app.description || "",
@@ -66,7 +88,7 @@ export default function ApplicationsPage() {
             location: app.location || "",
             salary: app.salary ? app.salary.toLocaleString() : "",
             appliedAt: app.appliedAt || "",
-            status: (app.status as Application["status"]) || "PENDING",
+            status: statusMap[app.status ?? 0] ?? "PENDING",
           };
         })
       );
@@ -78,7 +100,7 @@ export default function ApplicationsPage() {
     setOpen(true);
     setLoadingDetail(true);
     try {
-      const data = await fetchJobApplicationDetail(app.jobPostId);
+      const data = await fetchJobApplicationDetail(app.id);
       setDetail(data);
     } catch {
       setDetail(null);
@@ -91,7 +113,9 @@ export default function ApplicationsPage() {
     setDeletingId(app.jobPostId);
     try {
       await deleteJobApplication(app.jobPostId);
-      setApplications((prev) => prev.filter((a) => a.jobPostId !== app.jobPostId));
+      setApplications((prev) =>
+        prev.filter((a) => a.jobPostId !== app.jobPostId)
+      );
       toast.success("Đã hủy đơn ứng tuyển.");
     } catch {
       toast.error("Hủy đơn thất bại. Vui lòng thử lại.");
@@ -101,6 +125,7 @@ export default function ApplicationsPage() {
   };
 
   return (
+    
     <div className="max-w-6xl mx-auto my-9">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">
@@ -129,19 +154,25 @@ export default function ApplicationsPage() {
             </TableHeader>
             <TableBody>
               {applications.map((application) => (
-                <TableRow key={application.jobPostId}>
+                <TableRow key={application.id}>
                   <TableCell className="font-medium">
                     {application.title}
                   </TableCell>
                   <TableCell>{application.location}</TableCell>
                   <TableCell>{application.salary}</TableCell>
                   <TableCell>
-                    {new Date(application.appliedAt).toLocaleDateString("vi-VN")}
+                    {new Date(application.appliedAt).toLocaleDateString(
+                      "vi-VN"
+                    )}
                   </TableCell>
                   <TableCell>{getStatusBadge(application.status)}</TableCell>
                   <TableCell>
                     <div className="space-x-2">
-                      <Button variant="outline" size="sm" onClick={() => handleViewDetail(application)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewDetail(application)}
+                      >
                         Xem chi tiết
                       </Button>
                       {application.status === "PENDING" && (
@@ -150,9 +181,11 @@ export default function ApplicationsPage() {
                           size="sm"
                           className="text-red-600"
                           onClick={() => handleCancel(application)}
-                          disabled={deletingId === application.jobPostId}
+                          disabled={deletingId === application.id}
                         >
-                          {deletingId === application.jobPostId ? "Đang hủy..." : "Hủy đơn"}
+                          {deletingId === application.id
+                            ? "Đang hủy..."
+                            : "Hủy đơn"}
                         </Button>
                       )}
                     </div>
@@ -210,24 +243,98 @@ export default function ApplicationsPage() {
             <div className="py-8 text-center text-gray-500">Đang tải...</div>
           ) : detail ? (
             (() => {
-              const d: Partial<Application> & { [key: string]: unknown } = detail as Partial<Application> & { [key: string]: unknown };
+              const d: Partial<Application> & { [key: string]: unknown } =
+                detail as Partial<Application> & { [key: string]: unknown };
               return (
                 <div className="space-y-2">
-                  <div><b>Vị trí:</b> {String(d.jobTitle || selected?.title || "")}</div>
-                  <div><b>Địa điểm:</b> {String(d.location || selected?.location || "")}</div>
-                  <div><b>Lương:</b> {String(d.salary || selected?.salary || "")}</div>
-                  <div><b>Ngày ứng tuyển:</b> {d.appliedAt ? new Date(String(d.appliedAt)).toLocaleDateString("vi-VN") : (selected?.appliedAt || "")}</div>
-                  <div><b>Trạng thái:</b> {d.status ? getStatusBadge(String(d.status) as Application["status"]) : getStatusBadge(selected?.status || "PENDING")}</div>
-                  <div><b>Mô tả:</b> {String(d.description || selected?.description || "")}</div>
-                  <div><b>Kỹ năng yêu cầu:</b> {String(d.skillsRequired || selected?.skillsRequired || "")}</div>
+                  <div>
+                    <b>Vị trí:</b> {String(d.jobTitle || selected?.title || "")}
+                  </div>
+                  <div>
+                    <b>Địa điểm:</b>{" "}
+                    {String(d.location || selected?.location || "")}
+                  </div>
+                  <div>
+                    <b>Lương:</b> {String(d.salary || selected?.salary || "")}
+                  </div>
+                  <div>
+                    <b>Ngày ứng tuyển:</b>{" "}
+                    {d.appliedAt
+                      ? new Date(String(d.appliedAt)).toLocaleDateString(
+                          "vi-VN"
+                        )
+                      : selected?.appliedAt || ""}
+                  </div>
+                  <div>
+                    <b>Trạng thái:</b>{" "}
+                    {getStatusBadge(
+                      (typeof d.status === "string"
+                        ? d.status.toUpperCase()
+                        : selected?.status || "PENDING") as Application["status"]
+                    )}
+                  </div>
+                  <div>
+                    <b>Mô tả:</b>{" "}
+                    {String(d.description || selected?.description || "")}
+                  </div>
+                  <div>
+                    <b>Kỹ năng yêu cầu:</b>{" "}
+                    {String(d.skillsRequired || selected?.skillsRequired || "")}
+                  </div>
                   {typeof d.cvUrl === "string" && d.cvUrl.length > 0 && (
-                    <div><b>CV đã nộp:</b> <a href={d.cvUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Xem CV</a></div>
+                    <div>
+                      <b>CV đã nộp:</b>{" "}
+                      <a
+                        href={d.cvUrl.startsWith("https") ? d.cvUrl : `https://localhost:7146${d.cvUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        Xem CV
+                      </a>
+                      <div className="mt-2">
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          onChange={e => setNewCvFile(e.target.files?.[0] || null)}
+                          disabled={updatingCv}
+                        />
+                        <Button
+                          size="sm"
+                          className="ml-2"
+                          disabled={!newCvFile || updatingCv}
+                          onClick={async () => {
+                            if (!newCvFile) return;
+                            setUpdatingCv(true);
+                            try {
+                              const formData = new FormData();
+                              formData.append("file", newCvFile);
+                              // Gọi API cập nhật lại CV cho đơn ứng tuyển
+                              const res = await axiosInstance.put(`/jobapplication/${d.id}/cv`, formData, {
+                                headers: { "Content-Type": "multipart/form-data" },
+                              });
+                              toast.success("Cập nhật CV thành công!");
+                              setDetail({ ...d, cvUrl: res.data.cvUrl });
+                              setNewCvFile(null);
+                            } catch {
+                              toast.error("Cập nhật CV thất bại!");
+                            } finally {
+                              setUpdatingCv(false);
+                            }
+                          }}
+                        >
+                          {updatingCv ? "Đang cập nhật..." : "Thay đổi CV"}
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </div>
               );
             })()
           ) : (
-            <div className="py-8 text-center text-gray-500">Không tìm thấy chi tiết đơn ứng tuyển.</div>
+            <div className="py-8 text-center text-gray-500">
+              Không tìm thấy chi tiết đơn ứng tuyển.
+            </div>
           )}
         </DialogContent>
       </Dialog>

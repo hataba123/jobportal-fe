@@ -35,6 +35,8 @@ import { fetchJobPostById, fetchAllJobPosts } from "@/lib/api/jobpost";
 import { JobPost } from "@/types/JobPost";
 import { fetchSavedJobs, saveJob, unsaveJob } from "@/lib/api/saved-job";
 import { toast } from "sonner";
+import { applyJob } from "@/lib/api/job-application";
+import { fetchMyProfile, uploadCv } from "@/lib/api/candidate-profile";
 
 interface ApplicationForm {
   fullName: string;
@@ -67,6 +69,8 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
     coverLetter: "",
     resume: null,
   });
+  const [existingCvUrl, setExistingCvUrl] = useState<string | null>(null);
+  const [useExistingCv, setUseExistingCv] = useState(true);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -110,16 +114,31 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
       });
       setIsSaved(!!found);
     });
+
+    // Lấy CV cũ nếu có
+    fetchMyProfile().then(profile => {
+      const url = profile.cvUrl || profile.resumeUrl || null;
+      setExistingCvUrl(url);
+      setUseExistingCv(!!url);
+    });
   }, [jobId]);
 
   const handleApply = async () => {
     setIsApplying(true);
     try {
-      // TODO: Implement actual application API
-      // For now, just simulate the API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      
-      alert("Đơn ứng tuyển đã được gửi thành công!");
+      let cvUrl: string | undefined = undefined;
+      if (existingCvUrl && useExistingCv) {
+        cvUrl = existingCvUrl;
+      } else if (applicationForm.resume) {
+        cvUrl = await uploadCv(applicationForm.resume);
+      }
+      if (!cvUrl) {
+        toast.error("Bạn cần tải lên CV trước khi ứng tuyển.");
+        setIsApplying(false);
+        return;
+      }
+      await applyJob(jobId, cvUrl);
+      toast.success("Đơn ứng tuyển đã được gửi thành công!");
       setApplicationForm({
         fullName: "",
         email: "",
@@ -127,9 +146,12 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
         coverLetter: "",
         resume: null,
       });
-    } catch (error) {
-      console.error("Error applying for job:", error);
-      alert("Có lỗi xảy ra khi gửi đơn ứng tuyển. Vui lòng thử lại.");
+    } catch (error: unknown) {
+      type ErrorWithResponse = { response?: { data?: { message?: string } } };
+      const errorMessage = (error && typeof error === 'object' && 'response' in error && (error as ErrorWithResponse).response?.data?.message)
+        ? (error as ErrorWithResponse).response!.data!.message!
+        : "Có lỗi xảy ra khi gửi đơn ứng tuyển. Vui lòng thử lại.";
+      toast.error(errorMessage);
     } finally {
       setIsApplying(false);
     }
@@ -312,15 +334,41 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                       rows={4}
                     />
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="resume">CV/Resume</Label>
-                    <Input
-                      id="resume"
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      onChange={(e) => setApplicationForm((prev) => ({ ...prev, resume: e.target.files?.[0] || null }))}
-                    />
-                  </div>
+                  {existingCvUrl && (
+                    <div className="mb-2">
+                      <label>
+                        <input
+                          type="radio"
+                          checked={useExistingCv}
+                          onChange={() => setUseExistingCv(true)}
+                        />
+                        Sử dụng CV đã có (
+                        <a href={`https://localhost:7146${useExistingCv}`} target="_blank" rel="noopener noreferrer" className="underline text-blue-600">
+                          Xem CV
+                        </a>
+                        )
+                      </label>
+                      <label className="ml-4">
+                        <input
+                          type="radio"
+                          checked={!useExistingCv}
+                          onChange={() => setUseExistingCv(false)}
+                        />
+                        Upload file mới
+                      </label>
+                    </div>
+                  )}
+                  {(!existingCvUrl || !useExistingCv) && (
+                    <div className="grid gap-2">
+                      <Label htmlFor="resume">CV/Resume</Label>
+                      <Input
+                        id="resume"
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={(e) => setApplicationForm((prev) => ({ ...prev, resume: e.target.files?.[0] || null }))}
+                      />
+                    </div>
+                  )}
                 </div>
                 <DialogFooter>
                   <Button
