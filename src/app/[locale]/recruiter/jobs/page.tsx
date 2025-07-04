@@ -672,7 +672,37 @@ export default function RecruiterJobsPage() {
                         "—"
                       )}
                     </TableCell>
-                    <TableCell>{c.status}</TableCell>
+                    <TableCell>
+                      {/* Hiển thị badge màu sắc theo trạng thái, label tiếng Việt chỉ để hiển thị, value vẫn giữ đúng enum tiếng Anh */}
+                      <Badge
+                        variant={
+                          c.status === "Pending"
+                            ? "secondary"
+                            : c.status === "Reviewed"
+                            ? "default"
+                            : c.status === "Accepted"
+                            ? "outline"
+                            : c.status === "Rejected"
+                            ? "destructive"
+                            : undefined
+                        }
+                        className={
+                          c.status === "Accepted"
+                            ? "bg-green-500 text-white border-green-500"
+                            : ""
+                        }
+                      >
+                        {c.status === "Pending"
+                          ? "Chờ xử lý"
+                          : c.status === "Reviewed"
+                          ? "Đang xem xét"
+                          : c.status === "Accepted"
+                          ? "Chấp nhận"
+                          : c.status === "Rejected"
+                          ? "Từ chối"
+                          : c.status}
+                      </Badge>
+                    </TableCell>
                     <TableCell>
                       <Select
                         value={c.status}
