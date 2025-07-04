@@ -393,12 +393,17 @@ export default function HomepageContent() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {categories.map((category) => {
+                // Lấy icon cho category nếu có
                 const IconComponent = category.icon
                   ? iconMap[category.icon]
                   : undefined;
+                // Đếm số lượng việc làm theo categoryId (chuẩn, tránh so sánh theo tên)
+                const jobCount = jobPosts.filter(
+                  (job) => job.categoryId === category.id
+                ).length;
                 return (
                   <Card
-                    key={category.name}
+                    key={category.id || category.name}
                     className="hover:shadow-lg transition-shadow cursor-pointer"
                     onClick={() =>
                       handleCategoryClick(category.id || category.name)
@@ -414,12 +419,7 @@ export default function HomepageContent() {
                       </div>
                       <h3 className="font-semibold mb-2">{category.name}</h3>
                       <p className="text-sm text-gray-600">
-                        {
-                          jobPosts.filter(
-                            (job) => job.categoryName === category.name
-                          ).length
-                        }{" "}
-                        việc làm
+                        {jobCount} việc làm
                       </p>
                     </CardContent>
                   </Card>

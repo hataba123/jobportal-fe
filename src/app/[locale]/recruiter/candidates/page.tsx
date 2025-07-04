@@ -420,22 +420,44 @@ const CandidatesPage = () => {
                             </TableCell>
                             <TableCell>{formatDate(app.appliedAt)}</TableCell>
                             <TableCell>
+                              {/* Hiển thị badge trạng thái với màu sắc riêng */}
+                              {/* Hiển thị badge trạng thái với màu sắc và label theo API trả về */}
                               <Badge
-                                variant={
-                                  app.status === "PENDING"
-                                    ? "secondary"
-                                    : app.status === "ACCEPTED"
-                                    ? "default"
-                                    : "destructive"
+                                className={
+                                  app.status === "Pending"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : app.status === "Accepted"
+                                    ? "bg-green-100 text-green-800"
+                                    : app.status === "Rejected"
+                                    ? "bg-red-100 text-red-800"
+                                    : app.status === "Reviewed"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : "bg-gray-100 text-gray-800"
                                 }
                               >
-                                {app.status}
+                                {app.status === "Pending"
+                                  ? "Chờ xử lý"
+                                  : app.status === "Accepted"
+                                  ? "Được chấp nhận"
+                                  : app.status === "Rejected"
+                                  ? "Từ chối"
+                                  : app.status === "Reviewed"
+                                  ? "Đang xem xét"
+                                  : app.status}
                               </Badge>
                             </TableCell>
                             <TableCell>
+                              {/* Hiển thị link CV, lấy domain từ biến môi trường nếu là đường dẫn tương đối */}
                               {app.cvUrl ? (
                                 <a
-                                  href={app.cvUrl}
+                                  href={
+                                    app.cvUrl.startsWith("https")
+                                      ? app.cvUrl
+                                      : `${process.env.NEXT_PUBLIC_API_URL?.replace(
+                                          /\/api$/,
+                                          ""
+                                        )}${app.cvUrl}`
+                                  }
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex items-center text-blue-600 hover:text-blue-800 underline"
