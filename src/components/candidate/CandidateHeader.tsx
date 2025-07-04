@@ -41,6 +41,7 @@ const navigationItems = [
   },
 ];
 
+// Component header điều hướng cho candidate, responsive cho mobile và desktop
 export default function CandidateHeader() {
   const router = useRouter();
   const pathname = usePathname();
@@ -50,23 +51,28 @@ export default function CandidateHeader() {
   };
 
   return (
-    <div className="bg-white shadow-sm border-b border-gray-200 ">
-      <div className="container mx-auto px-4">
-        <nav className="flex space-x-8">
+    <div className="bg-white shadow-sm border-b border-gray-200">
+      <div className="container mx-auto px-2 sm:px-4">
+        {/* Thanh điều hướng ngang, cuộn ngang trên mobile */}
+        <nav className="flex overflow-x-auto space-x-4 sm:space-x-8 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
           {navigationItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <button
                 key={item.name}
                 onClick={() => handleNavigation(item.href)}
-                className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
+                className={`flex items-center space-x-2 py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition-colors whitespace-nowrap ${
                   isActive
-                    ? "border-blue-500 text-blue-600"
+                    ? "border-blue-500 text-blue-600 bg-blue-50"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
               >
                 <item.icon className="w-5 h-5" />
-                <span>{item.name}</span>
+                {/* Hiển thị đầy đủ tên trên màn hình sm trở lên, rút gọn trên mobile */}
+                <span className="hidden sm:inline">{item.name}</span>
+                <span className="inline sm:hidden">
+                  {item.name.split(" ")[0]}
+                </span>
               </button>
             );
           })}

@@ -10,7 +10,7 @@ export function useJobPosts() {
   useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     axios
-      .get<JobPost[]>(`${apiUrl}/JobPost`)
+      .get<JobPost[]>(`${apiUrl}/jobpost`)
       .then((res) => setJobPosts(res.data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));

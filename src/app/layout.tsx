@@ -16,7 +16,7 @@ export default async function RootLayout({
   // }
   return (
     <html lang={locale}>
-      <body clasosName="min-h-screen flex flex-col">{children}</body>
+      <body className="min-h-screen flex flex-col">{children}</body>
     </html>
   );
 }

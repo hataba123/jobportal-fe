@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "@/i18n/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -78,12 +84,15 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
       try {
         const jobData = await fetchJobPostById(jobId);
         setJob(jobData);
-        
+
         // Fetch similar jobs based on category
         if (jobData.categoryId) {
           const allJobs = await fetchAllJobPosts();
           const similar = allJobs
-            .filter((j: JobPost) => j.id !== jobId && j.categoryId === jobData.categoryId)
+            .filter(
+              (j: JobPost) =>
+                j.id !== jobId && j.categoryId === jobData.categoryId
+            )
             .slice(0, 3)
             .map((j: JobPost) => ({
               id: j.id,
@@ -116,7 +125,7 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
     });
 
     // Lấy CV cũ nếu có
-    fetchMyProfile().then(profile => {
+    fetchMyProfile().then((profile) => {
       const url = profile.cvUrl || profile.resumeUrl || null;
       setExistingCvUrl(url);
       setUseExistingCv(!!url);
@@ -148,9 +157,13 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
       });
     } catch (error: unknown) {
       type ErrorWithResponse = { response?: { data?: { message?: string } } };
-      const errorMessage = (error && typeof error === 'object' && 'response' in error && (error as ErrorWithResponse).response?.data?.message)
-        ? (error as ErrorWithResponse).response!.data!.message!
-        : "Có lỗi xảy ra khi gửi đơn ứng tuyển. Vui lòng thử lại.";
+      const errorMessage =
+        error &&
+        typeof error === "object" &&
+        "response" in error &&
+        (error as ErrorWithResponse).response?.data?.message
+          ? (error as ErrorWithResponse).response!.data!.message!
+          : "Có lỗi xảy ra khi gửi đơn ứng tuyển. Vui lòng thử lại.";
       toast.error(errorMessage);
     } finally {
       setIsApplying(false);
@@ -209,7 +222,9 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
         <h1 className="text-2xl font-bold mb-4">Không tìm thấy việc làm</h1>
-        <p className="text-gray-600 mb-6">Việc làm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
+        <p className="text-gray-600 mb-6">
+          Việc làm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.
+        </p>
         <Button onClick={() => router.push("/candidate/job")}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Quay lại danh sách việc làm
@@ -222,11 +237,19 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb */}
       <div className="flex items-center text-sm text-gray-600 mb-6">
-        <button onClick={() => router.push("/candidate/job")} className="hover:text-blue-600">
+        <button
+          onClick={() => router.push("/candidate/job")}
+          className="hover:text-blue-600"
+        >
           Việc làm
         </button>
         <span className="mx-2">/</span>
-        <button onClick={() => router.push(`/candidate/category/${job.categoryId || 'all'}`)} className="hover:text-blue-600">
+        <button
+          onClick={() =>
+            router.push(`/candidate/category/${job.categoryId || "all"}`)
+          }
+          className="hover:text-blue-600"
+        >
           {job.categoryName}
         </button>
         <span className="mx-2">/</span>
@@ -239,15 +262,22 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
           <div className="flex flex-col md:flex-row gap-6">
             <Image
               src={job.logo || "/placeholder.svg"}
-              alt={`${job.employer?.fullName || 'Company'} Logo`}
+              alt={`${job.employer?.fullName || "Company"} Logo`}
               width={80}
               height={80}
               className="w-20 h-20 object-contain rounded-lg border"
             />
             <div className="flex-1">
-              <CardTitle className="text-3xl font-bold mb-2">{job.title}</CardTitle>
+              <CardTitle className="text-3xl font-bold mb-2">
+                {job.title}
+              </CardTitle>
               <CardDescription className="text-xl text-blue-600 mb-4">
-                <button onClick={() => router.push(`/candidate/company/${job.companyId}`)} className="hover:underline">
+                <button
+                  onClick={() =>
+                    router.push(`/candidate/company/${job.companyId}`)
+                  }
+                  className="hover:underline"
+                >
                   {job.employer?.fullName || job.companyName || "N/A"}
                 </button>
               </CardDescription>
@@ -257,7 +287,8 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                   {job.location}
                 </div>
                 <div className="flex items-center">
-                  <DollarSign className="w-4 h-4 mr-2" />${job.salary.toLocaleString()}/tháng
+                  <DollarSign className="w-4 h-4 mr-2" />$
+                  {job.salary.toLocaleString()}/tháng
                 </div>
                 <div className="flex items-center">
                   <Briefcase className="w-4 h-4 mr-2" />
@@ -277,11 +308,12 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3 mb-6">
-            {Array.isArray(job.tags) && job.tags.map((tag) => (
-              <Badge key={tag} variant="secondary">
-                {tag}
-              </Badge>
-            ))}
+            {Array.isArray(job.tags) &&
+              job.tags.map((tag) => (
+                <Badge key={tag} variant="secondary">
+                  {tag}
+                </Badge>
+              ))}
           </div>
           <div className="flex flex-wrap gap-3">
             <Dialog>
@@ -293,7 +325,9 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                   <DialogTitle>Ứng tuyển: {job.title}</DialogTitle>
-                  <DialogDescription>Điền thông tin của bạn để ứng tuyển vào vị trí này.</DialogDescription>
+                  <DialogDescription>
+                    Điền thông tin của bạn để ứng tuyển vào vị trí này.
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
@@ -301,7 +335,12 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                     <Input
                       id="fullName"
                       value={applicationForm.fullName}
-                      onChange={(e) => setApplicationForm((prev) => ({ ...prev, fullName: e.target.value }))}
+                      onChange={(e) =>
+                        setApplicationForm((prev) => ({
+                          ...prev,
+                          fullName: e.target.value,
+                        }))
+                      }
                       placeholder="Nhập họ và tên"
                     />
                   </div>
@@ -311,7 +350,12 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                       id="email"
                       type="email"
                       value={applicationForm.email}
-                      onChange={(e) => setApplicationForm((prev) => ({ ...prev, email: e.target.value }))}
+                      onChange={(e) =>
+                        setApplicationForm((prev) => ({
+                          ...prev,
+                          email: e.target.value,
+                        }))
+                      }
                       placeholder="Nhập email"
                     />
                   </div>
@@ -320,7 +364,12 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                     <Input
                       id="phone"
                       value={applicationForm.phone}
-                      onChange={(e) => setApplicationForm((prev) => ({ ...prev, phone: e.target.value }))}
+                      onChange={(e) =>
+                        setApplicationForm((prev) => ({
+                          ...prev,
+                          phone: e.target.value,
+                        }))
+                      }
                       placeholder="Nhập số điện thoại"
                     />
                   </div>
@@ -329,7 +378,12 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                     <Textarea
                       id="coverLetter"
                       value={applicationForm.coverLetter}
-                      onChange={(e) => setApplicationForm((prev) => ({ ...prev, coverLetter: e.target.value }))}
+                      onChange={(e) =>
+                        setApplicationForm((prev) => ({
+                          ...prev,
+                          coverLetter: e.target.value,
+                        }))
+                      }
                       placeholder="Viết thư xin việc của bạn..."
                       rows={4}
                     />
@@ -343,7 +397,21 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                           onChange={() => setUseExistingCv(true)}
                         />
                         Sử dụng CV đã có (
-                        <a href={`https://localhost:7146${useExistingCv}`} target="_blank" rel="noopener noreferrer" className="underline text-blue-600">
+                        <a
+                          href={
+                            typeof existingCvUrl === "string" && existingCvUrl
+                              ? existingCvUrl.startsWith("https")
+                                ? existingCvUrl
+                                : `${process.env.NEXT_PUBLIC_API_URL?.replace(
+                                    /\/api$/,
+                                    ""
+                                  )}${existingCvUrl}`
+                              : "#"
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline text-blue-600"
+                        >
                           Xem CV
                         </a>
                         )
@@ -365,7 +433,12 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                         id="resume"
                         type="file"
                         accept=".pdf,.doc,.docx"
-                        onChange={(e) => setApplicationForm((prev) => ({ ...prev, resume: e.target.files?.[0] || null }))}
+                        onChange={(e) =>
+                          setApplicationForm((prev) => ({
+                            ...prev,
+                            resume: e.target.files?.[0] || null,
+                          }))
+                        }
                       />
                     </div>
                   )}
@@ -374,7 +447,10 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                   <Button
                     onClick={handleApply}
                     disabled={
-                      isApplying || !applicationForm.fullName || !applicationForm.email || !applicationForm.phone
+                      isApplying ||
+                      !applicationForm.fullName ||
+                      !applicationForm.email ||
+                      !applicationForm.phone
                     }
                     className="w-full"
                   >
@@ -389,7 +465,9 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
               onClick={handleSave}
               className={isSaved ? "text-blue-600 border-blue-600" : ""}
             >
-              <Bookmark className={`w-4 h-4 mr-2 ${isSaved ? "fill-current" : ""}`} />
+              <Bookmark
+                className={`w-4 h-4 mr-2 ${isSaved ? "fill-current" : ""}`}
+              />
               {isSaved ? "Đã lưu" : "Lưu việc làm"}
             </Button>
             <Button
@@ -398,7 +476,9 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
               onClick={() => setIsLiked(!isLiked)}
               className={isLiked ? "text-red-600 border-red-600" : ""}
             >
-              <Heart className={`w-4 h-4 mr-2 ${isLiked ? "fill-current" : ""}`} />
+              <Heart
+                className={`w-4 h-4 mr-2 ${isLiked ? "fill-current" : ""}`}
+              />
               {isLiked ? "Đã thích" : "Yêu thích"}
             </Button>
             <Button variant="outline" size="lg" onClick={handleShare}>
@@ -420,12 +500,17 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
               <div className="prose max-w-none">
                 {job.description ? (
                   job.description.split("\n").map((paragraph, index) => (
-                    <p key={index} className="mb-4 text-gray-700 leading-relaxed">
+                    <p
+                      key={index}
+                      className="mb-4 text-gray-700 leading-relaxed"
+                    >
                       {paragraph}
                     </p>
                   ))
                 ) : (
-                  <p className="text-gray-500 italic">Chưa có mô tả chi tiết cho vị trí này.</p>
+                  <p className="text-gray-500 italic">
+                    Chưa có mô tả chi tiết cho vị trí này.
+                  </p>
                 )}
               </div>
             </CardContent>
@@ -439,12 +524,18 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
               <div className="flex flex-wrap gap-3">
                 {Array.isArray(job.tags) && job.tags.length > 0 ? (
                   job.tags.map((skill) => (
-                    <Badge key={skill} variant="outline" className="text-sm py-2 px-3">
+                    <Badge
+                      key={skill}
+                      variant="outline"
+                      className="text-sm py-2 px-3"
+                    >
                       {skill}
                     </Badge>
                   ))
                 ) : (
-                  <p className="text-gray-500 italic">Chưa có thông tin kỹ năng yêu cầu.</p>
+                  <p className="text-gray-500 italic">
+                    Chưa có thông tin kỹ năng yêu cầu.
+                  </p>
                 )}
               </div>
             </CardContent>
@@ -468,11 +559,15 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                   className="w-12 h-12 object-contain rounded mr-3"
                 />
                 <div>
-                  <h3 className="font-semibold">{job.employer?.fullName || job.companyName || "N/A"}</h3>
+                  <h3 className="font-semibold">
+                    {job.employer?.fullName || job.companyName || "N/A"}
+                  </h3>
                   <p className="text-sm text-gray-600">N/A nhân viên</p>
                 </div>
               </div>
-              <p className="text-sm text-gray-700 mb-4">Chưa có mô tả công ty.</p>
+              <p className="text-sm text-gray-700 mb-4">
+                Chưa có mô tả công ty.
+              </p>
               <div className="space-y-2">
                 <div className="flex items-center text-sm">
                   <Building2 className="w-4 h-4 mr-2 text-gray-500" />
@@ -486,7 +581,9 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
               <Button
                 variant="outline"
                 className="w-full mt-4 bg-transparent"
-                onClick={() => router.push(`/candidate/company/${job.companyId}`)}
+                onClick={() =>
+                  router.push(`/candidate/company/${job.companyId}`)
+                }
               >
                 Xem trang công ty
               </Button>
@@ -502,7 +599,9 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Mức lương:</span>
-                  <span className="font-semibold">${job.salary.toLocaleString()}/tháng</span>
+                  <span className="font-semibold">
+                    ${job.salary.toLocaleString()}/tháng
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Loại hình:</span>
@@ -515,7 +614,11 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Danh mục:</span>
                   <button
-                    onClick={() => router.push(`/candidate/category/${job.categoryId || 'all'}`)}
+                    onClick={() =>
+                      router.push(
+                        `/candidate/category/${job.categoryId || "all"}`
+                      )
+                    }
                     className="text-blue-600 hover:underline"
                   >
                     {job.categoryName}
@@ -527,7 +630,9 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Ngày đăng:</span>
-                  <span>{new Date(job.createdAt).toLocaleDateString("vi-VN")}</span>
+                  <span>
+                    {new Date(job.createdAt).toLocaleDateString("vi-VN")}
+                  </span>
                 </div>
               </div>
             </CardContent>
@@ -542,13 +647,23 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
               <div className="space-y-4">
                 {similarJobs.length > 0 ? (
                   similarJobs.map((similarJob) => (
-                    <div key={similarJob.id} className="border-b border-gray-100 pb-4 last:border-b-0">
+                    <div
+                      key={similarJob.id}
+                      className="border-b border-gray-100 pb-4 last:border-b-0"
+                    >
                       <h4 className="font-semibold text-sm mb-1">
-                        <button onClick={() => router.push(`/candidate/job/${similarJob.id}`)} className="hover:text-blue-600">
+                        <button
+                          onClick={() =>
+                            router.push(`/candidate/job/${similarJob.id}`)
+                          }
+                          className="hover:text-blue-600"
+                        >
                           {similarJob.title}
                         </button>
                       </h4>
-                      <p className="text-sm text-gray-600 mb-1">{similarJob.companyName}</p>
+                      <p className="text-sm text-gray-600 mb-1">
+                        {similarJob.companyName}
+                      </p>
                       <div className="flex justify-between text-xs text-gray-500">
                         <span>{similarJob.location}</span>
                         <span>${similarJob.salary.toLocaleString()}</span>
@@ -556,7 +671,9 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-gray-500">Chưa có việc làm tương tự.</p>
+                  <p className="text-sm text-gray-500">
+                    Chưa có việc làm tương tự.
+                  </p>
                 )}
               </div>
             </CardContent>
@@ -565,4 +682,4 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
       </div>
     </div>
   );
-} 
+}

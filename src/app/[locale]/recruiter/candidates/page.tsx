@@ -28,15 +28,25 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { searchCandidates, getCandidateById, getCandidateApplications, CandidateProfileBriefDto, CandidateProfileDetailDto, CandidateApplicationDto } from "@/lib/api/recruiter-candidates";
+import {
+  searchCandidates,
+  getCandidateById,
+  getCandidateApplications,
+  CandidateProfileBriefDto,
+  CandidateProfileDetailDto,
+  CandidateApplicationDto,
+} from "@/lib/api/recruiter-candidates";
 import { Search, User, FileText, ExternalLink } from "lucide-react";
 
 const CandidatesPage = () => {
   const [candidates, setCandidates] = useState<CandidateProfileBriefDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedCandidate, setSelectedCandidate] = useState<CandidateProfileDetailDto | null>(null);
-  const [applications, setApplications] = useState<CandidateApplicationDto[]>([]);
+  const [selectedCandidate, setSelectedCandidate] =
+    useState<CandidateProfileDetailDto | null>(null);
+  const [applications, setApplications] = useState<CandidateApplicationDto[]>(
+    []
+  );
   const [open, setOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -116,8 +126,8 @@ const CandidatesPage = () => {
               <Input
                 placeholder="Tìm theo tên, kỹ năng, học vấn..."
                 value={search}
-                onChange={e => setSearch(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && handleSearch()}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 className="pl-10"
               />
             </div>
@@ -155,25 +165,37 @@ const CandidatesPage = () => {
                   </TableRow>
                 ) : candidates.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                    <TableCell
+                      colSpan={5}
+                      className="text-center py-8 text-gray-500"
+                    >
                       Không tìm thấy ứng viên nào
                     </TableCell>
                   </TableRow>
                 ) : (
                   candidates.map((c) => (
                     <TableRow key={c.userId}>
-                      <TableCell className="font-medium">{c.fullName}</TableCell>
+                      <TableCell className="font-medium">
+                        {c.fullName}
+                      </TableCell>
                       <TableCell>
                         {c.skills ? (
                           <div className="flex flex-wrap gap-1">
-                            {c.skills.split(',').slice(0, 2).map((skill, index) => (
-                              <Badge key={index} variant="secondary" className="text-xs">
-                                {skill.trim()}
-                              </Badge>
-                            ))}
-                            {c.skills.split(',').length > 2 && (
+                            {c.skills
+                              .split(",")
+                              .slice(0, 2)
+                              .map((skill, index) => (
+                                <Badge
+                                  key={index}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {skill.trim()}
+                                </Badge>
+                              ))}
+                            {c.skills.split(",").length > 2 && (
                               <Badge variant="outline" className="text-xs">
-                                +{c.skills.split(',').length - 2}
+                                +{c.skills.split(",").length - 2}
                               </Badge>
                             )}
                           </div>
@@ -202,9 +224,11 @@ const CandidatesPage = () => {
         <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Chi tiết ứng viên</DialogTitle>
-            <DialogDescription>Xem thông tin và lịch sử ứng tuyển</DialogDescription>
+            <DialogDescription>
+              Xem thông tin và lịch sử ứng tuyển
+            </DialogDescription>
           </DialogHeader>
-          
+
           {detailLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mr-2"></div>
@@ -213,7 +237,9 @@ const CandidatesPage = () => {
           ) : error ? (
             <div className="text-center py-8">
               <p className="text-red-600 mb-4">{error}</p>
-              <Button onClick={() => handleOpenDialog(selectedCandidate!)}>Thử lại</Button>
+              <Button onClick={() => handleOpenDialog(selectedCandidate!)}>
+                Thử lại
+              </Button>
             </div>
           ) : selectedCandidate ? (
             <div className="space-y-6">
@@ -231,7 +257,14 @@ const CandidatesPage = () => {
                   </div>
                   <div>
                     <Label>Ngày sinh</Label>
-                    <Input value={selectedCandidate.dob ? formatDate(selectedCandidate.dob) : "-"} disabled />
+                    <Input
+                      value={
+                        selectedCandidate.dob
+                          ? formatDate(selectedCandidate.dob)
+                          : "-"
+                      }
+                      disabled
+                    />
                   </div>
                   <div>
                     <Label>Giới tính</Label>
@@ -242,7 +275,9 @@ const CandidatesPage = () => {
 
               {/* Skills & Experience */}
               <div>
-                <h3 className="text-lg font-semibold mb-3">Kỹ năng & Kinh nghiệm</h3>
+                <h3 className="text-lg font-semibold mb-3">
+                  Kỹ năng & Kinh nghiệm
+                </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Kỹ năng</Label>
@@ -250,15 +285,24 @@ const CandidatesPage = () => {
                   </div>
                   <div>
                     <Label>Kinh nghiệm</Label>
-                    <Input value={selectedCandidate.experience || "-"} disabled />
+                    <Input
+                      value={selectedCandidate.experience || "-"}
+                      disabled
+                    />
                   </div>
                   <div>
                     <Label>Học vấn</Label>
-                    <Input value={selectedCandidate.education || "-"} disabled />
+                    <Input
+                      value={selectedCandidate.education || "-"}
+                      disabled
+                    />
                   </div>
                   <div>
                     <Label>Chứng chỉ</Label>
-                    <Input value={selectedCandidate.certificates || "-"} disabled />
+                    <Input
+                      value={selectedCandidate.certificates || "-"}
+                      disabled
+                    />
                   </div>
                 </div>
                 <div className="mt-4">
@@ -269,15 +313,25 @@ const CandidatesPage = () => {
 
               {/* Links & Documents */}
               <div>
-                <h3 className="text-lg font-semibold mb-3">Liên kết & Tài liệu</h3>
+                <h3 className="text-lg font-semibold mb-3">
+                  Liên kết & Tài liệu
+                </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>CV</Label>
+                    {/* Hiển thị link CV, lấy domain từ biến môi trường nếu là đường dẫn tương đối */}
                     {selectedCandidate.resumeUrl ? (
-                      <a 
-                        href={selectedCandidate.resumeUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
+                      <a
+                        href={
+                          selectedCandidate.resumeUrl.startsWith("https")
+                            ? selectedCandidate.resumeUrl
+                            : `${process.env.NEXT_PUBLIC_API_URL?.replace(
+                                /\/api$/,
+                                ""
+                              )}${selectedCandidate.resumeUrl}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="flex items-center text-blue-600 hover:text-blue-800 underline"
                       >
                         <FileText className="h-4 w-4 mr-1" />
@@ -290,10 +344,10 @@ const CandidatesPage = () => {
                   <div>
                     <Label>Portfolio</Label>
                     {selectedCandidate.portfolioUrl ? (
-                      <a 
-                        href={selectedCandidate.portfolioUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
+                      <a
+                        href={selectedCandidate.portfolioUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="flex items-center text-blue-600 hover:text-blue-800 underline"
                       >
                         <ExternalLink className="h-4 w-4 mr-1" />
@@ -306,10 +360,10 @@ const CandidatesPage = () => {
                   <div>
                     <Label>LinkedIn</Label>
                     {selectedCandidate.linkedinUrl ? (
-                      <a 
-                        href={selectedCandidate.linkedinUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
+                      <a
+                        href={selectedCandidate.linkedinUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="flex items-center text-blue-600 hover:text-blue-800 underline"
                       >
                         <ExternalLink className="h-4 w-4 mr-1" />
@@ -322,10 +376,10 @@ const CandidatesPage = () => {
                   <div>
                     <Label>Github</Label>
                     {selectedCandidate.githubUrl ? (
-                      <a 
-                        href={selectedCandidate.githubUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
+                      <a
+                        href={selectedCandidate.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="flex items-center text-blue-600 hover:text-blue-800 underline"
                       >
                         <ExternalLink className="h-4 w-4 mr-1" />
@@ -340,9 +394,13 @@ const CandidatesPage = () => {
 
               {/* Application History */}
               <div>
-                <h3 className="text-lg font-semibold mb-3">Lịch sử ứng tuyển</h3>
+                <h3 className="text-lg font-semibold mb-3">
+                  Lịch sử ứng tuyển
+                </h3>
                 {applications.length === 0 ? (
-                  <div className="text-gray-500 text-center py-4">Chưa có đơn ứng tuyển nào</div>
+                  <div className="text-gray-500 text-center py-4">
+                    Chưa có đơn ứng tuyển nào
+                  </div>
                 ) : (
                   <div className="border rounded-lg">
                     <Table>
@@ -355,21 +413,31 @@ const CandidatesPage = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {applications.map(app => (
+                        {applications.map((app) => (
                           <TableRow key={app.jobId}>
-                            <TableCell className="font-medium">{app.jobTitle}</TableCell>
+                            <TableCell className="font-medium">
+                              {app.jobTitle}
+                            </TableCell>
                             <TableCell>{formatDate(app.appliedAt)}</TableCell>
                             <TableCell>
-                              <Badge variant={app.status === 'PENDING' ? 'secondary' : app.status === 'ACCEPTED' ? 'default' : 'destructive'}>
+                              <Badge
+                                variant={
+                                  app.status === "PENDING"
+                                    ? "secondary"
+                                    : app.status === "ACCEPTED"
+                                    ? "default"
+                                    : "destructive"
+                                }
+                              >
                                 {app.status}
                               </Badge>
                             </TableCell>
                             <TableCell>
                               {app.cvUrl ? (
-                                <a 
-                                  href={app.cvUrl} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
+                                <a
+                                  href={app.cvUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
                                   className="flex items-center text-blue-600 hover:text-blue-800 underline"
                                 >
                                   <FileText className="h-4 w-4 mr-1" />
@@ -388,9 +456,11 @@ const CandidatesPage = () => {
               </div>
             </div>
           ) : (
-            <div className="text-center py-8 text-red-500">Không thể tải thông tin ứng viên</div>
+            <div className="text-center py-8 text-red-500">
+              Không thể tải thông tin ứng viên
+            </div>
           )}
-          
+
           <DialogFooter>
             <Button type="button" onClick={handleCloseDialog}>
               Đóng

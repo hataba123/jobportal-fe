@@ -61,7 +61,10 @@ import {
   deleteJobPost as apiDeleteJobPost,
 } from "@/lib/api/recruiter-jobpost";
 import { JobPost } from "@/types/JobPost";
-import { fetchCandidatesForJob, updateJobApplicationStatus } from "@/lib/api/job-application";
+import {
+  fetchCandidatesForJob,
+  updateJobApplicationStatus,
+} from "@/lib/api/job-application";
 import { toast } from "sonner";
 
 interface CandidateApplicationDto {
@@ -84,7 +87,8 @@ export default function RecruiterJobsPage() {
     logo: "/placeholder.svg?height=32&width=32",
     tags: [],
   });
-  const [selectedJobForCandidates, setSelectedJobForCandidates] = useState<JobPost | null>(null);
+  const [selectedJobForCandidates, setSelectedJobForCandidates] =
+    useState<JobPost | null>(null);
   const [candidates, setCandidates] = useState<CandidateApplicationDto[]>([]);
   const [candidatesDialogOpen, setCandidatesDialogOpen] = useState(false);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
@@ -163,7 +167,7 @@ export default function RecruiterJobsPage() {
     setLoadingCandidates(true);
     try {
       const data = await fetchCandidatesForJob(job.id);
-      
+
       setCandidates(data);
     } catch {
       setCandidates([]);
@@ -175,7 +179,10 @@ export default function RecruiterJobsPage() {
   const handleUpdateStatus = async (applicationId: string, status: string) => {
     setUpdatingStatusId(applicationId);
     try {
-      await updateJobApplicationStatus(applicationId, status as "Pending" | "Reviewed" | "Accepted" | "Rejected");
+      await updateJobApplicationStatus(
+        applicationId,
+        status as "Pending" | "Reviewed" | "Accepted" | "Rejected"
+      );
       if (selectedJobForCandidates) {
         const data = await fetchCandidatesForJob(selectedJobForCandidates.id);
         setCandidates(data);
@@ -422,7 +429,9 @@ export default function RecruiterJobsPage() {
                           <Edit className="h-4 w-4 mr-2" />
                           Chỉnh sửa
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleViewCandidates(job)}>
+                        <DropdownMenuItem
+                          onClick={() => handleViewCandidates(job)}
+                        >
                           <FileText className="h-4 w-4 mr-2" />
                           Xem ứng viên
                         </DropdownMenuItem>
@@ -602,15 +611,22 @@ export default function RecruiterJobsPage() {
       </Dialog>
 
       {/* Dialog danh sách ứng viên ứng tuyển */}
-      <Dialog open={candidatesDialogOpen} onOpenChange={setCandidatesDialogOpen}>
+      <Dialog
+        open={candidatesDialogOpen}
+        onOpenChange={setCandidatesDialogOpen}
+      >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Ứng viên ứng tuyển cho: {selectedJobForCandidates?.title}</DialogTitle>
+            <DialogTitle>
+              Ứng viên ứng tuyển cho: {selectedJobForCandidates?.title}
+            </DialogTitle>
           </DialogHeader>
           {loadingCandidates ? (
             <div className="py-8 text-center text-gray-500">Đang tải...</div>
           ) : candidates.length === 0 ? (
-            <div className="py-8 text-center text-gray-500">Chưa có ứng viên nào ứng tuyển.</div>
+            <div className="py-8 text-center text-gray-500">
+              Chưa có ứng viên nào ứng tuyển.
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -628,17 +644,41 @@ export default function RecruiterJobsPage() {
                   <TableRow key={c.id}>
                     <TableCell>{c.fullName || c.candidateName}</TableCell>
                     <TableCell>{c.email}</TableCell>
-                    <TableCell>{c.appliedAt ? new Date(c.appliedAt).toLocaleDateString("vi-VN") : ""}</TableCell>
                     <TableCell>
+                      {c.appliedAt
+                        ? new Date(c.appliedAt).toLocaleDateString("vi-VN")
+                        : ""}
+                    </TableCell>
+                    <TableCell>
+                      // Hiển thị link CV, lấy domain từ biến môi trường nếu là
+                      đường dẫn tương đối
                       {c.cvUrl ? (
-                        <a href={c.cvUrl.startsWith("http") ? c.cvUrl : `https://localhost:7146${c.cvUrl}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Xem CV</a>
-                      ) : "—"}
+                        <a
+                          href={
+                            c.cvUrl.startsWith("https")
+                              ? c.cvUrl
+                              : `${process.env.NEXT_PUBLIC_API_URL?.replace(
+                                  /\/api$/,
+                                  ""
+                                )}${c.cvUrl}`
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline"
+                        >
+                          Xem CV
+                        </a>
+                      ) : (
+                        "—"
+                      )}
                     </TableCell>
                     <TableCell>{c.status}</TableCell>
                     <TableCell>
                       <Select
                         value={c.status}
-                        onValueChange={(value) => handleUpdateStatus(c.id, value)}
+                        onValueChange={(value) =>
+                          handleUpdateStatus(c.id, value)
+                        }
                         disabled={updatingStatusId === c.id}
                       >
                         <SelectTrigger className="w-32">

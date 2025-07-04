@@ -44,6 +44,7 @@ const getNotificationBadge = (type: Notification["type"]) => {
   };
 
   const badgeConfig = config[type];
+  if (!badgeConfig) return null;
   return <Badge className={badgeConfig.className}>{badgeConfig.label}</Badge>;
 };
 

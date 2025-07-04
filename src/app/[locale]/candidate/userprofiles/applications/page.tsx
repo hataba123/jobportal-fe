@@ -73,9 +73,14 @@ export default function ApplicationsPage() {
   useEffect(() => {
     fetchMyAppliedJobs().then((data: unknown) => {
       const arr = Array.isArray(data) ? data : [];
-  
-      const statusMap = ["PENDING", "REVIEWING", "ACCEPTED", "REJECTED"] as const;
-  
+
+      const statusMap = [
+        "PENDING",
+        "REVIEWING",
+        "ACCEPTED",
+        "REJECTED",
+      ] as const;
+
       setApplications(
         arr.map((item) => {
           const app = item as Partial<Application> & { status?: number };
@@ -125,7 +130,6 @@ export default function ApplicationsPage() {
   };
 
   return (
-    
     <div className="max-w-6xl mx-auto my-9">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">
@@ -270,7 +274,8 @@ export default function ApplicationsPage() {
                     {getStatusBadge(
                       (typeof d.status === "string"
                         ? d.status.toUpperCase()
-                        : selected?.status || "PENDING") as Application["status"]
+                        : selected?.status ||
+                          "PENDING") as Application["status"]
                     )}
                   </div>
                   <div>
@@ -285,7 +290,14 @@ export default function ApplicationsPage() {
                     <div>
                       <b>CV đã nộp:</b>{" "}
                       <a
-                        href={d.cvUrl.startsWith("https") ? d.cvUrl : `https://localhost:7146${d.cvUrl}`}
+                        href={
+                          d.cvUrl.startsWith("https")
+                            ? d.cvUrl
+                            : `${process.env.NEXT_PUBLIC_API_URL?.replace(
+                                /\/api$/,
+                                ""
+                              )}${d.cvUrl}`
+                        }
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 underline"
@@ -296,7 +308,9 @@ export default function ApplicationsPage() {
                         <input
                           type="file"
                           accept=".pdf,.doc,.docx"
-                          onChange={e => setNewCvFile(e.target.files?.[0] || null)}
+                          onChange={(e) =>
+                            setNewCvFile(e.target.files?.[0] || null)
+                          }
                           disabled={updatingCv}
                         />
                         <Button
@@ -310,9 +324,15 @@ export default function ApplicationsPage() {
                               const formData = new FormData();
                               formData.append("file", newCvFile);
                               // Gọi API cập nhật lại CV cho đơn ứng tuyển
-                              const res = await axiosInstance.put(`/jobapplication/${d.id}/cv`, formData, {
-                                headers: { "Content-Type": "multipart/form-data" },
-                              });
+                              const res = await axiosInstance.put(
+                                `/jobapplication/${d.id}/cv`,
+                                formData,
+                                {
+                                  headers: {
+                                    "Content-Type": "multipart/form-data",
+                                  },
+                                }
+                              );
                               toast.success("Cập nhật CV thành công!");
                               setDetail({ ...d, cvUrl: res.data.cvUrl });
                               setNewCvFile(null);

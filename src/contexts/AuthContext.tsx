@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const register = async (data: RegisterRequest) => {
     await registerUser(data); // Gọi API
     // ✅ Sau khi đăng ký thành công → chuyển sang trang đăng nhập
-    router.push("/auth/login");
+    router.push("/candidate/auth/login");
   };
 
   const logout = () => {

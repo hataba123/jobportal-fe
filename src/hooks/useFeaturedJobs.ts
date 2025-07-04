@@ -9,7 +9,7 @@ export function useFeaturedJobs() {
   useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     axios
-      .get<JobPost[]>(`${apiUrl}/JobPost`)
+      .get<JobPost[]>(`${apiUrl}/jobpost`)
       .then((res) => setJobs(res.data))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
