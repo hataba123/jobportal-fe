@@ -115,11 +115,11 @@ export default function ApplicationsPage() {
   };
 
   const handleCancel = async (app: Application) => {
-    setDeletingId(app.jobPostId);
+    setDeletingId(app.id); // dùng id duy nhất
     try {
-      await deleteJobApplication(app.jobPostId);
-      setApplications((prev) =>
-        prev.filter((a) => a.jobPostId !== app.jobPostId)
+      await deleteJobApplication(app.id); // truyền id duy nhất
+      setApplications(
+        (prev) => prev.filter((a) => a.id !== app.id) // chỉ xóa đúng 1 đơn
       );
       toast.success("Đã hủy đơn ứng tuyển.");
     } catch {
