@@ -345,7 +345,7 @@ components:
         email: { type: string, format: email }
         password: { type: string, minLength: 8, writeOnly: true }
         fullName: { type: string }
-        role: { type: string, enum: [Candidate, Recruiter], default: Candidate }
+        role: { type: integer, enum: [1, 2], default: 2, description: 1=Recruiter, 2=Candidate; Admin chỉ được tạo bởi Admin đã xác thực }
     LoginRequest:
       type: object
       required: [email, password]
