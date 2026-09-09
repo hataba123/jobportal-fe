@@ -41,6 +41,8 @@ export default function RecruiterLayout({
         return "Đơn ứng tuyển";
       case "/recruiter/matches":
         return "Xếp hạng ứng viên";
+      case "/recruiter/plans":
+        return "Gói tín dụng";
       case "/recruiter/candidates":
         return "Tìm ứng viên";
       case "/recruiter/company":

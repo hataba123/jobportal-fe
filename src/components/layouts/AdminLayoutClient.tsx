@@ -61,6 +61,12 @@ export default function AdminLayoutClient({
             Job Posts
           </Link>
           <Link
+            href="/admin/plans"
+            className="block px-3 py-2 rounded hover:bg-blue-800"
+          >
+            Gói tín dụng
+          </Link>
+          <Link
             href="/admin/job-application"
             className="block px-3 py-2 rounded hover:bg-blue-800"
           >
