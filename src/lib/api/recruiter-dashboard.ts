@@ -59,4 +59,4 @@ export const updateMyCompany = async (data: Partial<CompanyDto>): Promise<void> 
 // Xóa công ty
 export const deleteMyCompany = async (): Promise<void> => {
   await axiosInstance.delete("/recruiter/company");
-}; 
+};
