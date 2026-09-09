@@ -44,6 +44,7 @@ import {
   deleteMyCompany,
   type CompanyDto
 } from "@/lib/api/recruiter-dashboard";
+import Link from "next/link";
 
 export default function RecruiterCompanyPage() {
   const [company, setCompany] = useState<CompanyDto | null>(null);
@@ -68,30 +69,9 @@ export default function RecruiterCompanyPage() {
     } catch (error) {
       console.error("Error fetching company data:", error);
       setError("Không thể tải thông tin công ty");
-      // Fallback to mock data for development
-      setMockData();
     } finally {
       setLoading(false);
     }
-  };
-
-  const setMockData = () => {
-    const mockCompany: CompanyDto = {
-      id: "1",
-      name: "TechCorp Vietnam",
-      logo: "/placeholder.svg",
-      description: "Công ty công nghệ hàng đầu tại Việt Nam, chuyên về phát triển phần mềm và giải pháp số.",
-      location: "Ho Chi Minh City",
-      employees: 150,
-      industry: "Technology",
-      openJobs: 8,
-      rating: 4.5,
-      website: "https://techcorp.vn",
-      founded: 2018,
-      tags: ["Technology", "Software", "Innovation", "Startup"]
-    };
-    setCompany(mockCompany);
-    setEditForm(mockCompany);
   };
 
   const handleUpdateCompany = async () => {
@@ -386,13 +366,17 @@ export default function RecruiterCompanyPage() {
                 <Edit className="h-4 w-4 mr-2" />
                 Chỉnh sửa thông tin
               </Button>
-              <Button className="w-full" variant="outline">
+              <Button asChild className="w-full" variant="outline">
+                <Link href="/recruiter/jobs">
                 <Building className="h-4 w-4 mr-2" />
                 Quản lý việc làm
+                </Link>
               </Button>
-              <Button className="w-full" variant="outline">
+              <Button asChild className="w-full" variant="outline">
+                <Link href="/recruiter/candidates">
                 <Users className="h-4 w-4 mr-2" />
                 Xem ứng viên
+                </Link>
               </Button>
             </CardContent>
           </Card>
