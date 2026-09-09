@@ -307,7 +307,7 @@ export default function ApplicationsPage() {
                       <div className="mt-2">
                         <input
                           type="file"
-                          accept=".pdf,.doc,.docx"
+                          accept="application/pdf"
                           onChange={(e) =>
                             setNewCvFile(e.target.files?.[0] || null)
                           }

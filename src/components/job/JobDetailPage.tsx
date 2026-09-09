@@ -432,7 +432,7 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                       <Input
                         id="resume"
                         type="file"
-                        accept=".pdf,.doc,.docx"
+                        accept="application/pdf"
                         onChange={(e) =>
                           setApplicationForm((prev) => ({
                             ...prev,

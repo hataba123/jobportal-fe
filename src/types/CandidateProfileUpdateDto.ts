@@ -11,5 +11,4 @@ export interface CandidateProfileUpdateDto {
   githubUrl?: string;
   certificates?: string; // <-- dạng CSV
   summary?: string;
-  resumeUrl?: string;
 }
