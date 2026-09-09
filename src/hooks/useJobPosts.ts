@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { JobPost } from "@/types/JobPost";
+import axiosInstance from "@/lib/axiosInstance";
 
 export function useJobPosts() {
   const [jobPosts, setJobPosts] = useState<JobPost[]>([]);
@@ -8,10 +8,13 @@ export function useJobPosts() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    axios
-      .get<JobPost[]>(`${apiUrl}/jobpost`)
-      .then((res) => setJobPosts(res.data))
+    axiosInstance
+      .get<JobPost[] | { items: JobPost[] }>("/jobpost", {
+        params: { page: 1, pageSize: 100 },
+      })
+      .then((res) =>
+        setJobPosts(Array.isArray(res.data) ? res.data : res.data.items),
+      )
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
