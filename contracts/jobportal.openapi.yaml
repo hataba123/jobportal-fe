@@ -28,6 +28,7 @@ paths:
       responses:
         '200': { description: Đăng ký thành công, content: { application/json: { schema: { $ref: '#/components/schemas/AuthResponse' } } } }
         '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
   /auth/login:
     post:
       tags: [Auth]
@@ -117,7 +118,7 @@ paths:
           application/json:
             schema: { $ref: '#/components/schemas/JobPostWrite' }
       responses:
-        '201': { description: Đã tạo tin, content: { application/json: { schema: { $ref: '#/components/schemas/JobPost' } } } }
+        '200': { description: Đã tạo tin, content: { application/json: { schema: { $ref: '#/components/schemas/JobPost' } } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
   /companies:
     get:
@@ -180,7 +181,7 @@ paths:
       operationId: deleteJob
       security: [{ bearerAuth: [] }]
       responses:
-        '204': { description: Đã xóa mềm tin }
+        '200': { description: Đã xóa mềm tin }
         '403': { $ref: '#/components/responses/Forbidden' }
   /jobapplication:
     post:
@@ -222,6 +223,18 @@ paths:
       responses:
         '200': { description: Ứng viên đã nộp được xếp hạng }
         '403': { $ref: '#/components/responses/Forbidden' }
+  /matches/job-posts/{jobPostId}/candidates/{candidateId}:
+    get:
+      tags: [Matches]
+      operationId: getCandidateMatch
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: jobPostId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+        - { name: candidateId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+      responses:
+        '200': { description: Giải thích chi tiết điểm khớp, content: { application/json: { schema: { $ref: '#/components/schemas/MatchResult' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /plans:
     get:
       tags: [Payments]
@@ -238,7 +251,7 @@ paths:
           application/json:
             schema: { type: object, required: [planId], properties: { planId: { $ref: '#/components/schemas/Uuid' } } }
       responses:
-        '201': { description: Đơn thanh toán chờ xử lý, content: { application/json: { schema: { $ref: '#/components/schemas/PaymentOrder' } } } }
+        '200': { description: Đơn thanh toán chờ xử lý, content: { application/json: { schema: { $ref: '#/components/schemas/PaymentOrder' } } } }
   /payment-orders/{id}:
     get:
       tags: [Payments]
@@ -309,6 +322,7 @@ components:
     PageSize: { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
   responses:
     BadRequest: { description: Dữ liệu không hợp lệ, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Conflict: { description: Xung đột dữ liệu, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
     Unauthorized: { description: Chưa xác thực }
     Forbidden: { description: Không đủ quyền }
     NotFound: { description: Không tìm thấy }

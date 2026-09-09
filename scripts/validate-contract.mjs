@@ -20,6 +20,8 @@ const requiredOperations = {
   "/companies/{id}": ["get"],
   "/admin/companies/{id}/verification": ["patch"],
   "/matches/jobs": ["get"],
+  "/matches/job-posts/{jobPostId}/candidates": ["get"],
+  "/matches/job-posts/{jobPostId}/candidates/{candidateId}": ["get"],
   "/payment-orders": ["post"],
   "/payments/vnpay/ipn": ["get"],
 };
