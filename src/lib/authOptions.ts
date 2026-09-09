@@ -92,7 +92,7 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account }) {
-      if (!account?.provider || !account.providerAccountId || !user.email) {
+      if (!account?.provider || !account.access_token) {
         return false;
       }
 
@@ -100,10 +100,9 @@ export const authOptions: NextAuthOptions = {
         const response = await axiosInstance.post<OAuthResponse>(
           "/auth/oauth-login",
           {
-            email: user.email,
-            name: user.name ?? user.email.split("@")[0],
             provider: account.provider,
-            providerAccountId: account.providerAccountId,
+            accessToken: account.access_token,
+            idToken: account.id_token,
           },
           {
             headers: {

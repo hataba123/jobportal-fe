@@ -40,6 +40,24 @@ paths:
       responses:
         '200': { description: Đăng nhập thành công, content: { application/json: { schema: { $ref: '#/components/schemas/AuthResponse' } } } }
         '400': { $ref: '#/components/responses/BadRequest' }
+  /auth/oauth-login:
+    post:
+      tags: [Auth]
+      operationId: oauthLogin
+      security: []
+      parameters:
+        - name: X-OAuth-Exchange-Secret
+          in: header
+          required: true
+          schema: { type: string, writeOnly: true }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OAuthLoginRequest' }
+      responses:
+        '200': { description: Đăng nhập OAuth thành công, content: { application/json: { schema: { $ref: '#/components/schemas/AuthResponse' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
   /auth/change-password:
     post:
       tags: [Auth]
@@ -284,6 +302,13 @@ components:
       properties:
         email: { type: string, format: email }
         password: { type: string, writeOnly: true }
+    OAuthLoginRequest:
+      type: object
+      required: [provider, accessToken]
+      properties:
+        provider: { type: string, enum: [google, facebook, github] }
+        accessToken: { type: string, writeOnly: true }
+        idToken: { type: string, writeOnly: true }
     ChangePasswordRequest:
       type: object
       required: [currentPassword, newPassword]
