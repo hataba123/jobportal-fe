@@ -19,7 +19,7 @@ jobs:
       - name: Lint
         run: npm run lint
       - name: Contract file check
-        run: test -s contracts/jobportal.openapi.yaml
+        run: npm run contract:test
       - run: npm run build
       - name: Dependency audit
         run: npm audit --omit=dev --audit-level=high
