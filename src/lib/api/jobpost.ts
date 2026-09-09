@@ -36,4 +36,4 @@ export const fetchPagedJobPosts = async (
 export const fetchAllJobPosts = async (): Promise<JobPost[]> => {
   const result = await fetchPagedJobPosts(1, 100);
   return result.items;
-}; 
+};
