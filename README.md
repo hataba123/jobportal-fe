@@ -506,7 +506,7 @@ To add a new language:
 
 ## 🔐 Authentication
 
-The application uses NextAuth.js for authentication with JWT tokens. User sessions are maintained through localStorage and API requests are automatically authenticated using Axios interceptors.
+The application uses NextAuth.js for authentication with JWT tokens. User sessions are maintained in secure HttpOnly cookies and the server-side BFF attaches tokens to backend requests.
 
 ## 🔄 API Integration
 
