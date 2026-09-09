@@ -1,0 +1,343 @@
+openapi: 3.1.0
+info:
+  title: JobPortal API
+  version: 1.0.0
+  description: Hợp đồng API dùng chung cho NestJS/PostgreSQL và ASP.NET Core/SQL Server.
+servers:
+  - url: /api
+    description: Backend được chọn bởi deployment
+tags:
+  - name: Auth
+  - name: Jobs
+  - name: Applications
+  - name: Notifications
+  - name: Matches
+  - name: Payments
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '200': { description: Đăng ký thành công, content: { application/json: { schema: { $ref: '#/components/schemas/AuthResponse' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200': { description: Đăng nhập thành công, content: { application/json: { schema: { $ref: '#/components/schemas/AuthResponse' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /auth/change-password:
+    post:
+      tags: [Auth]
+      operationId: changePassword
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChangePasswordRequest' }
+      responses:
+        '200': { description: Đổi mật khẩu thành công }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      operationId: forgotPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [email], properties: { email: { type: string, format: email } } }
+      responses:
+        '200': { description: Luôn trả thông báo chung để chống dò email }
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      operationId: resetPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ResetPasswordRequest' }
+      responses:
+        '200': { description: Đặt lại mật khẩu thành công }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /jobpost:
+    get:
+      tags: [Jobs]
+      operationId: listJobs
+      security: []
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/PageSize' }
+      responses:
+        '200': { description: Danh sách tin đang hoạt động, content: { application/json: { schema: { $ref: '#/components/schemas/PagedJobPosts' } } } }
+    post:
+      tags: [Jobs]
+      operationId: createJob
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/JobPostWrite' }
+      responses:
+        '201': { description: Đã tạo tin, content: { application/json: { schema: { $ref: '#/components/schemas/JobPost' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /jobpost/{id}:
+    parameters: [{ $ref: '#/components/parameters/Id' }]
+    get:
+      tags: [Jobs]
+      operationId: getJob
+      security: []
+      responses:
+        '200': { description: Tin tuyển dụng, content: { application/json: { schema: { $ref: '#/components/schemas/JobPost' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Jobs]
+      operationId: updateJob
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/JobPostWrite' }
+      responses:
+        '200': { description: Đã cập nhật tin }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    delete:
+      tags: [Jobs]
+      operationId: deleteJob
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Đã xóa mềm tin }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /jobapplication:
+    post:
+      tags: [Applications]
+      operationId: applyToJob
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [jobPostId], properties: { jobPostId: { $ref: '#/components/schemas/Uuid' }, cvUrl: { type: string } } }
+      responses:
+        '200': { description: Đã ứng tuyển }
+        '409': { description: Đã tồn tại đơn ứng tuyển }
+  /notifications:
+    get:
+      tags: [Notifications]
+      operationId: listNotifications
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Thông báo của người dùng hiện tại, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Notification' } } } } }
+  /matches/jobs:
+    get:
+      tags: [Matches]
+      operationId: listRecommendedJobs
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/PageSize' }
+        - { name: minScore, in: query, schema: { type: integer, minimum: 0, maximum: 100, default: 0 } }
+      responses:
+        '200': { description: Gợi ý việc có breakdown điểm, content: { application/json: { schema: { $ref: '#/components/schemas/PagedMatches' } } } }
+  /matches/job-posts/{jobPostId}/candidates:
+    get:
+      tags: [Matches]
+      operationId: rankCandidates
+      security: [{ bearerAuth: [] }]
+      parameters: [{ name: jobPostId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }]
+      responses:
+        '200': { description: Ứng viên đã nộp được xếp hạng }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /plans:
+    get:
+      tags: [Payments]
+      security: []
+      responses:
+        '200': { description: Gói tín dụng, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/ServicePlan' } } } } }
+  /payment-orders:
+    post:
+      tags: [Payments]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [planId], properties: { planId: { $ref: '#/components/schemas/Uuid' } } }
+      responses:
+        '201': { description: Đơn thanh toán chờ xử lý, content: { application/json: { schema: { $ref: '#/components/schemas/PaymentOrder' } } } }
+  /payments/vnpay/ipn:
+    get:
+      tags: [Payments]
+      security: []
+      responses:
+        '200': { description: IPN đã xử lý idempotent }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  parameters:
+    Id: { name: id, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    Page: { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+    PageSize: { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+  responses:
+    BadRequest: { description: Dữ liệu không hợp lệ, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Unauthorized: { description: Chưa xác thực }
+    Forbidden: { description: Không đủ quyền }
+    NotFound: { description: Không tìm thấy }
+  schemas:
+    Uuid: { type: string, format: uuid }
+    DateTime: { type: string, format: date-time, description: UTC ISO-8601 }
+    Error:
+      type: object
+      required: [statusCode, code, message, traceId]
+      properties:
+        statusCode: { type: integer }
+        code: { type: string }
+        message: { type: string }
+        traceId: { type: string }
+        details: { type: object, additionalProperties: true }
+    RegisterRequest:
+      type: object
+      required: [email, password, fullName]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8, writeOnly: true }
+        fullName: { type: string }
+        role: { type: string, enum: [Candidate, Recruiter], default: Candidate }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, writeOnly: true }
+    ChangePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword: { type: string, writeOnly: true }
+        newPassword: { type: string, minLength: 8, writeOnly: true }
+    ResetPasswordRequest:
+      type: object
+      required: [email, token, newPassword]
+      properties:
+        email: { type: string, format: email }
+        token: { type: string, writeOnly: true }
+        newPassword: { type: string, minLength: 8, writeOnly: true }
+    AuthResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token: { type: string, writeOnly: true }
+        user: { $ref: '#/components/schemas/User' }
+    User:
+      type: object
+      required: [id, email, fullName, role]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        email: { type: string, format: email }
+        fullName: { type: string }
+        role: { type: integer, enum: [0, 1, 2] }
+    JobPostWrite:
+      type: object
+      required: [title, description, location, salary, categoryId]
+      properties:
+        title: { type: string, maxLength: 200 }
+        description: { type: string }
+        location: { type: string }
+        salary: { type: number }
+        skillsRequired: { type: string }
+        type: { type: string }
+        tags: { type: array, items: { type: string } }
+        companyId: { $ref: '#/components/schemas/Uuid' }
+        categoryId: { $ref: '#/components/schemas/Uuid' }
+        expiresAt: { $ref: '#/components/schemas/DateTime' }
+    JobPost:
+      allOf:
+        - $ref: '#/components/schemas/JobPostWrite'
+        - type: object
+          required: [id, employerId, createdAt, status]
+          properties:
+            id: { $ref: '#/components/schemas/Uuid' }
+            employerId: { $ref: '#/components/schemas/Uuid' }
+            createdAt: { $ref: '#/components/schemas/DateTime' }
+            status: { type: string, enum: [Draft, PendingApproval, Active, Closed, Expired, Rejected] }
+            applicants: { type: integer }
+    PagedJobPosts:
+      type: object
+      required: [items, page, pageSize, total]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/JobPost' } }
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+    Notification:
+      type: object
+      required: [id, userId, message, read, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        userId: { $ref: '#/components/schemas/Uuid' }
+        message: { type: string }
+        read: { type: boolean }
+        createdAt: { $ref: '#/components/schemas/DateTime' }
+        type: { type: string }
+    MatchResult:
+      type: object
+      required: [jobPostId, totalScore, algorithmVersion, breakdown, matchedSkills, missingSkills, reason]
+      properties:
+        jobPostId: { $ref: '#/components/schemas/Uuid' }
+        candidateId: { $ref: '#/components/schemas/Uuid' }
+        totalScore: { type: integer, minimum: 0, maximum: 100 }
+        algorithmVersion: { type: string, example: v1 }
+        breakdown:
+          type: object
+          properties:
+            skills: { type: integer }
+            experience: { type: integer }
+            education: { type: integer }
+            preferences: { type: integer }
+        matchedSkills: { type: array, items: { type: string } }
+        missingSkills: { type: array, items: { type: string } }
+        reason: { type: string }
+    PagedMatches:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/MatchResult' } }
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+    ServicePlan:
+      type: object
+      required: [id, name, price, currency, entitlements]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        name: { type: string }
+        price: { type: number }
+        currency: { type: string, example: VND }
+        entitlements: { type: array, items: { type: object, additionalProperties: true } }
+    PaymentOrder:
+      type: object
+      required: [id, status, amount, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        status: { type: string, enum: [Pending, Paid, Failed, Expired, Refunded] }
+        amount: { type: number }
+        createdAt: { $ref: '#/components/schemas/DateTime' }
