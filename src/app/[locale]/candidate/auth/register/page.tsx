@@ -102,8 +102,8 @@ export default function RegisterPage() {
               {...register("password", {
                 required: "Mật khẩu không được để trống",
                 minLength: {
-                  value: 6,
-                  message: "Mật khẩu phải có ít nhất 6 ký tự",
+                  value: 8,
+                  message: "Mật khẩu phải có ít nhất 8 ký tự",
                 },
               })}
               className="mt-1 block w-full border border-gray-300 rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
