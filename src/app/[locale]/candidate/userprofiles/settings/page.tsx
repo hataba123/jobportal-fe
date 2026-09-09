@@ -6,6 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { changePassword } from "@/lib/api/auth";
+import { useAuth } from "@/contexts/AuthContext";
+import { signOut } from "next-auth/react";
+import { useRouter } from "@/i18n/navigation";
 import {
   UserIcon,
   LockClosedIcon,
@@ -15,6 +19,8 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function SettingsPage() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [settings, setSettings] = useState({
     emailNotifications: true,
     jobAlerts: true,
@@ -27,10 +33,36 @@ export default function SettingsPage() {
     newPassword: "",
     confirmPassword: "",
   });
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [changingPassword, setChangingPassword] = useState(false);
 
-  const handlePasswordChange = () => {
-    // TODO: Implement password change logic
-    console.log("Change password:", passwordForm);
+  const handlePasswordChange = async () => {
+    setPasswordMessage(null);
+    setPasswordError(null);
+    if (passwordForm.newPassword.length < 8) {
+      setPasswordError("Mật khẩu mới phải có ít nhất 8 ký tự.");
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError("Xác nhận mật khẩu không khớp.");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await changePassword({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      });
+      setPasswordMessage("Đổi mật khẩu thành công. Vui lòng đăng nhập lại.");
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      await signOut({ redirect: false });
+      router.push("/candidate/auth/login");
+    } catch {
+      setPasswordError("Không thể đổi mật khẩu. Hãy kiểm tra mật khẩu hiện tại.");
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   const handleSettingChange = (key: string, value: boolean) => {
@@ -59,7 +91,7 @@ export default function SettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" value="nguyenvana@email.com" disabled />
+                <Input id="email" value={user?.email ?? ""} disabled />
               </div>
               <div>
                 <Label htmlFor="phone">Số điện thoại</Label>
@@ -121,7 +153,15 @@ export default function SettingsPage() {
                 }
               />
             </div>
-            <Button onClick={handlePasswordChange}>Đổi mật khẩu</Button>
+            {passwordError && (
+              <p className="text-sm text-red-600">{passwordError}</p>
+            )}
+            {passwordMessage && (
+              <p className="text-sm text-green-700">{passwordMessage}</p>
+            )}
+            <Button onClick={handlePasswordChange} disabled={changingPassword}>
+              {changingPassword ? "Đang cập nhật..." : "Đổi mật khẩu"}
+            </Button>
           </CardContent>
         </Card>
 

@@ -78,6 +78,15 @@ export default function HomePage() {
             )}
           </div>
 
+          <div className="text-right">
+            <Link
+              href="/candidate/auth/forgot-password"
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Quên mật khẩu?
+            </Link>
+          </div>
+
           {errors.root && (
             <p className="text-red-500 text-sm text-center">
               {errors.root.message}

@@ -47,3 +47,22 @@ export async function registerUser(
   console.log("✅ API /auth/register trả về:", res.data);
   return res.data;
 }
+
+export async function changePassword(data: {
+  currentPassword: string;
+  newPassword: string;
+}): Promise<void> {
+  await axiosInstance.post("/auth/change-password", data);
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  await axiosInstance.post("/auth/forgot-password", { email });
+}
+
+export async function resetPassword(data: {
+  email: string;
+  token: string;
+  newPassword: string;
+}): Promise<void> {
+  await axiosInstance.post("/auth/reset-password", data);
+}
