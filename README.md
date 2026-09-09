@@ -67,7 +67,7 @@ bun install
 Create a `.env.local` file in the root directory with the following variables:
 
 ```
-NEXT_PUBLIC_API_URL=your_backend_api_url
+BACKEND_API_URL=your_backend_api_url
 NEXTAUTH_SECRET=your_nextauth_secret
 NEXTAUTH_URL=http://localhost:3000
 ```

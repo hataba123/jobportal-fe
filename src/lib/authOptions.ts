@@ -51,7 +51,7 @@ export const authOptions: NextAuthOptions = {
         const password = credentials?.password;
         if (!email || !password) return null;
 
-        const backendUrl = process.env.BACKEND_API_URL ?? process.env.NEXT_PUBLIC_API_URL;
+        const backendUrl = process.env.BACKEND_API_URL;
         if (!backendUrl) return null;
 
         const response = await fetch(`${backendUrl.replace(/\/$/, "")}/auth/login`, {

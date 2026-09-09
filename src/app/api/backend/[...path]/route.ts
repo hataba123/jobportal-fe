@@ -6,7 +6,7 @@ type RouteContext = {
 };
 
 const getBackendUrl = () => {
-  const baseUrl = process.env.BACKEND_API_URL ?? process.env.NEXT_PUBLIC_API_URL;
+  const baseUrl = process.env.BACKEND_API_URL;
   if (!baseUrl) {
     throw new Error("BACKEND_API_URL chưa được cấu hình");
   }
