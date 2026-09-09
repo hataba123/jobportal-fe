@@ -2,7 +2,7 @@
  * Tương thích ngược cho các import cũ.
  *
  * JWT hiện được NextAuth giữ trong cookie HttpOnly và BFF gắn vào request
- * phía server. Không lưu access token trong localStorage nữa.
+ * phía server. Không lưu access token trong kho lưu trữ trình duyệt.
  */
 /** @deprecated Dùng phiên NextAuth thay vì tự lưu JWT. */
 export function setAccessToken(token: string): void {
@@ -17,5 +17,5 @@ export function getAccessToken(): null {
 
 /** @deprecated Phiên NextAuth được đăng xuất qua signOut(). */
 export function clearAccessToken(): void {
-  // Cố ý không có thao tác dọn localStorage.
+  // Cố ý không thao tác với kho lưu trữ trình duyệt.
 }
