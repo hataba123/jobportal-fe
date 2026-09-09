@@ -1,43 +1,35 @@
 "use client";
 
+import React, { useState, useMemo, useRef, useEffect } from "react";
+import { useRouter } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import CompanyLogo from "@/components/common/CompanyLogo";
 import {
+  Search,
+  MapPin,
+  Clock,
   DollarSign,
   Users,
   TrendingUp,
   Star,
   ArrowRight,
-  CheckCircle,
-  MapPin,
-  Clock,
-  Palette,
-  BarChart3,
-  Shield,
-  Headphones,
+  ShieldCheck,
+  CheckCircle2,
+  Sparkles,
+  Building2,
+  Briefcase,
+  Layers,
   Code,
-  Search,
+  Laptop,
+  Palette,
+  Server,
+  Cpu,
+  BarChart3,
+  SlidersHorizontal,
 } from "lucide-react";
-
-const iconMap: Record<string, React.ElementType> = {
-  DollarSign,
-  Users,
-  TrendingUp,
-  Star,
-  ArrowRight,
-  CheckCircle,
-  MapPin,
-  Clock,
-  Palette,
-  BarChart3,
-  Shield,
-  Headphones,
-  Code,
-  Search,
-};
-import Image from "next/image";
 import { useFeaturedJobs } from "@/hooks/useFeaturedJobs";
 import { useCategories } from "@/hooks/useCategories";
 import { useJobPosts } from "@/hooks/useJobPosts";
@@ -45,19 +37,25 @@ import { useCompanies } from "@/hooks/useCompanies";
 import { useReviews } from "@/hooks/useReviews";
 import { Company } from "@/types/Company";
 import { Review } from "@/types/Review";
-import { useMemo, useState } from "react";
-import { useRouter } from "@/i18n/navigation";
+
+const categoryIconMap: Record<string, React.ElementType> = {
+  Code,
+  Laptop,
+  Palette,
+  Server,
+  Cpu,
+  BarChart3,
+  Briefcase,
+  Layers,
+};
 
 function getTopCompanies(companies: Company[], reviews: Review[], topN = 6) {
   return companies
     .map((company) => {
-      const companyReviews = reviews.filter(
-        (review) => review.companyId === company.id
-      );
+      const companyReviews = reviews.filter((r) => r.companyId === company.id);
       const averageRating =
         companyReviews.length > 0
-          ? companyReviews.reduce((sum, review) => sum + review.rating, 0) /
-            companyReviews.length
+          ? companyReviews.reduce((sum, r) => sum + r.rating, 0) / companyReviews.length
           : 0;
 
       return {
@@ -75,23 +73,32 @@ export default function HomepageContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
   const [useComplexSearch, setUseComplexSearch] = useState(false);
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+
+  const searchBoxRef = useRef<HTMLDivElement>(null);
 
   const { jobs: featuredJobs, loading } = useFeaturedJobs();
   const { categories, loading: loadingCategories } = useCategories();
   const { jobPosts } = useJobPosts();
   const { companies, loading: loadingCompanies } = useCompanies();
   const { reviews, loading: loadingReviews } = useReviews();
-  const handleCompanyClick = (companyId: string) => {
-    router.push(`/candidate/company/${companyId}`);
-  };
-  const handleCategoryClick = (categoryId: string | number) => {
-    router.push(`/candidate/category/${categoryId}`);
-  };
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target as Node)) {
+        setShowSearchSuggestions(false);
+        setShowLocationSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleSearch = () => {
     if (!searchTerm.trim() && !location.trim()) return;
 
-    // Navigate to search results page with query parameters
     const params = new URLSearchParams();
     if (searchTerm.trim()) params.append("q", searchTerm.trim());
     if (location.trim()) params.append("location", location.trim());
@@ -106,22 +113,15 @@ export default function HomepageContent() {
     }
   };
 
-  // Get search suggestions based on current input
   const searchSuggestions = useMemo(() => {
     if (!searchTerm.trim() || searchTerm.length < 2) return [];
-
     const suggestions = new Set<string>();
     const searchLower = searchTerm.toLowerCase();
 
-    // Add job title suggestions
     jobPosts.forEach((job) => {
       if (job.title.toLowerCase().includes(searchLower)) {
         suggestions.add(job.title);
       }
-    });
-
-    // Add company name suggestions
-    jobPosts.forEach((job) => {
       if (job.employer?.fullName?.toLowerCase().includes(searchLower)) {
         suggestions.add(job.employer.fullName);
       }
@@ -130,15 +130,13 @@ export default function HomepageContent() {
     return Array.from(suggestions).slice(0, 5);
   }, [searchTerm, jobPosts]);
 
-  // Get location suggestions
   const locationSuggestions = useMemo(() => {
     if (!location.trim() || location.length < 2) return [];
-
     const suggestions = new Set<string>();
-    const locationLower = location.toLowerCase();
+    const locLower = location.toLowerCase();
 
     jobPosts.forEach((job) => {
-      if (job.location?.toLowerCase().includes(locationLower)) {
+      if (job.location?.toLowerCase().includes(locLower)) {
         suggestions.add(job.location);
       }
     });
@@ -147,282 +145,341 @@ export default function HomepageContent() {
   }, [location, jobPosts]);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-slate-50/50">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            Tìm công việc <span className="text-blue-600">mơ ước</span> của bạn
+      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50/70 via-slate-50 to-white pt-16 pb-24 md:pt-24 md:pb-32 border-b border-slate-100">
+        {/* Subtle Background Blobs */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full overflow-hidden pointer-events-none -z-10">
+          <div className="absolute top-10 left-1/4 w-72 h-72 bg-blue-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-20 right-1/4 w-96 h-96 bg-indigo-400/10 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/70 text-blue-700 text-xs font-semibold mb-6 shadow-2xs">
+            <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+            <span>Nền tảng tuyển dụng công nghệ hàng đầu Việt Nam</span>
+          </div>
+
+          {/* Heading */}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight max-w-4xl mx-auto leading-tight sm:leading-tight">
+            Khám phá cơ hội việc làm{" "}
+            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              IT đỉnh cao
+            </span>{" "}
+            của bạn
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Khám phá hàng nghìn cơ hội việc làm từ các công ty hàng đầu. Bắt đầu
-            hành trình sự nghiệp của bạn ngay hôm nay.
+
+          <p className="mt-5 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            Kết nối trực tiếp với hơn 5,000+ doanh nghiệp công nghệ uy tín. Tối ưu hóa hồ sơ, nhận gợi ý việc làm chuẩn xác với thuật toán so khớp thông minh.
           </p>
 
-          {/* Search Bar */}
-          <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-4 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="md:col-span-2 relative">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Tìm kiếm công việc, công ty..."
-                    className="pl-10 border-0 focus:ring-0"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                  />
-                </div>
-                {/* Search Suggestions */}
-                {searchSuggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 mt-1">
-                    {searchSuggestions.map((suggestion, index) => (
-                      <div
-                        key={index}
-                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                        onClick={() => {
-                          setSearchTerm(suggestion);
-                          // Hide suggestions after selection
-                          setTimeout(() => {
-                            const suggestions = document.querySelector(
-                              ".search-suggestions"
-                            );
-                            if (suggestions)
-                              suggestions.classList.add("hidden");
-                          }, 100);
-                        }}
-                      >
-                        {suggestion}
-                      </div>
-                    ))}
+          {/* Search Box */}
+          <div ref={searchBoxRef} className="max-w-4xl mx-auto mt-10">
+            <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-200/80 p-3 sm:p-4 transition-all">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+                {/* Search Keywords */}
+                <div className="md:col-span-6 relative">
+                  <div className="flex items-center px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200/80 focus-within:border-blue-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                    <Search className="w-4 h-4 text-slate-400 mr-2.5 flex-shrink-0" />
+                    <input
+                      type="text"
+                      placeholder="Vị trí tuyển dụng, kỹ năng (React, .NET, Golang...)"
+                      className="w-full bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setShowSearchSuggestions(true);
+                      }}
+                      onFocus={() => setShowSearchSuggestions(true)}
+                      onKeyDown={handleKeyPress}
+                    />
                   </div>
-                )}
-              </div>
-              <div className="relative">
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Địa điểm"
-                    className="pl-10 border-0 focus:ring-0"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                  />
-                </div>
-                {/* Location Suggestions */}
-                {locationSuggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 mt-1">
-                    {locationSuggestions.map((suggestion, index) => (
-                      <div
-                        key={index}
-                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                        onClick={() => {
-                          setLocation(suggestion);
-                          // Hide suggestions after selection
-                          setTimeout(() => {
-                            const suggestions = document.querySelector(
-                              ".location-suggestions"
-                            );
-                            if (suggestions)
-                              suggestions.classList.add("hidden");
-                          }, 100);
-                        }}
-                      >
-                        {suggestion}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <Button
-                size="lg"
-                className="w-full"
-                onClick={handleSearch}
-                disabled={!searchTerm.trim() && !location.trim()}
-              >
-                Tìm kiếm
-              </Button>
-            </div>
 
-            {/* Search Algorithm Toggle */}
-            <div className="mt-3 flex items-center justify-center">
-              <label className="flex items-center space-x-2 text-sm text-gray-600">
-                <input
-                  type="checkbox"
-                  checked={useComplexSearch}
-                  onChange={(e) => setUseComplexSearch(e.target.checked)}
-                  className="rounded"
-                />
-                <span>Sử dụng thuật toán tìm kiếm nâng cao</span>
-              </label>
+                  {/* Autocomplete Suggestions */}
+                  {showSearchSuggestions && searchSuggestions.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-2xl shadow-xl z-20 mt-1.5 overflow-hidden text-left p-1">
+                      {searchSuggestions.map((suggestion, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          className="w-full px-3.5 py-2 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl flex items-center gap-2 transition-colors text-left"
+                          onClick={() => {
+                            setSearchTerm(suggestion);
+                            setShowSearchSuggestions(false);
+                          }}
+                        >
+                          <Search className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{suggestion}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Location */}
+                <div className="md:col-span-4 relative">
+                  <div className="flex items-center px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200/80 focus-within:border-blue-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                    <MapPin className="w-4 h-4 text-slate-400 mr-2.5 flex-shrink-0" />
+                    <input
+                      type="text"
+                      placeholder="Địa điểm (Hà Nội, TP.HCM...)"
+                      className="w-full bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                      value={location}
+                      onChange={(e) => {
+                        setLocation(e.target.value);
+                        setShowLocationSuggestions(true);
+                      }}
+                      onFocus={() => setShowLocationSuggestions(true)}
+                      onKeyDown={handleKeyPress}
+                    />
+                  </div>
+
+                  {/* Location Suggestions */}
+                  {showLocationSuggestions && locationSuggestions.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-2xl shadow-xl z-20 mt-1.5 overflow-hidden text-left p-1">
+                      {locationSuggestions.map((loc, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          className="w-full px-3.5 py-2 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl flex items-center gap-2 transition-colors text-left"
+                          onClick={() => {
+                            setLocation(loc);
+                            setShowLocationSuggestions(false);
+                          }}
+                        >
+                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{loc}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Search Button */}
+                <div className="md:col-span-2">
+                  <Button
+                    size="lg"
+                    className="w-full h-[42px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                    onClick={handleSearch}
+                  >
+                    <span>Tìm việc</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Complex Search Algorithm Toggle */}
+              <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 px-1">
+                <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={useComplexSearch}
+                    onChange={(e) => setUseComplexSearch(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="font-medium text-slate-600 flex items-center gap-1">
+                    <SlidersHorizontal className="w-3 h-3 text-blue-600" />
+                    Bật thuật toán tìm kiếm đa chiều (AI Matching v1)
+                  </span>
+                </label>
+                <span className="hidden sm:inline text-slate-400">
+                  Gợi ý: Tìm kiếm theo kỹ năng để có độ chuẩn xác cao nhất
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-2xl mx-auto">
-            <div>
-              <div className="text-3xl font-bold text-blue-600">10K+</div>
-              <div className="text-gray-600">Việc làm</div>
+          {/* Quick Metrics */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mt-12 pt-6">
+            <div className="p-4 rounded-2xl bg-white/70 backdrop-blur-xs border border-slate-200/60 shadow-2xs">
+              <div className="text-2xl sm:text-3xl font-extrabold text-blue-600">10,000+</div>
+              <div className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">Việc làm IT tuyển dụng</div>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-blue-600">5K+</div>
-              <div className="text-gray-600">Công ty</div>
+            <div className="p-4 rounded-2xl bg-white/70 backdrop-blur-xs border border-slate-200/60 shadow-2xs">
+              <div className="text-2xl sm:text-3xl font-extrabold text-indigo-600">5,000+</div>
+              <div className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">Doanh nghiệp công nghệ</div>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-blue-600">50K+</div>
-              <div className="text-gray-600">Ứng viên</div>
+            <div className="p-4 rounded-2xl bg-white/70 backdrop-blur-xs border border-slate-200/60 shadow-2xs">
+              <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600">50,000+</div>
+              <div className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">Ứng viên tài năng</div>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-blue-600">95%</div>
-              <div className="text-gray-600">Thành công</div>
+            <div className="p-4 rounded-2xl bg-white/70 backdrop-blur-xs border border-slate-200/60 shadow-2xs">
+              <div className="text-2xl sm:text-3xl font-extrabold text-amber-600">98%</div>
+              <div className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">Tỷ lệ hài lòng</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Featured Jobs */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                Việc làm nổi bật
-              </h2>
-              <p className="text-gray-600">
-                Khám phá những cơ hội việc làm tốt nhất
-              </p>
+      {/* Featured Jobs Section */}
+      <section className="py-16 md:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Cơ hội tuyển dụng hot</span>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => router.push("/candidate/job")} // 👈 chuyển route tại đây
-            >
-              Xem tất cả <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+              Việc làm nổi bật hôm nay
+            </h2>
+            <p className="text-sm text-slate-500 mt-1">
+              Được chọn lọc từ các công ty công nghệ có đãi ngộ tốt và môi trường làm việc lý tưởng
+            </p>
           </div>
+          <Button
+            variant="outline"
+            onClick={() => router.push("/candidate/job")}
+            className="rounded-xl border-slate-300 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 self-start md:self-auto text-xs font-semibold"
+          >
+            <span>Xem tất cả việc làm</span>
+            <ArrowRight className="ml-1.5 w-3.5 h-3.5" />
+          </Button>
+        </div>
 
-          {loading ? (
-            <p>Đang tải việc làm nổi bật...</p>
-          ) : featuredJobs.length === 0 ? (
-            <p>Không có việc làm nổi bật nào vào lúc này.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredJobs.slice(0, 9).map((job) => (
-                <Card
-                  key={job.id}
-                  className="hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => router.push(`/candidate/job/${job.id}`)} // 👈 chuyển route khi click
-                >
-                  <CardContent className="p-6">
-                    {/* Render thông tin job từ API */}
-                    <div className="flex items-start space-x-4 mb-4">
-                      <Image
-                        src={job.logo || "/placeholder.svg"}
-                        alt={job.employer?.fullName || "Company"}
-                        width={50}
-                        height={50}
-                        className="rounded-lg border"
-                      />
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg mb-1">
-                          {job.title}
-                        </h3>
-                        <p className="text-blue-600 font-medium">
-                          {job.employer?.fullName}
-                        </p>
-                      </div>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((n) => (
+              <div key={n} className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs animate-pulse space-y-4">
+                <div className="flex gap-4 items-center">
+                  <div className="w-12 h-12 bg-slate-200 rounded-xl"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+                    <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                  </div>
+                </div>
+                <div className="h-3 bg-slate-200 rounded w-full"></div>
+                <div className="h-3 bg-slate-200 rounded w-2/3"></div>
+              </div>
+            ))}
+          </div>
+        ) : featuredJobs.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-2xl border border-slate-200/80 p-8">
+            <Briefcase className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <p className="text-base font-semibold text-slate-700">Chưa có việc làm nổi bật</p>
+            <p className="text-xs text-slate-400 mt-1">Hãy quay lại sau hoặc khám phá tất cả công việc trong hệ thống</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredJobs.slice(0, 9).map((job) => (
+              <div
+                key={job.id}
+                onClick={() => router.push(`/candidate/job/${job.id}`)}
+                className="group relative flex flex-col justify-between p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-xl hover:border-blue-500/50 hover:-translate-y-1 transition-all duration-200 cursor-pointer overflow-hidden"
+              >
+                <div>
+                  {/* Top Header */}
+                  <div className="flex items-start gap-4 mb-4">
+                    <CompanyLogo
+                      src={job.logo}
+                      name={job.employer?.fullName || job.companyName || "Công ty"}
+                      size="md"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-base text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                        {job.title}
+                      </h3>
+                      <p className="text-xs text-slate-500 line-clamp-1 mt-0.5 flex items-center gap-1">
+                        <Building2 className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                        <span>{job.employer?.fullName || job.companyName || "Công ty công nghệ"}</span>
+                      </p>
                     </div>
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <MapPin className="h-4 w-4 mr-2" />
-                        {job.location}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Clock className="h-4 w-4 mr-2" />
-                        {job.type}
-                      </div>
-                      <div className="flex items-center text-sm font-semibold text-green-600">
-                        <DollarSign className="h-4 w-4 mr-2" />
-                        {job.salary}
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {job.tags?.map((tag) => (
+                  </div>
+
+                  {/* Highlights Pill */}
+                  <div className="flex flex-wrap items-center gap-2 mb-4 text-xs">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-bold border border-emerald-200/60">
+                      <DollarSign className="w-3.5 h-3.5" />
+                      {Number(job.salary) > 0 ? `${Number(job.salary).toLocaleString()}$ / tháng` : "Thương lượng"}
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 text-slate-600">
+                      <MapPin className="w-3 h-3 text-slate-400" />
+                      {job.location || "Toàn quốc"}
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 text-slate-600">
+                      <Clock className="w-3 h-3 text-slate-400" />
+                      {job.type || "Full-time"}
+                    </span>
+                  </div>
+
+                  {/* Tags */}
+                  {Array.isArray(job.tags) && job.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {job.tags.slice(0, 3).map((tag) => (
                         <Badge
                           key={tag}
                           variant="secondary"
-                          className="text-xs"
+                          className="text-[11px] font-medium bg-slate-100/90 text-slate-600 hover:bg-slate-200"
                         >
                           {tag}
                         </Badge>
                       ))}
+                      {job.tags.length > 3 && (
+                        <span className="text-[11px] text-slate-400 self-center">
+                          +{job.tags.length - 3}
+                        </span>
+                      )}
                     </div>
-                    <div className="flex justify-between items-center text-sm text-gray-500">
-                      <span>
-                        {job.createdAt
-                          ? `${Math.floor(
-                              (Date.now() - new Date(job.createdAt).getTime()) /
-                                (1000 * 60 * 60 * 24)
-                            )} ngày trước`
-                          : ""}
-                      </span>
-                      <span>{job.applicants ?? 0} ứng viên</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
+                  )}
+                </div>
+
+                {/* Card Footer */}
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 mt-2">
+                  <span>
+                    {job.createdAt
+                      ? `${Math.max(1, Math.floor((Date.now() - new Date(job.createdAt).getTime()) / (1000 * 60 * 60 * 24)))} ngày trước`
+                      : "Mới đăng"}
+                  </span>
+                  <span className="font-medium text-slate-500">
+                    {job.applicants ?? 0} ứng viên đã nộp
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
-      {/* Job Categories */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Danh mục việc làm
+      {/* Categories Section */}
+      <section className="py-16 md:py-20 bg-white border-y border-slate-200/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+              Khám phá theo ngành nghề
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Khám phá các lĩnh vực nghề nghiệp phổ biến và tìm kiếm cơ hội phù
-              hợp với bạn
+            <p className="text-sm text-slate-500 mt-2">
+              Tìm kiếm các vị trí phù hợp nhất theo từng lĩnh vực chuyên sâu trong ngành IT
             </p>
           </div>
 
           {loadingCategories ? (
-            <p>Đang tải danh mục...</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                <div key={n} className="h-32 bg-slate-100 rounded-2xl animate-pulse"></div>
+              ))}
+            </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {categories.map((category) => {
-                // Lấy icon cho category nếu có
-                const IconComponent = category.icon
-                  ? iconMap[category.icon]
-                  : undefined;
-                // Đếm số lượng việc làm theo categoryId (chuẩn, tránh so sánh theo tên)
-                const jobCount = jobPosts.filter(
-                  (job) => job.categoryId === category.id
-                ).length;
+                const IconComponent = category.icon ? categoryIconMap[category.icon] || Code : Code;
+                const jobCount = jobPosts.filter((job) => job.categoryId === category.id).length;
+
                 return (
-                  <Card
+                  <div
                     key={category.id || category.name}
-                    className="hover:shadow-lg transition-shadow cursor-pointer"
-                    onClick={() =>
-                      handleCategoryClick(category.id || category.name)
-                    }
+                    onClick={() => router.push(`/candidate/category/${category.id || category.name}`)}
+                    className="group p-5 rounded-2xl bg-slate-50/70 hover:bg-white border border-slate-200/70 hover:border-blue-500 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex flex-col items-center text-center select-none"
                   >
-                    <CardContent className="p-6 text-center">
-                      <div
-                        className={`w-16 h-16 rounded-full ${category.color} flex items-center justify-center mx-auto mb-4`}
-                      >
-                        {IconComponent ? (
-                          <IconComponent className="h-8 w-8" />
-                        ) : null}
-                      </div>
-                      <h3 className="font-semibold mb-2">{category.name}</h3>
-                      <p className="text-sm text-gray-600">
-                        {jobCount} việc làm
-                      </p>
-                    </CardContent>
-                  </Card>
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-200 shadow-2xs">
+                      <IconComponent className="w-6 h-6" />
+                    </div>
+                    <h3 className="font-bold text-sm text-slate-800 group-hover:text-blue-600 transition-colors">
+                      {category.name}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {jobCount} việc làm đang tuyển
+                    </p>
+                  </div>
                 );
               })}
             </div>
@@ -430,140 +487,171 @@ export default function HomepageContent() {
         </div>
       </section>
 
-      {/* Top Companies */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Công ty hàng đầu
+      {/* Top Companies Section */}
+      <section className="py-16 md:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">
+              <Building2 className="w-3.5 h-3.5" />
+              <span>Nhà tuyển dụng uy tín</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+              Top doanh nghiệp công nghệ hàng đầu
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Làm việc cùng những công ty uy tín và phát triển sự nghiệp của bạn
+            <p className="text-sm text-slate-500 mt-1">
+              Khám phá môi trường làm việc lý tưởng và văn hóa doanh nghiệp hiện đại
             </p>
           </div>
-
-          {loadingCompanies || loadingReviews ? (
-            <p>Đang tải...</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {getTopCompanies(companies, reviews, 6).map((company) => (
-                <Card
-                  key={company.id}
-                  className="hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => handleCompanyClick(company.id as string)}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-center space-x-4 mb-4">
-                      <Image
-                        src={company.logo || "/placeholder.svg"}
-                        alt={company.name}
-                        width={60}
-                        height={60}
-                        className="rounded-lg border"
-                      />
-                      <div>
-                        <h3 className="font-semibold text-lg">
-                          {company.name}
-                        </h3>
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Users className="h-4 w-4 mr-1" />
-                          {company.employees} nhân viên
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <span className="text-sm text-gray-600">
-                          Đang tuyển:{" "}
-                        </span>
-                        <span className="font-semibold text-blue-600">
-                          {company.openJobs} vị trí
-                        </span>
-                      </div>
-                      <div className="flex items-center">
-                        <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                        <span className="ml-1 text-sm font-semibold">
-                          {company.averageRating.toFixed(1)}
-                        </span>
-                        <span className="ml-1 text-xs text-gray-500">
-                          ({company.reviewCount} đánh giá)
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          <Button
+            variant="outline"
+            onClick={() => router.push("/candidate/company")}
+            className="rounded-xl border-slate-300 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 self-start md:self-auto text-xs font-semibold"
+          >
+            <span>Tất cả công ty</span>
+            <ArrowRight className="ml-1.5 w-3.5 h-3.5" />
+          </Button>
         </div>
+
+        {loadingCompanies || loadingReviews ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((n) => (
+              <div key={n} className="h-40 bg-white rounded-2xl border border-slate-200 animate-pulse"></div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {getTopCompanies(companies, reviews, 6).map((company) => (
+              <div
+                key={company.id}
+                onClick={() => router.push(`/candidate/company/${company.id}`)}
+                className="group p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-xl hover:border-indigo-500/50 hover:-translate-y-1 transition-all duration-200 cursor-pointer flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-start gap-4 mb-4">
+                    <CompanyLogo src={company.logo} name={company.name} size="md" />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-base text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                        {company.name}
+                      </h3>
+                      <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-1">
+                        <Users className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{company.employees || "50-100"} nhân viên</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <span className="font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">
+                    {company.openJobs || 0} việc làm đang mở
+                  </span>
+                  <div className="flex items-center gap-1 text-slate-700 font-bold">
+                    <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                    <span>{company.averageRating > 0 ? company.averageRating.toFixed(1) : "5.0"}</span>
+                    <span className="text-slate-400 font-normal">({company.reviewCount})</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
-      {/* Why Choose Us */}
-      <section className="py-16 bg-blue-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Tại sao chọn IT Job?
+      {/* Why Choose Us & Trust Section */}
+      <section className="py-16 md:py-20 bg-slate-900 text-white relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-14">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Tại sao hàng ngàn lập trình viên chọn JobPortal?
             </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Chúng tôi cam kết mang đến trải nghiệm tuyển dụng tốt nhất cho cả
-              ứng viên và nhà tuyển dụng
+            <p className="text-sm text-slate-400 mt-2">
+              Chúng tôi cam kết xây dựng hệ sinh thái tuyển dụng công bằng, minh bạch và hiệu quả nhất
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-8 w-8 text-blue-600" />
+            <div className="p-6 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-3">
+              <div className="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                <ShieldCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Xác thực công ty</h3>
-              <p className="text-gray-600">
-                Tất cả công ty đều được xác thực kỹ lưỡng để đảm bảo tính chính
-                xác và uy tín
+              <h3 className="text-lg font-bold">Xác thực công ty 100%</h3>
+              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                Mọi bài đăng và doanh nghiệp trên nền tảng đều được kiểm duyệt thông tin pháp lý, phòng tránh tin lừa đảo.
               </p>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="h-8 w-8 text-green-600" />
+
+            <div className="p-6 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-3">
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                <Sparkles className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Hỗ trợ 24/7</h3>
-              <p className="text-gray-600">
-                Đội ngũ hỗ trợ chuyên nghiệp luôn sẵn sàng giúp đỡ bạn trong quá
-                trình tìm việc
+              <h3 className="text-lg font-bold">Matching CV thông minh</h3>
+              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                Thuật toán tự động phân tích kỹ năng và kinh nghiệm trong hồ sơ để gợi ý việc làm chuẩn xác nhất.
               </p>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <TrendingUp className="h-8 w-8 text-purple-600" />
+
+            <div className="p-6 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-3">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                <TrendingUp className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">
-                Tỷ lệ thành công cao
-              </h3>
-              <p className="text-gray-600">
-                95% ứng viên tìm được việc làm phù hợp trong vòng 30 ngày đầu
-                tiên
+              <h3 className="text-lg font-bold">Phản hồi siêu tốc</h3>
+              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                Thông báo tiến độ hồ sơ theo thời gian thực (Đã xem, Phỏng vấn, Chấp nhận) ngay trên giao diện cá nhân.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Newsletter */}
-      <section className="py-16 bg-gray-900 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">
-            Đăng ký nhận thông tin việc làm mới
-          </h2>
-          <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
-            Nhận thông báo về những cơ hội việc làm phù hợp với bạn qua email
-            hàng tuần
-          </p>
-          <div className="max-w-md mx-auto flex gap-4">
-            <Input
-              placeholder="Nhập email của bạn"
-              className="bg-white text-gray-900"
-            />
-            <Button>Đăng ký</Button>
+      {/* Dual CTA Banner */}
+      <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Candidate Card */}
+          <div className="p-8 rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-xl shadow-blue-500/10 flex flex-col justify-between space-y-6">
+            <div>
+              <span className="inline-flex px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white mb-4">
+                Dành cho ứng viên
+              </span>
+              <h3 className="text-2xl font-extrabold tracking-tight">
+                Sẵn sàng cho bước tiến sự nghiệp mới?
+              </h3>
+              <p className="text-sm text-blue-100 mt-2 leading-relaxed">
+                Tải lên CV của bạn để nhà tuyển dụng chủ động liên hệ hoặc khám phá danh sách việc làm IT hấp dẫn nhất.
+              </p>
+            </div>
+            <div>
+              <Button
+                onClick={() => router.push("/candidate/job")}
+                className="h-11 px-6 rounded-xl bg-white text-blue-700 font-bold hover:bg-blue-50 active:scale-95 transition-all shadow-md"
+              >
+                <span>Tìm việc ngay</span>
+                <ArrowRight className="ml-1.5 w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Recruiter Card */}
+          <div className="p-8 rounded-3xl bg-slate-900 text-white border border-slate-800 shadow-xl flex flex-col justify-between space-y-6">
+            <div>
+              <span className="inline-flex px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-amber-400 border border-slate-700 mb-4">
+                Dành cho nhà tuyển dụng
+              </span>
+              <h3 className="text-2xl font-extrabold tracking-tight">
+                Doanh nghiệp bạn đang tìm nhân tài IT?
+              </h3>
+              <p className="text-sm text-slate-400 mt-2 leading-relaxed">
+                Đăng tin tuyển dụng tiếp cận hơn 50,000+ ứng viên chất lượng cao. Quản lý hồ sơ và xếp hạng ứng viên tiện lợi.
+              </p>
+            </div>
+            <div>
+              <Button
+                onClick={() => router.push("/recruiter/jobs")}
+                className="h-11 px-6 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 active:scale-95 transition-all shadow-md shadow-blue-500/20"
+              >
+                <span>Đăng tin tuyển dụng</span>
+                <ArrowRight className="ml-1.5 w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </section>

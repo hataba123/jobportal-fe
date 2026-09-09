@@ -1,86 +1,72 @@
 "use client";
-import { useRouter, usePathname } from "@/i18n/navigation";
+
+import React from "react";
+import { Link, usePathname } from "@/i18n/navigation";
 import {
-  UserIcon,
-  DocumentTextIcon,
-  BookmarkIcon,
-  BellIcon,
-  Cog6ToothIcon,
-  SparklesIcon,
-} from "@heroicons/react/24/outline";
+  User,
+  FileText,
+  Bookmark,
+  Bell,
+  Sparkles,
+  Settings,
+} from "lucide-react";
 
 const navigationItems = [
   {
     name: "Hồ sơ cá nhân",
     href: "/candidate/userprofiles/profile",
-    icon: UserIcon,
-    description: "Quản lý thông tin cá nhân",
+    icon: User,
   },
   {
     name: "Việc làm đã ứng tuyển",
     href: "/candidate/userprofiles/applications",
-    icon: DocumentTextIcon,
-    description: "Theo dõi đơn ứng tuyển",
+    icon: FileText,
   },
   {
     name: "Việc làm đã lưu",
     href: "/candidate/userprofiles/saved-jobs",
-    icon: BookmarkIcon,
-    description: "Công việc yêu thích",
+    icon: Bookmark,
+  },
+  {
+    name: "Gợi ý việc làm AI",
+    href: "/candidate/userprofiles/matches",
+    icon: Sparkles,
   },
   {
     name: "Thông báo",
     href: "/candidate/userprofiles/notifications",
-    icon: BellIcon,
-    description: "Xem tất cả thông báo",
-  },
-  {
-    name: "Gợi ý việc làm",
-    href: "/candidate/userprofiles/matches",
-    icon: SparklesIcon,
-    description: "Việc làm phù hợp với hồ sơ",
+    icon: Bell,
   },
   {
     name: "Cài đặt tài khoản",
     href: "/candidate/userprofiles/settings",
-    icon: Cog6ToothIcon,
-    description: "Thay đổi mật khẩu, thông tin",
+    icon: Settings,
   },
 ];
 
-// Component header điều hướng cho candidate, responsive cho mobile và desktop
 export default function CandidateHeader() {
-  const router = useRouter();
   const pathname = usePathname();
 
-  const handleNavigation = (href: string) => {
-    router.push(href);
-  };
-
   return (
-    <div className="bg-white shadow-sm border-b border-gray-200">
-      <div className="container mx-auto px-2 sm:px-4">
-        {/* Thanh điều hướng ngang, cuộn ngang trên mobile */}
-        <nav className="flex overflow-x-auto space-x-4 sm:space-x-8 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+    <div className="bg-white border-b border-slate-200/80 sticky top-16 z-40 shadow-2xs">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav className="flex space-x-1 sm:space-x-2 overflow-x-auto py-2.5 scrollbar-none">
           {navigationItems.map((item) => {
             const isActive = pathname === item.href;
+            const Icon = item.icon;
             return (
-              <button
-                key={item.name}
-                onClick={() => handleNavigation(item.href)}
-                className={`flex items-center space-x-2 py-3 px-2 border-b-2 font-medium text-xs sm:text-sm transition-colors whitespace-nowrap ${
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-semibold text-xs sm:text-sm whitespace-nowrap transition-all duration-150 ${
                   isActive
-                    ? "border-blue-500 text-blue-600 bg-blue-50"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    ? "bg-blue-50 text-blue-600 shadow-2xs border border-blue-200/60"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
                 }`}
               >
-                <item.icon className="w-5 h-5" />
-                {/* Hiển thị đầy đủ tên trên màn hình sm trở lên, rút gọn trên mobile */}
-                <span className="hidden sm:inline">{item.name}</span>
-                <span className="inline sm:hidden">
-                  {item.name.split(" ")[0]}
-                </span>
-              </button>
+                <Icon className={`w-4 h-4 ${isActive ? "text-blue-600" : "text-slate-400"}`} />
+                <span>{item.name}</span>
+              </Link>
             );
           })}
         </nav>

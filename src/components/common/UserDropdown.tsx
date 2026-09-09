@@ -1,8 +1,32 @@
 "use client";
-import { ChevronDownIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
-import { useState, useRef } from "react";
+
+import React from "react";
 import { useRouter } from "@/i18n/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  User,
+  FileText,
+  Bookmark,
+  Bell,
+  Settings,
+  LayoutDashboard,
+  Building2,
+  Users,
+  Briefcase,
+  LogOut,
+  ChevronDown,
+  Sparkles,
+  Layers,
+  ShieldCheck,
+} from "lucide-react";
 
 type Props = {
   user: {
@@ -13,143 +37,209 @@ type Props = {
 };
 
 export default function UserDropdown({ user, onLogout }: Props) {
-  const [open, setOpen] = useState(false);
   const router = useRouter();
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleLogout = () => {
     onLogout?.();
     router.push("/candidate/auth/login");
   };
 
-  const handleMouseEnter = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setOpen(true);
-  };
-
-  const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => {
-      setOpen(false);
-    }, 50);
-  };
-
-  const handleMenuClick = (path: string) => {
-    setOpen(false);
-    router.push(path);
-  };
-
-  // Menu items cho ứng viên
-  const candidateMenuItems = [
-    {
-      label: "Hồ sơ cá nhân",
-      path: "/candidate/userprofiles/profile",
-      icon: "👤",
-    },
-    {
-      label: "Việc làm đã ứng tuyển",
-      path: "/candidate/userprofiles/applications",
-      icon: "📝",
-    },
-    {
-      label: "Việc làm đã lưu",
-      path: "/candidate/userprofiles/saved-jobs",
-      icon: "💾",
-    },
-    {
-      label: "Thông báo",
-      path: "/candidate/userprofiles/notifications",
-      icon: "🔔",
-    },
-    {
-      label: "Cài đặt tài khoản",
-      path: "/candidate/userprofiles/settings",
-      icon: "⚙️",
-    },
-  ];
-
-  // Menu items cho nhà tuyển dụng
-  const recruiterMenuItems = [
-    { label: "Dashboard", path: "/recruiter/dashboard", icon: "📊" },
-
-    { label: "Quản lý công ty", path: "/recruiter/company", icon: "🏢" },
-    { label: "Đăng tin tuyển dụng", path: "/recruiter/jobs", icon: "📋" },
-    { label: "Ứng viên", path: "/recruiter/candidates", icon: "👥" },
-    { label: "Đơn ứng tuyển", path: "/recruiter/applications", icon: "📄" },
-    { label: "Thông báo", path: "/recruiter/notifications", icon: "🔔" },
-  ];
-
-  // Menu items cho admin
-  const adminMenuItems = [
-    { label: "Dashboard", path: "/admin/dashboard", icon: "📊" },
-
-    { label: "Quản lý người dùng", path: "/admin/user", icon: "👥" },
-    { label: "Quản lý công ty", path: "/admin/company", icon: "🏢" },
-    { label: "Quản lý tin tuyển dụng", path: "/admin/job-post", icon: "📋" },
-    {
-      label: "Quản lý đơn ứng tuyển",
-      path: "/admin/job-application",
-      icon: "📄",
-    },
-    { label: "Thông báo", path: "/admin/notification", icon: "🔔" },
-  ];
-
-  const getMenuItems = () => {
+  const getRoleBadge = () => {
     switch (user.role) {
-      case "CANDIDATE":
-        return candidateMenuItems;
-      case "RECRUITER":
-        return recruiterMenuItems;
       case "ADMIN":
-        return adminMenuItems;
+        return { label: "Quản trị viên", color: "bg-purple-100 text-purple-700 border-purple-200" };
+      case "RECRUITER":
+        return { label: "Nhà tuyển dụng", color: "bg-amber-100 text-amber-800 border-amber-200" };
       default:
-        return [];
+        return { label: "Ứng viên", color: "bg-blue-100 text-blue-700 border-blue-200" };
     }
   };
 
-  const menuItems = getMenuItems();
+  const roleInfo = getRoleBadge();
+  const initials = user.fullName
+    ? user.fullName
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+    : "U";
 
   return (
-    <div
-      className="relative inline-block text-left"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <button className="inline-flex items-center space-x-2 focus:outline-none">
-        <Image
-          src="/image/avatar.png"
-          alt="avatar"
-          width={32}
-          height={32}
-          className="rounded-full"
-        />
-        <span className="text-white">{user.fullName}</span>
-        <ChevronDownIcon className="w-4 h-4 ml-1 text-white" />
-      </button>
-
-      {open && (
-        <div className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 text-black">
-          <div className="py-1">
-            {menuItems.map((item, index) => (
-              <button
-                key={index}
-                onClick={() => handleMenuClick(item.path)}
-                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors"
-              >
-                <span className="mr-2">{item.icon}</span>
-                {item.label}
-              </button>
-            ))}
-            <div className="border-t border-gray-200 my-1"></div>
-            <button
-              onClick={handleLogout}
-              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors text-red-600"
-            >
-              <span className="mr-2">🚪</span>
-              Đăng xuất
-            </button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="flex items-center gap-2.5 p-1.5 rounded-full hover:bg-slate-100/80 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-xs border border-white/40 select-none">
+            {initials}
           </div>
-        </div>
-      )}
-    </div>
+          <div className="hidden lg:flex flex-col text-left mr-0.5">
+            <span className="text-sm font-semibold text-slate-800 leading-tight max-w-[120px] truncate">
+              {user.fullName}
+            </span>
+            <span className="text-[11px] text-slate-500 font-medium">
+              {roleInfo.label}
+            </span>
+          </div>
+          <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform" />
+        </button>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent
+        align="end"
+        className="w-60 p-1.5 shadow-xl border border-slate-200/80 rounded-2xl bg-white animate-in fade-in-50 zoom-in-95 z-50"
+      >
+        <DropdownMenuLabel className="p-2.5">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-bold text-slate-900 leading-none">{user.fullName}</p>
+            <div className="pt-1">
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${roleInfo.color}`}>
+                {roleInfo.label}
+              </span>
+            </div>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator className="my-1 bg-slate-100" />
+
+        <DropdownMenuGroup>
+          {user.role === "CANDIDATE" && (
+            <>
+              <DropdownMenuItem
+                onClick={() => router.push("/candidate/userprofiles/profile")}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
+              >
+                <User className="w-4 h-4 text-slate-400" />
+                <span>Hồ sơ cá nhân</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push("/candidate/userprofiles/applications")}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
+              >
+                <FileText className="w-4 h-4 text-slate-400" />
+                <span>Việc làm đã ứng tuyển</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push("/candidate/userprofiles/saved-jobs")}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
+              >
+                <Bookmark className="w-4 h-4 text-slate-400" />
+                <span>Việc làm đã lưu</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push("/candidate/userprofiles/matches")}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
+              >
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span>Gợi ý việc làm phù hợp</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push("/candidate/userprofiles/notifications")}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
+              >
+                <Bell className="w-4 h-4 text-slate-400" />
+                <span>Thông báo</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push("/candidate/userprofiles/settings")}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
+              >
+                <Settings className="w-4 h-4 text-slate-400" />
+                <span>Cài đặt tài khoản</span>
+              </DropdownMenuItem>
+            </>
+          )}
+
+          {user.role === "RECRUITER" && (
+            <>
+              <DropdownMenuItem
+                onClick={() => router.push("/recruiter/dashboard")}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
+              >
+                <LayoutDashboard className="w-4 h-4 text-slate-400" />
+                <span>Recruiter Dashboard</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push("/recruiter/jobs")}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
+              >
+                <Briefcase className="w-4 h-4 text-slate-400" />
+                <span>Quản lý tin tuyển dụng</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push("/recruiter/applications")}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
+              >
+                <FileText className="w-4 h-4 text-slate-400" />
+                <span>Đơn ứng tuyển</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push("/recruiter/candidates")}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
+              >
+                <Users className="w-4 h-4 text-slate-400" />
+                <span>Tìm nhân tài (Talent Pool)</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push("/recruiter/company")}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
+              >
+                <Building2 className="w-4 h-4 text-slate-400" />
+                <span>Hồ sơ công ty</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push("/recruiter/settings")}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
+              >
+                <Settings className="w-4 h-4 text-slate-400" />
+                <span>Cài đặt nhà tuyển dụng</span>
+              </DropdownMenuItem>
+            </>
+          )}
+
+          {user.role === "ADMIN" && (
+            <>
+              <DropdownMenuItem
+                onClick={() => router.push("/admin/dashboard")}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
+              >
+                <LayoutDashboard className="w-4 h-4 text-slate-400" />
+                <span>Admin Dashboard</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push("/admin/job-post")}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
+              >
+                <Briefcase className="w-4 h-4 text-slate-400" />
+                <span>Quản lý tin tuyển dụng</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push("/admin/user")}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
+              >
+                <Users className="w-4 h-4 text-slate-400" />
+                <span>Quản lý người dùng</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push("/admin/company")}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
+              >
+                <Building2 className="w-4 h-4 text-slate-400" />
+                <span>Quản lý công ty</span>
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuGroup>
+
+        <DropdownMenuSeparator className="my-1 bg-slate-100" />
+
+        <DropdownMenuItem
+          onClick={handleLogout}
+          className="flex items-center gap-2.5 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-xl cursor-pointer transition-colors font-medium"
+        >
+          <LogOut className="w-4 h-4 text-rose-500" />
+          <span>Đăng xuất</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

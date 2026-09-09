@@ -24,6 +24,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import Image from "next/image";
+import CompanyLogo from "@/components/common/CompanyLogo";
 import { Company } from "@/types/Company";
 import { JobPost } from "@/types/JobPost";
 import { Review } from "@/types/Review";
@@ -132,12 +133,12 @@ export default function CompanyDetailPage({
       <Card className="mb-8">
         <CardHeader>
           <div className="flex flex-col md:flex-row gap-6">
-            <Image
-              src={company.logo || "/placeholder.svg"}
-              alt={`${company.name} Logo`}
-              width={96}
-              height={96}
-              className="w-24 h-24 object-contain rounded-lg border mx-auto md:mx-0"
+            <CompanyLogo
+              src={company.logo}
+              name={company.name}
+              size="xl"
+              rounded="rounded-2xl"
+              className="mx-auto md:mx-0 shadow-md"
             />
             <div className="flex-1 text-center md:text-left">
               <CardTitle className="text-3xl font-bold mb-2">

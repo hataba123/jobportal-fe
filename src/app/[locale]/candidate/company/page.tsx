@@ -22,6 +22,7 @@ import {
   List,
 } from "lucide-react";
 import Image from "next/image";
+import CompanyLogo from "@/components/common/CompanyLogo";
 import { useState, useMemo } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -266,15 +267,12 @@ export default function AllCompaniesPage() {
                   onClick={() => handleCompanyClick(company.id as string)}
                 >
                   <CardContent className={`p-6 ${viewMode === "list" ? "flex-1" : ""}`}>
-                    <div className={`flex ${viewMode === "list" ? "items-start space-x-4" : "flex-col"}`}>
-                      <Image
-                        src={company.logo || "/placeholder.svg"}
-                        alt={`${company.name} Logo`}
-                        width={80}
-                        height={80}
-                        className={`object-contain rounded-lg border ${
-                          viewMode === "list" ? "w-20 h-20 flex-shrink-0" : "w-20 h-20 mx-auto mb-4"
-                        }`}
+                    <div className={`flex ${viewMode === "list" ? "items-start space-x-4" : "flex-col items-center mb-4"}`}>
+                      <CompanyLogo
+                        src={company.logo}
+                        name={company.name}
+                        size="lg"
+                        className={viewMode === "list" ? "flex-shrink-0" : "mb-2"}
                       />
                       <div className={`flex-1 ${viewMode === "list" ? "ml-4" : ""}`}>
                         <h3 className="text-xl font-semibold mb-2">{company.name}</h3>

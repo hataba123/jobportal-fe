@@ -1,7 +1,7 @@
-// 📁 components/HoverDropdown.tsx
 "use client";
+
 import { Menu, Transition } from "@headlessui/react";
-import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import { ChevronDown, Briefcase } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Fragment, useState, useRef } from "react";
 
@@ -28,7 +28,7 @@ export default function HoverDropdown({ label, items, mainHref }: Props) {
   const handleMouseLeave = () => {
     timeoutRef.current = setTimeout(() => {
       setOpen(false);
-    }, 200);
+    }, 150);
   };
 
   return (
@@ -38,39 +38,50 @@ export default function HoverDropdown({ label, items, mainHref }: Props) {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <div className="inline-flex items-center hover:text-blue-200 cursor-pointer">
-        <Link href={mainHref} className="flex items-center">
+      <div className="inline-flex items-center">
+        <Link
+          href={mainHref}
+          className="flex items-center gap-1 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors py-2"
+        >
           {label}
-          <ChevronDownIcon className="w-4 h-4 ml-1" />
+          <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${open ? "rotate-180 text-blue-600" : ""}`} />
         </Link>
       </div>
 
       <Transition
         as={Fragment}
         show={open}
-        enter="transition ease-out duration-100"
-        enterFrom="transform opacity-0 scale-95"
-        enterTo="transform opacity-100 scale-100"
-        leave="transition ease-in duration-75"
-        leaveFrom="transform opacity-100 scale-100"
-        leaveTo="transform opacity-0 scale-95"
+        enter="transition ease-out duration-150"
+        enterFrom="transform opacity-0 -translate-y-1 scale-95"
+        enterTo="transform opacity-100 translate-y-0 scale-100"
+        leave="transition ease-in duration-100"
+        leaveFrom="transform opacity-100 translate-y-0 scale-100"
+        leaveTo="transform opacity-0 -translate-y-1 scale-95"
       >
         <Menu.Items
           static
-          className="absolute right-0 mt-2 w-40 origin-top-right bg-white border rounded shadow-lg z-50 text-black"
+          className="absolute left-0 mt-1 w-56 origin-top-left bg-white border border-slate-200/80 rounded-2xl shadow-xl z-50 text-slate-700 p-1.5 focus:outline-none"
         >
-          {items.map((item) => (
-            <Menu.Item key={item.href}>
-              {({ active }) => (
-                <Link
-                  href={item.href}
-                  className={`block px-4 py-2 ${active ? "bg-gray-100" : ""}`}
-                >
-                  {item.label}
-                </Link>
-              )}
-            </Menu.Item>
-          ))}
+          <div className="px-3 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            Khám phá theo ngành
+          </div>
+          <div className="max-h-64 overflow-y-auto space-y-0.5">
+            {items.map((item) => (
+              <Menu.Item key={item.href}>
+                {({ active }) => (
+                  <Link
+                    href={item.href}
+                    className={`flex items-center gap-2 px-3 py-2 text-sm rounded-xl transition-colors ${
+                      active ? "bg-blue-50 text-blue-600 font-medium" : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <Briefcase className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                  </Link>
+                )}
+              </Menu.Item>
+            ))}
+          </div>
         </Menu.Items>
       </Transition>
     </Menu>

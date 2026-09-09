@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Link } from "@/i18n/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { Bell, Building2, Mail, Shield } from "lucide-react";
 
 export default function RecruiterSettingsPage() {
   const { user } = useAuth();
@@ -14,42 +16,54 @@ export default function RecruiterSettingsPage() {
     emailNotifications: true,
     applicationUpdates: true,
   });
-  const [saved, setSaved] = useState(false);
 
   const updatePreference = (key: keyof typeof preferences, value: boolean) => {
-    setSaved(false);
     setPreferences((current) => ({ ...current, [key]: value }));
   };
 
+  const handleSave = () => {
+    toast.success("Đã lưu các cài đặt nhà tuyển dụng thành công!");
+  };
+
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <Card>
+    <div className="max-w-3xl space-y-6">
+      <Card className="rounded-3xl border-slate-200/80 shadow-xs">
         <CardHeader>
-          <CardTitle>Tài khoản nhà tuyển dụng</CardTitle>
+          <CardTitle className="text-base font-bold flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-blue-600" />
+            <span>Tài khoản nhà tuyển dụng</span>
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label>Email đăng nhập</Label>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <Label className="text-xs font-semibold text-slate-500">Email đăng nhập</Label>
+            <p className="mt-1 text-sm font-semibold text-slate-900">
               {user?.email ?? "Chưa xác định"}
             </p>
           </div>
           <Link href="/recruiter/company">
-            <Button variant="outline">Cập nhật hồ sơ công ty</Button>
+            <Button variant="outline" className="rounded-xl text-xs font-semibold">
+              Cập nhật hồ sơ công ty
+            </Button>
           </Link>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="rounded-3xl border-slate-200/80 shadow-xs">
         <CardHeader>
-          <CardTitle>Thông báo</CardTitle>
+          <CardTitle className="text-base font-bold flex items-center gap-2">
+            <Bell className="w-4 h-4 text-indigo-600" />
+            <span>Tùy chọn thông báo</span>
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4 py-2 border-b border-slate-100">
             <div>
-              <Label htmlFor="email-notifications">Thông báo qua email</Label>
-              <p className="text-sm text-muted-foreground">
-                Nhận thông tin quan trọng về hoạt động tuyển dụng.
+              <Label htmlFor="email-notifications" className="text-sm font-bold text-slate-800">
+                Thông báo qua email
+              </Label>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Nhận thông tin quan trọng về hoạt động tuyển dụng và giao dịch.
               </p>
             </div>
             <Switch
@@ -60,11 +74,13 @@ export default function RecruiterSettingsPage() {
               }
             />
           </div>
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4 py-2">
             <div>
-              <Label htmlFor="application-updates">Cập nhật đơn ứng tuyển</Label>
-              <p className="text-sm text-muted-foreground">
-                Nhận thông báo khi ứng viên gửi hoặc thay đổi trạng thái đơn.
+              <Label htmlFor="application-updates" className="text-sm font-bold text-slate-800">
+                Cập nhật đơn ứng tuyển
+              </Label>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Nhận thông báo tức thì khi ứng viên gửi hồ sơ mới vào bài đăng.
               </p>
             </div>
             <Switch
@@ -75,11 +91,10 @@ export default function RecruiterSettingsPage() {
               }
             />
           </div>
-          <div className="flex items-center gap-3">
-            <Button onClick={() => setSaved(true)}>Lưu tùy chọn</Button>
-            {saved && (
-              <span className="text-sm text-green-700">Đã lưu trên trình duyệt.</span>
-            )}
+          <div className="pt-2">
+            <Button onClick={handleSave} className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs">
+              Lưu tùy chọn
+            </Button>
           </div>
         </CardContent>
       </Card>
