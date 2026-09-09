@@ -270,6 +270,8 @@ components:
         companyId: { $ref: '#/components/schemas/Uuid' }
         categoryId: { $ref: '#/components/schemas/Uuid' }
         expiresAt: { $ref: '#/components/schemas/DateTime' }
+        minExperienceYears: { type: integer, minimum: 0 }
+        educationRequirement: { type: string, maxLength: 200 }
     JobPost:
       allOf:
         - $ref: '#/components/schemas/JobPostWrite'
@@ -317,6 +319,22 @@ components:
         matchedSkills: { type: array, items: { type: string } }
         missingSkills: { type: array, items: { type: string } }
         reason: { type: string }
+        inputFingerprint: { type: string, maxLength: 64 }
+        jobPost:
+          type: object
+          properties:
+            id: { $ref: '#/components/schemas/Uuid' }
+            title: { type: string }
+            location: { type: string, nullable: true }
+            salary: { type: number }
+            type: { type: string, nullable: true }
+            expiresAt: { $ref: '#/components/schemas/DateTime' }
+        candidate:
+          type: object
+          properties:
+            id: { $ref: '#/components/schemas/Uuid' }
+            fullName: { type: string }
+            email: { type: string, format: email }
     PagedMatches:
       type: object
       properties:

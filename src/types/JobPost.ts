@@ -19,4 +19,8 @@ export interface JobPost {
   categoryName?: string;
   categoryId?: string; // Thêm categoryId
   companyName?: string; // Thêm companyName
+  status?: "Draft" | "PendingApproval" | "Active" | "Closed" | "Expired" | "Rejected";
+  expiresAt?: string;
+  minExperienceYears?: number;
+  educationRequirement?: string;
 }

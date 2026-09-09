@@ -6,6 +6,7 @@ import {
   BookmarkIcon,
   BellIcon,
   Cog6ToothIcon,
+  SparklesIcon,
 } from "@heroicons/react/24/outline";
 
 const navigationItems = [
@@ -32,6 +33,12 @@ const navigationItems = [
     href: "/candidate/userprofiles/notifications",
     icon: BellIcon,
     description: "Xem tất cả thông báo",
+  },
+  {
+    name: "Gợi ý việc làm",
+    href: "/candidate/userprofiles/matches",
+    icon: SparklesIcon,
+    description: "Việc làm phù hợp với hồ sơ",
   },
   {
     name: "Cài đặt tài khoản",
