@@ -43,6 +43,7 @@ import { fetchSavedJobs, saveJob, unsaveJob } from "@/lib/api/saved-job";
 import { toast } from "sonner";
 import { applyJob } from "@/lib/api/job-application";
 import { fetchMyProfile, uploadCv } from "@/lib/api/candidate-profile";
+import { toBackendUrl } from "@/lib/api/url";
 
 interface ApplicationForm {
   fullName: string;
@@ -398,16 +399,7 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                         />
                         Sử dụng CV đã có (
                         <a
-                          href={
-                            typeof existingCvUrl === "string" && existingCvUrl
-                              ? existingCvUrl.startsWith("https")
-                                ? existingCvUrl
-                                : `${process.env.NEXT_PUBLIC_API_URL?.replace(
-                                    /\/api$/,
-                                    ""
-                                  )}${existingCvUrl}`
-                              : "#"
-                          }
+                          href={toBackendUrl(existingCvUrl)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="underline text-blue-600"

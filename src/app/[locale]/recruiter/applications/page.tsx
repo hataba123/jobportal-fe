@@ -29,6 +29,7 @@ import {
   CandidateApplicationDto,
 } from "@/lib/api/recruiter-candidates";
 import { Search, RefreshCw, FileText, User } from "lucide-react";
+import { toBackendUrl } from "@/lib/api/url";
 
 const ApplicationsPage = () => {
   const [candidates, setCandidates] = useState<CandidateProfileBriefDto[]>([]);
@@ -320,14 +321,7 @@ const ApplicationsPage = () => {
                               {/* Hiển thị link CV, lấy domain từ biến môi trường nếu là đường dẫn tương đối */}
                               {app.cvUrl ? (
                                 <a
-                                  href={
-                                    app.cvUrl.startsWith("https")
-                                      ? app.cvUrl
-                                      : `${process.env.NEXT_PUBLIC_API_URL?.replace(
-                                          /\/api$/,
-                                          ""
-                                        )}${app.cvUrl}`
-                                  }
+                                  href={toBackendUrl(app.cvUrl)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex items-center text-blue-600 hover:text-blue-800 underline"

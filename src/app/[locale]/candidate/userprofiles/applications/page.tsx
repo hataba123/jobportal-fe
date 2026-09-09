@@ -24,6 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import axiosInstance from "@/lib/axiosInstance";
+import { toBackendUrl } from "@/lib/api/url";
 
 type Application = {
   id: string; // ← cần thêm
@@ -293,10 +294,7 @@ export default function ApplicationsPage() {
                         href={
                           d.cvUrl.startsWith("https")
                             ? d.cvUrl
-                            : `${process.env.NEXT_PUBLIC_API_URL?.replace(
-                                /\/api$/,
-                                ""
-                              )}${d.cvUrl}`
+                            : toBackendUrl(d.cvUrl)
                         }
                         target="_blank"
                         rel="noopener noreferrer"

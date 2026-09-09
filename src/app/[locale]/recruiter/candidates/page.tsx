@@ -37,6 +37,7 @@ import {
   CandidateApplicationDto,
 } from "@/lib/api/recruiter-candidates";
 import { Search, User, FileText, ExternalLink } from "lucide-react";
+import { toBackendUrl } from "@/lib/api/url";
 
 const CandidatesPage = () => {
   const [candidates, setCandidates] = useState<CandidateProfileBriefDto[]>([]);
@@ -322,14 +323,7 @@ const CandidatesPage = () => {
                     {/* Hiển thị link CV, lấy domain từ biến môi trường nếu là đường dẫn tương đối */}
                     {selectedCandidate.resumeUrl ? (
                       <a
-                        href={
-                          selectedCandidate.resumeUrl.startsWith("https")
-                            ? selectedCandidate.resumeUrl
-                            : `${process.env.NEXT_PUBLIC_API_URL?.replace(
-                                /\/api$/,
-                                ""
-                              )}${selectedCandidate.resumeUrl}`
-                        }
+                        href={toBackendUrl(selectedCandidate.resumeUrl)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center text-blue-600 hover:text-blue-800 underline"
@@ -450,14 +444,7 @@ const CandidatesPage = () => {
                               {/* Hiển thị link CV, lấy domain từ biến môi trường nếu là đường dẫn tương đối */}
                               {app.cvUrl ? (
                                 <a
-                                  href={
-                                    app.cvUrl.startsWith("https")
-                                      ? app.cvUrl
-                                      : `${process.env.NEXT_PUBLIC_API_URL?.replace(
-                                          /\/api$/,
-                                          ""
-                                        )}${app.cvUrl}`
-                                  }
+                                  href={toBackendUrl(app.cvUrl)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex items-center text-blue-600 hover:text-blue-800 underline"

@@ -12,6 +12,7 @@ import {
   deleteCv,
 } from "@/lib/api/candidate-profile";
 import { toast } from "sonner";
+import { toBackendUrl } from "@/lib/api/url";
 import {
   Select,
   SelectContent,
@@ -136,10 +137,7 @@ export default function CandidateProfilePage() {
         {cvUrl ? (
           <div className="flex items-center space-x-4">
             <a
-              href={`${process.env.NEXT_PUBLIC_API_URL?.replace(
-                /\/api$/,
-                ""
-              )}${cvUrl}`}
+              href={toBackendUrl(cvUrl)}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 underline"

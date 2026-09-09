@@ -1,6 +1,6 @@
 import { Company } from "./../types/Company";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance";
 
 export function useCompanies() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -8,9 +8,8 @@ export function useCompanies() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    axios
-      .get<Company[]>(`${apiUrl}/companies`)
+    axiosInstance
+      .get<Company[]>("/companies")
       .then((res) => setCompanies(res.data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));

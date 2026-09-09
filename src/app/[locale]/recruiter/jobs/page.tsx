@@ -66,6 +66,7 @@ import {
   updateJobApplicationStatus,
 } from "@/lib/api/job-application";
 import { toast } from "sonner";
+import { toBackendUrl } from "@/lib/api/url";
 
 interface CandidateApplicationDto {
   id: string;
@@ -653,14 +654,7 @@ export default function RecruiterJobsPage() {
                       {/* Hiển thị link CV; nối domain API khi backend trả đường dẫn tương đối. */}
                       {c.cvUrl ? (
                         <a
-                          href={
-                            c.cvUrl.startsWith("https")
-                              ? c.cvUrl
-                              : `${process.env.NEXT_PUBLIC_API_URL?.replace(
-                                  /\/api$/,
-                                  ""
-                                )}${c.cvUrl}`
-                          }
+                          href={toBackendUrl(c.cvUrl)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 underline"

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance";
 import { Category } from "@/types/Category";
 
 export function useCategories() {
@@ -8,9 +8,8 @@ export function useCategories() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    axios
-      .get<Category[]>(`${apiUrl}/categories`)
+    axiosInstance
+      .get<Category[]>("/categories")
       .then((res) => setCategories(res.data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
