@@ -51,6 +51,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 import { format } from "date-fns";
 import { PlusIcon, SearchIcon } from "lucide-react";
+import {
+  createJobPost as createJobPostApi,
+  deleteJobPost as deleteJobPostApi,
+  fetchAllJobPosts,
+  updateJobPost as updateJobPostApi,
+} from "@/lib/api/admin-jobpost";
+import type { JobPost as ApiJobPost } from "@/types/JobPost";
 interface JobPost {
   Id: string;
   Title: string;
@@ -68,76 +75,43 @@ interface JobPost {
   CategoryId: string;
 }
 
-const mockJobPosts: JobPost[] = [
-  {
-    Id: "jp101",
-    Title: "Frontend Developer",
-    Description:
-      "We are looking for a passionate Frontend Developer to join our team...",
-    SkillsRequired: "React, Next.js, TypeScript, Tailwind CSS",
-    Location: "Ho Chi Minh City",
-    Salary: 1500,
-    EmployerId: "emp001",
-    CompanyId: "comp001",
-    Logo: "/placeholder.svg?height=32&width=32",
-    Type: "Full-time",
-    Tags: ["React", "Frontend", "Web"],
-    Applicants: 25,
-    CreatedAt: "2024-05-20T10:00:00Z",
-    CategoryId: "cat001",
-  },
-  {
-    Id: "jp102",
-    Title: "Backend Engineer",
-    Description: "Join our backend team to build scalable and robust APIs...",
-    SkillsRequired: "Node.js, Express, MongoDB, AWS",
-    Location: "Ha Noi",
-    Salary: 1800,
-    EmployerId: "emp002",
-    CompanyId: "comp002",
-    Logo: "/placeholder.svg?height=32&width=32",
-    Type: "Full-time",
-    Tags: ["Node.js", "Backend", "API"],
-    Applicants: 18,
-    CreatedAt: "2024-05-22T11:30:00Z",
-    CategoryId: "cat002",
-  },
-  {
-    Id: "jp103",
-    Title: "UI/UX Designer",
-    Description: "Create intuitive and beautiful user interfaces...",
-    SkillsRequired: "Figma, Sketch, Adobe XD, User Research",
-    Location: "Da Nang",
-    Salary: 1200,
-    EmployerId: "emp003",
-    CompanyId: "comp003",
-    Logo: "/placeholder.svg?height=32&width=32",
-    Type: "Contract",
-    Tags: ["UI", "UX", "Design"],
-    Applicants: 30,
-    CreatedAt: "2024-05-18T09:00:00Z",
-    CategoryId: "cat003",
-  },
-  {
-    Id: "jp104",
-    Title: "Data Scientist",
-    Description: "Analyze large datasets to extract insights...",
-    SkillsRequired: "Python, R, SQL, Machine Learning",
-    Location: "Ho Chi Minh City",
-    Salary: 2000,
-    EmployerId: "emp004",
-    CompanyId: "comp004",
-    Logo: "/placeholder.svg?height=32&width=32",
-    Type: "Full-time",
-    Tags: ["Data Science", "ML", "Python"],
-    Applicants: 12,
-    CreatedAt: "2024-05-25T14:00:00Z",
-    CategoryId: "cat004",
-  },
-];
+const toAdminJobPost = (post: ApiJobPost): JobPost => ({
+  Id: post.id,
+  Title: post.title,
+  Description: post.description,
+  SkillsRequired: post.skillsRequired ?? "",
+  Location: post.location ?? "",
+  Salary: Number(post.salary ?? 0),
+  EmployerId: post.employerId ?? "",
+  CompanyId: post.companyId ?? "",
+  Logo: post.logo ?? "/placeholder.svg?height=32&width=32",
+  Type: (post.type as JobPost["Type"]) ?? "Full-time",
+  Tags: post.tags ?? [],
+  Applicants: post.applicants ?? 0,
+  CreatedAt: post.createdAt,
+  CategoryId: post.categoryId ?? "",
+});
+
+const toApiJobPost = (post: Partial<JobPost>) => ({
+  title: post.Title?.trim() ?? "",
+  description: post.Description?.trim() ?? "",
+  skillsRequired: post.SkillsRequired?.trim() || undefined,
+  location: post.Location?.trim() ?? "",
+  salary: Number(post.Salary ?? 0),
+  employerId: post.EmployerId?.trim() ?? "",
+  companyId: post.CompanyId?.trim() || undefined,
+  logo: post.Logo?.trim() || undefined,
+  type: post.Type,
+  tags: post.Tags ?? [],
+  applicants: Number(post.Applicants ?? 0),
+  createdAt: post.CreatedAt ?? new Date().toISOString(),
+  categoryId: post.CategoryId?.trim() ?? "",
+});
 
 export default function AdminJobPostDashboard() {
-  const [jobPosts, setJobPosts] = React.useState<JobPost[]>(mockJobPosts);
+  const [jobPosts, setJobPosts] = React.useState<JobPost[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [filterType, setFilterType] = React.useState<string>("all");
 
@@ -164,6 +138,24 @@ export default function AdminJobPostDashboard() {
     null
   );
 
+  const loadJobPosts = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await fetchAllJobPosts();
+      setJobPosts(data.map(toAdminJobPost));
+    } catch (loadError) {
+      console.error("Không thể tải danh sách tin tuyển dụng", loadError);
+      setError("Không thể tải danh sách tin tuyển dụng.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    void loadJobPosts();
+  }, [loadJobPosts]);
+
   const filteredJobPosts = jobPosts.filter((post) => {
     const matchesSearch =
       post.Title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -184,40 +176,64 @@ export default function AdminJobPostDashboard() {
     setIsViewDetailsOpen(true);
   };
 
-  const handleCreateJobPost = () => {
-    const id = `jp${Math.floor(Math.random() * 100000)}`;
-    const newPostWithId = {
-      ...newJobPost,
-      Id: id,
-      CreatedAt: new Date().toISOString(),
-    } as JobPost;
-    setJobPosts((prev) => [...prev, newPostWithId]);
-    setIsCreateDialogOpen(false);
-    setNewJobPost({
-      Type: "Full-time",
-      Applicants: 0,
-      Logo: "/placeholder.svg?height=32&width=32",
-      CreatedAt: new Date().toISOString(),
-    });
-  };
+  const handleCreateJobPost = async () => {
+    const payload = toApiJobPost(newJobPost);
+    if (
+      !payload.title ||
+      !payload.description ||
+      !payload.location ||
+      !payload.employerId ||
+      !payload.categoryId ||
+      !Number.isFinite(payload.salary)
+    ) {
+      setError("Vui lòng nhập đủ tiêu đề, mô tả, địa điểm, ID nhà tuyển dụng, ID danh mục và lương.");
+      return;
+    }
 
-  const handleEditJobPost = () => {
-    if (editingJobPost) {
-      setJobPosts((prev) =>
-        prev.map((post) =>
-          post.Id === editingJobPost.Id ? editingJobPost : post
-        )
-      );
-      setIsEditDialogOpen(false);
-      setEditingJobPost(null);
+    try {
+      setError(null);
+      await createJobPostApi(payload);
+      await loadJobPosts();
+      setIsCreateDialogOpen(false);
+      setNewJobPost({
+        Type: "Full-time",
+        Applicants: 0,
+        Logo: "/placeholder.svg?height=32&width=32",
+        CreatedAt: new Date().toISOString(),
+      });
+    } catch (createError) {
+      console.error("Không thể tạo tin tuyển dụng", createError);
+      setError("Không thể tạo tin tuyển dụng. Kiểm tra dữ liệu và quyền quản trị.");
     }
   };
 
-  const handleDeleteJobPost = () => {
+  const handleEditJobPost = async () => {
+    if (editingJobPost) {
+      try {
+        setError(null);
+        await updateJobPostApi(editingJobPost.Id, toApiJobPost(editingJobPost));
+        await loadJobPosts();
+        setIsEditDialogOpen(false);
+        setEditingJobPost(null);
+      } catch (updateError) {
+        console.error("Không thể cập nhật tin tuyển dụng", updateError);
+        setError("Không thể cập nhật tin tuyển dụng.");
+      }
+    }
+  };
+
+  const handleDeleteJobPost = async () => {
     if (jobPostToDelete) {
-      setJobPosts((prev) => prev.filter((post) => post.Id !== jobPostToDelete));
-      setIsDeleteDialogOpen(false);
-      setJobPostToDelete(null);
+      try {
+        setError(null);
+        await deleteJobPostApi(jobPostToDelete);
+        await loadJobPosts();
+        setIsDeleteDialogOpen(false);
+        setJobPostToDelete(null);
+      } catch (deleteError) {
+        console.error("Không thể xóa tin tuyển dụng", deleteError);
+        setError("Không thể xóa tin tuyển dụng.");
+      }
     }
   };
 
@@ -259,6 +275,16 @@ export default function AdminJobPostDashboard() {
                   </Button>
                 </div>
               </div>
+              {error && (
+                <p className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
+                  {error}
+                </p>
+              )}
+              {loading ? (
+                <p className="py-10 text-center text-muted-foreground">
+                  Đang tải danh sách tin tuyển dụng...
+                </p>
+              ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -331,6 +357,7 @@ export default function AdminJobPostDashboard() {
                   ))}
                 </TableBody>
               </Table>
+              )}
             </CardContent>
           </Card>
         </main>

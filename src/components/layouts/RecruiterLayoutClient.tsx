@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import type React from "react";
 
-import { usePathname } from "@/i18n/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import Image from "next/image";
 import { RecruiterHeaderNav } from "@/components/recruiter-header-nav"; // Import new header nav
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,9 +18,18 @@ export default function RecruiterLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { user, logout, isAuthenticated, loading } = useAuth();
+  const { user, logout, isAuthenticated, loading, role } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && (!isAuthenticated || role !== "RECRUITER")) {
+      router.replace("/candidate/auth/login");
+    }
+  }, [isAuthenticated, loading, role, router]);
 
   if (loading) return null; // hoặc return <Loading />
+
+  if (!isAuthenticated || role !== "RECRUITER") return null;
 
   const getTitle = (path: string) => {
     switch (path) {

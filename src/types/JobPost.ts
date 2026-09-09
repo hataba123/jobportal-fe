@@ -7,7 +7,8 @@ export interface JobPost {
   skillsRequired?: string;
   location?: string;
   salary: number;
-  candidateId: string;
+  candidateId?: string;
+  employerId?: string;
   companyId?: string; // Thêm nếu API trả về companyId
   employer?: User;
   logo?: string; // Thêm nếu API trả về logo riêng
@@ -15,7 +16,7 @@ export interface JobPost {
   tags?: string[]; // Danh sách tag
   applicants?: number; // Số ứng viên
   createdAt: string;
-  categoryName: string;
+  categoryName?: string;
   categoryId?: string; // Thêm categoryId
   companyName?: string; // Thêm companyName
 }

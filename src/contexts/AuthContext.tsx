@@ -1,16 +1,11 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
-import { getUser, loginUser, registerUser } from "@/lib/api/auth"; // 👈 THÊM registerUser
-import {
-  getAccessToken,
-  setAccessToken,
-  clearAccessToken,
-} from "@/utils/token";
+import { registerUser } from "@/lib/api/auth";
 import { type Role, type User, RoleEnum } from "@/types/user";
 import type { LoginCredentials } from "@/types/auth";
 import type { RegisterRequest } from "@/types/RegisterRequest"; // 👈 THÊM
-import { useSession } from "next-auth/react";
+import { getSession, signIn, signOut, useSession } from "next-auth/react";
 
 type AuthContextType = {
   user: User | null;
@@ -31,40 +26,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session } = useSession();
 
   useEffect(() => {
-    const token = getAccessToken();
-    console.log("🌟 AuthProvider useEffect token:", token);
-
-    if (token) {
-      getUser(token)
-        .then((user) => {
-          setUser(user);
-          console.log("📥 getUser response:", user);
-        })
-        .catch((err) => {
-          console.error("❌ Lỗi khi getUser:", err);
-          setUser(null);
-          clearAccessToken();
-        })
-        .finally(() => setLoading(false));
-    } else if (session?.backendUser) {
+    if (session?.backendUser) {
       setUser(session.backendUser);
-      setLoading(false);
     } else {
-      setLoading(false);
+      setUser(null);
     }
+    setLoading(false);
   }, [session]);
 
   const login = async (credentials: LoginCredentials) => {
-    const { token, user } = await loginUser(credentials);
+    const result = await signIn("credentials", {
+      ...credentials,
+      redirect: false,
+    });
+    if (!result || result.error) {
+      throw new Error("Email hoặc mật khẩu không đúng");
+    }
 
-    // ✅ Đảm bảo token được lưu vào localStorage
-    setAccessToken(token);
+    const currentSession = await getSession();
+    const user = currentSession?.backendUser;
+    if (!user) {
+      throw new Error("Không thể tạo phiên đăng nhập");
+    }
     setUser(user);
 
-    console.log("✅ Đã login, token:", token);
-    console.log("🧑‍💼 Role:", user.role);
-
-    // ✅ Redirect về trang chủ sau khi login thành công
     setTimeout(() => {
       const roleString = mapRoleEnumToString(user.role);
       switch (roleString) {
@@ -91,7 +76,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = () => {
-    clearAccessToken();
+    void signOut({ redirect: false });
     setUser(null);
     router.push("/candidate");
   };

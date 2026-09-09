@@ -22,6 +22,7 @@ export function RecruiterHeaderNav() {
     { href: "/recruiter/applications", label: "Đơn ứng tuyển" },
     { href: "/recruiter/candidates", label: "Tìm ứng viên" },
     { href: "/recruiter/company", label: "Hồ sơ công ty" },
+    { href: "/recruiter/analytics", label: "Báo cáo" },
     { href: "/recruiter/settings", label: "Cài đặt" },
     { href: "/recruiter/notifications", label: "Thông báo" },
   ];

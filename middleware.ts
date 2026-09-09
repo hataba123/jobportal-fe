@@ -1,66 +1,49 @@
 import createMiddleware from "next-intl/middleware";
-import { routing } from "@/i18n/routing"; // hoặc từ 'src/routing' tùy vị trí file
-// import { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
+import { NextRequest, NextResponse } from "next/server";
+import { routing } from "@/i18n/routing";
 
-// Nếu dùng Clerk (bạn chỉ bật phần này khi dùng Clerk)
-// import {clerkMiddleware, createRouteMatcher} from '@clerk/nextjs/server';
-// const isProtectedRoute = createRouteMatcher(['/:locale/dashboard(.*)']);
+const handleI18nRouting = createMiddleware(routing);
 
-// // Nếu dùng NextAuth
-// import {withAuth} from 'next-auth/middleware';
+const getApplicationPath = (pathname: string) =>
+  pathname.replace(/^\/(en|vi)(?=\/|$)/, "") || "/";
 
-// const publicPages = ['/', '/login']; // Các trang công khai không cần đăng nhập
-// const locales = routing.locales; // Lấy danh sách locale từ cấu hình
-// // Khởi tạo middleware i18n
-// const handleI18nRouting = createMiddleware(routing);
+const requiredRole = (pathname: string) => {
+  if (pathname.startsWith("/admin")) return 0;
+  if (pathname.startsWith("/recruiter")) return 1;
+  if (pathname.startsWith("/candidate/userprofiles")) return 2;
+  return null;
+};
 
-// // Middleware xác thực NextAuth
-// const authMiddleware = withAuth(
-//   function onSuccess(req) {
-//     // Nếu đã xác thực thành công, tiếp tục xử lý i18n
-//     return handleI18nRouting(req);
-//   },
-//   {
-//     callbacks: {
-//       authorized: ({token}) => token != null // Nếu có token thì cho qua
-//     },
-//     pages: {
-//       signIn: '/login' // Trang đăng nhập tùy chỉnh
-//     }
-//   }
-// );
+export async function middleware(request: NextRequest) {
+  const applicationPath = getApplicationPath(request.nextUrl.pathname);
+  const role = requiredRole(applicationPath);
+  if (role === null) return handleI18nRouting(request);
 
-//  // Nếu là trang công khai → chỉ xử lý i18n
-//   if (isPublicPage) {
-//     const response = handleI18nRouting(req);
-//     return await updateSession(req, response); // Kết hợp với Supabase
-//   }
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+  const backendUser = (token as { backendUser?: { role?: number } } | null)
+    ?.backendUser;
 
-//   // Nếu là trang yêu cầu xác thực → chạy middleware Auth.js
-//   const response = (authMiddleware as any)(req) as NextResponse;
-//   return await updateSession(req, response); // Kết hợp Supabase luôn
-// }
+  if (!token || backendUser?.role !== role) {
+    const locale = request.nextUrl.pathname.match(/^\/(en|vi)(?:\/|$)/)?.[1] ?? "en";
+    const loginUrl = new URL(
+      `/${locale}/candidate/auth/login`,
+      request.url
+    );
+    loginUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
+  }
 
-// export function middleware(request: NextRequest) {
-//   // Nếu truy cập root, redirect sang /en
-//   if (request.nextUrl.pathname === "/") {
-//     return Response.redirect(new URL("/en", request.url));
-//   }
-//   // Xử lý i18n như cũ
-//   return createMiddleware(routing)(request);
-// }
-// Matcher entries are linked with a logical "or", therefore
-// if one of them matches, the middleware will be invoked
-
-export default createMiddleware(routing);
+  return handleI18nRouting(request);
+}
 
 export const config = {
   matcher: [
     "/",
     "/(en|vi)/:path*",
     "/((?!api|_next|_vercel|.*\\..*).*)",
-
-    // However, match all pathnames within `/users`, optionally with a locale prefix
-    "/([\\w-]+)?/users/(.+)",
   ],
 };

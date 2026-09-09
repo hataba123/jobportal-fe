@@ -32,6 +32,7 @@ import {
 import Image from "next/image";
 import { useBlogs } from "@/hooks/useBlogs";
 import { Pagination } from "@/components/common/Pagination";
+import { useRouter } from "@/i18n/navigation";
 
 // Fallback data for when API is not available
 const fallbackBlogs = [
@@ -125,6 +126,7 @@ const featuredAuthors = [
 ];
 
 export default function BlogPage() {
+  const router = useRouter();
   const {
     blogs,
     featuredBlogs,
@@ -268,7 +270,11 @@ export default function BlogPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {displayFeaturedBlogs.map((post) => (
-                  <Card key={post.id} className="overflow-hidden hover:shadow-xl transition-shadow group cursor-pointer">
+                  <Card
+                    key={post.id}
+                    className="overflow-hidden hover:shadow-xl transition-shadow group cursor-pointer"
+                    onClick={() => router.push(`/candidate/blog/${post.id}`)}
+                  >
                     <div className="relative">
                       <Image
                         src={post.image || "/image/Image.jpg"}
@@ -360,7 +366,11 @@ export default function BlogPage() {
                 <>
                   <div className="space-y-8">
                     {displayBlogs.map((post) => (
-                      <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow group cursor-pointer">
+                      <Card
+                        key={post.id}
+                        className="overflow-hidden hover:shadow-lg transition-shadow group cursor-pointer"
+                        onClick={() => router.push(`/candidate/blog/${post.id}`)}
+                      >
                         <div className="md:flex">
                           <div className="md:w-1/3">
                             <Image

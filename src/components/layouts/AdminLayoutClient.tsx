@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import { useAuth, mapRoleEnumToString } from "@/contexts/AuthContext";
 import UserDropdown from "@/components/common/UserDropdown";
 import { Link } from "@/i18n/navigation";
-import { getAccessToken } from "@/utils/token";
 import { useRouter } from "@/i18n/navigation";
 import NotificationBell from "../common/NotificationBell";
 
@@ -15,17 +14,16 @@ export default function AdminLayoutClient({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, logout, loading } = useAuth();
+  const { user, logout, loading, isAuthenticated, role } = useAuth();
   const router = useRouter(); // <-- Thêm dòng này
 
   useEffect(() => {
-    const token = getAccessToken();
-    if (!token) {
+    if (!loading && (!isAuthenticated || role !== "ADMIN")) {
       router.replace("/candidate/auth/login");
     }
-  }, [router]);
+  }, [isAuthenticated, loading, role, router]);
 
-  if (loading) return null;
+  if (loading || !isAuthenticated || role !== "ADMIN") return null;
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100">
@@ -61,6 +59,12 @@ export default function AdminLayoutClient({
             className="block px-3 py-2 rounded hover:bg-blue-800"
           >
             Job Posts
+          </Link>
+          <Link
+            href="/admin/job-application"
+            className="block px-3 py-2 rounded hover:bg-blue-800"
+          >
+            Applications
           </Link>
           <Link
             href="/admin/review"
