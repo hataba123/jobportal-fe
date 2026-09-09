@@ -11,4 +11,6 @@ export interface Company {
   website?: string;
   founded?: string;
   tags?: string[];
+  verificationStatus?: "Pending" | "Verified" | "Rejected";
+  verifiedAt?: string;
 }

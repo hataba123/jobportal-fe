@@ -9,6 +9,7 @@ servers:
 tags:
   - name: Auth
   - name: Jobs
+  - name: Companies
   - name: Applications
   - name: Notifications
   - name: Matches
@@ -118,6 +119,41 @@ paths:
       responses:
         '201': { description: Đã tạo tin, content: { application/json: { schema: { $ref: '#/components/schemas/JobPost' } } } }
         '401': { $ref: '#/components/responses/Unauthorized' }
+  /companies:
+    get:
+      tags: [Companies]
+      operationId: listCompanies
+      security: []
+      responses:
+        '200':
+          description: Danh sách công ty đã được xác minh
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Company' } }
+  /companies/{id}:
+    parameters: [{ $ref: '#/components/parameters/Id' }]
+    get:
+      tags: [Companies]
+      operationId: getCompany
+      security: []
+      responses:
+        '200': { description: Công ty đã được xác minh, content: { application/json: { schema: { $ref: '#/components/schemas/Company' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /admin/companies/{id}/verification:
+    parameters: [{ $ref: '#/components/parameters/Id' }]
+    patch:
+      tags: [Companies]
+      operationId: updateCompanyVerification
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CompanyVerificationUpdate' }
+      responses:
+        '200': { description: Đã cập nhật trạng thái xác minh, content: { application/json: { schema: { $ref: '#/components/schemas/Company' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '403': { $ref: '#/components/responses/Forbidden' }
   /jobpost/{id}:
     parameters: [{ $ref: '#/components/parameters/Id' }]
     get:
@@ -352,6 +388,29 @@ components:
         expiresAt: { $ref: '#/components/schemas/DateTime' }
         minExperienceYears: { type: integer, minimum: 0 }
         educationRequirement: { type: string, maxLength: 200 }
+    Company:
+      type: object
+      required: [id, name, verificationStatus]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        name: { type: string }
+        logo: { type: string, nullable: true }
+        description: { type: string, nullable: true }
+        location: { type: string, nullable: true }
+        employees: { type: string, nullable: true }
+        industry: { type: string, nullable: true }
+        openJobs: { type: integer }
+        rating: { type: number }
+        website: { type: string, nullable: true }
+        founded: { type: string, nullable: true }
+        tags: { type: array, items: { type: string } }
+        verificationStatus: { type: string, enum: [Pending, Verified, Rejected] }
+        verifiedAt: { $ref: '#/components/schemas/DateTime' }
+    CompanyVerificationUpdate:
+      type: object
+      required: [verificationStatus]
+      properties:
+        verificationStatus: { type: string, enum: [Pending, Verified, Rejected] }
     JobPost:
       allOf:
         - $ref: '#/components/schemas/JobPostWrite'

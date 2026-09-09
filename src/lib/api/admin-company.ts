@@ -21,4 +21,14 @@ export const updateCompany = async (id: string, data: Partial<Company>) => {
 
 export const deleteCompany = async (id: string) => {
   return await axiosInstance.delete(`/admin/companies/${id}`);
-}; 
+};
+
+export const updateCompanyVerification = async (
+  id: string,
+  verificationStatus: "Pending" | "Verified" | "Rejected",
+): Promise<Company> => {
+  const res = await axiosInstance.patch(`/admin/companies/${id}/verification`, {
+    verificationStatus,
+  });
+  return res.data;
+};

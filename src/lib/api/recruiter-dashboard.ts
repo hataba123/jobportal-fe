@@ -35,6 +35,8 @@ export interface CompanyDto {
   website: string;
   founded: number;
   tags: string[];
+  verificationStatus?: "Pending" | "Verified" | "Rejected";
+  verifiedAt?: string;
 }
 
 // Lấy dashboard data cho recruiter

@@ -73,7 +73,7 @@ import {
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import React from "react";
-import { fetchAllCompanies, createCompany as apiCreateCompany, updateCompany as apiUpdateCompany, deleteCompany as apiDeleteCompany } from "@/lib/api/admin-company";
+import { fetchAllCompanies, createCompany as apiCreateCompany, updateCompany as apiUpdateCompany, deleteCompany as apiDeleteCompany, updateCompanyVerification } from "@/lib/api/admin-company";
 import { Company } from "@/types/Company";
 
 const industries = [
@@ -211,6 +211,25 @@ export default function Page() {
   const handleDelete = (company: Company) => {
     setSelectedCompany(company);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleVerification = async (
+    company: Company,
+    verificationStatus: "Pending" | "Verified" | "Rejected",
+  ) => {
+    if (!company.id) return;
+    try {
+      await updateCompanyVerification(String(company.id), verificationStatus);
+      await fetchCompanies();
+    } catch {
+      // Giữ trạng thái hiện tại nếu API cập nhật thất bại.
+    }
+  };
+
+  const verificationLabel = (status?: Company["verificationStatus"]) => {
+    if (status === "Verified") return "Đã xác minh";
+    if (status === "Rejected") return "Từ chối";
+    return "Chờ xác minh";
   };
 
   const CompanyForm = () => (
@@ -520,6 +539,7 @@ export default function Page() {
                   <TableHead>Việc làm</TableHead>
                   <TableHead>Rating</TableHead>
                   <TableHead>Năm thành lập</TableHead>
+                  <TableHead>Xác minh</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -564,6 +584,11 @@ export default function Page() {
                     </TableCell>
                     <TableCell>{company.founded}</TableCell>
                     <TableCell>
+                      <Badge variant={company.verificationStatus === "Verified" ? "default" : "secondary"}>
+                        {verificationLabel(company.verificationStatus)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm">
@@ -579,6 +604,16 @@ export default function Page() {
                             <Edit className="h-4 w-4 mr-2" />
                             Chỉnh sửa
                           </DropdownMenuItem>
+                          {company.verificationStatus !== "Verified" && (
+                            <DropdownMenuItem onClick={() => handleVerification(company, "Verified")}>
+                              Duyệt công ty
+                            </DropdownMenuItem>
+                          )}
+                          {company.verificationStatus === "Verified" && (
+                            <DropdownMenuItem onClick={() => handleVerification(company, "Rejected")}>
+                              Từ chối xác minh
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => handleDelete(company)}
