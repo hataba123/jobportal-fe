@@ -7,8 +7,8 @@ import {
   setAccessToken,
   clearAccessToken,
 } from "@/utils/token";
-import { type Role, type User, RoleEnum } from "@/types/User";
-import type { LoginCredentials } from "@/types/Auth";
+import { type Role, type User, RoleEnum } from "@/types/user";
+import type { LoginCredentials } from "@/types/auth";
 import type { RegisterRequest } from "@/types/RegisterRequest"; // 👈 THÊM
 import { useSession } from "next-auth/react";
 

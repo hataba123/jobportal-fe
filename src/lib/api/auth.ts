@@ -1,6 +1,6 @@
-import type { LoginCredentials } from "@/types/Auth";
-import type { User } from "@/types/User";
-import type { AuthResponse } from "@/types/Auth";
+import type { LoginCredentials } from "@/types/auth";
+import type { User } from "@/types/user";
+import type { AuthResponse } from "@/types/auth";
 import { RegisterRequest } from "@/types/RegisterRequest"; // Nếu đã định nghĩa kiểu dữ liệu
 import axiosInstance from "@/lib/axiosInstance"; // dùng alias @ là chuẩn
 /**

@@ -650,8 +650,7 @@ export default function RecruiterJobsPage() {
                         : ""}
                     </TableCell>
                     <TableCell>
-                      // Hiển thị link CV, lấy domain từ biến môi trường nếu là
-                      đường dẫn tương đối
+                      {/* Hiển thị link CV; nối domain API khi backend trả đường dẫn tương đối. */}
                       {c.cvUrl ? (
                         <a
                           href={

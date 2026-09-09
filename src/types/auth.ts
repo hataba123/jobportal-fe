@@ -1,4 +1,4 @@
-import { User } from "@/types/User";
+import { User } from "@/types/user";
 // 📁 src/types/auth.ts
 export interface LoginCredentials {
   email: string;

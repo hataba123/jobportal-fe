@@ -1,11 +1,12 @@
 import CategoryJobsPage from "@/components/category/CategoryJobsPage";
 
 interface CategoryPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function CategoryPage({ params }: CategoryPageProps) {
-  return <CategoryJobsPage categoryId={params.id} />;
+export default async function CategoryPage({ params }: CategoryPageProps) {
+  const { id } = await params;
+  return <CategoryJobsPage categoryId={id} />;
 } 

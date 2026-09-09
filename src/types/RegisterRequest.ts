@@ -1,4 +1,4 @@
-import { RoleEnum } from "./User";
+import { RoleEnum } from "./user";
 
 export type RegisterRequest = {
   email: string;

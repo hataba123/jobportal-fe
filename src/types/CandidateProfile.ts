@@ -1,4 +1,4 @@
-import { User } from "@/types/User";
+import { User } from "@/types/user";
 
 export interface CandidateProfiles extends User {
   resumeUrl?: string; // Đường dẫn CV

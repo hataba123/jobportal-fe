@@ -1,5 +1,5 @@
 import axiosInstance from "../axiosInstance";
-import { User } from "@/types/User";
+import { User } from "@/types/user";
 
 export const fetchAllUsers = async (): Promise<User[]> => {
   const res = await axiosInstance.get("/admin/users");

@@ -1,11 +1,12 @@
 import JobDetailPage from "@/components/job/JobDetailPage";
 
 interface JobPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function JobPage({ params }: JobPageProps) {
-  return <JobDetailPage jobId={params.id} />;
+export default async function JobPage({ params }: JobPageProps) {
+  const { id } = await params;
+  return <JobDetailPage jobId={id} />;
 } 

@@ -6,6 +6,7 @@ import {
   fetchMyNotifications,
   markNotificationAsRead,
 } from "@/lib/api/candidate-notification";
+import type { Notification as ApiNotification } from "@/types/Notification";
 
 type Notification = {
   id: string;
@@ -28,13 +29,16 @@ export default function NotificationBell() {
       fetchMyNotifications().then((data) => {
         // Map API fields to local Notification type if needed
         setNotifications(
-          data.map((n: any) => ({
+          data.map((n: ApiNotification) => ({
             id: n.id,
             title: n.title || n.message?.slice(0, 30) || "Thông báo", // fallback nếu không có title
             message: n.message,
             time: n.createdAt ? new Date(n.createdAt).toLocaleString() : "",
-            isRead: n.read ?? n.isRead,
-            type: n.type || "system",
+            isRead: n.read,
+            type:
+              n.type === "application" || n.type === "job" || n.type === "system"
+                ? n.type
+                : "system",
           }))
         );
       });

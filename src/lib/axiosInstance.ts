@@ -13,12 +13,11 @@ function getLocalToken() {
   return null;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-console.log("🌐 API_BASE_URL đang dùng:", API_BASE_URL); // 👈 THÊM DÒNG NÀY
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  // withCredentials: true, // bật nếu dùng cookie HttpOnly thay vì localStorage
+  withCredentials: true,
 });
 
 // ✅ Thêm interceptor để tự động gắn token vào headers

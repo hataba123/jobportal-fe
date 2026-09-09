@@ -1,4 +1,4 @@
-import { User } from "@/types/User";
+import { User } from "@/types/user";
 // types/job-post.ts
 export interface JobPost {
   id: string;

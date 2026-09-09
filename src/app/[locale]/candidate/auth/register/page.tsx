@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "@/i18n/navigation";
-import { RoleEnum } from "@/types/User";
+import { RoleEnum } from "@/types/user";
 type FormValues = {
   fullName: string;
   email: string;

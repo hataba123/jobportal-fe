@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { Suspense, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -89,7 +89,7 @@ const complexSearch = (jobs: JobPost[], searchTerm: string, location: string) =>
     .map(item => item.job);
 };
 
-export default function SearchPage() {
+function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { jobPosts, loading } = useJobPosts();
@@ -297,4 +297,12 @@ export default function SearchPage() {
       </div>
     </div>
   );
-} 
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
+      <SearchPageContent />
+    </Suspense>
+  );
+}

@@ -66,7 +66,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { fetchAllUsers, createUser as apiCreateUser, updateUser as apiUpdateUser, deleteUser as apiDeleteUser } from "@/lib/api/admin-user";
-import { User as UserType, RoleEnum } from "@/types/User";
+import { User as UserType, RoleEnum } from "@/types/user";
 
 const userRoles = [
   { value: RoleEnum.ADMIN, label: "Admin" },

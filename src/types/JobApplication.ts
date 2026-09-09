@@ -1,5 +1,5 @@
 import { ApplicationStatus } from "./ApplyStatus";
-import { User } from "./User";
+import { User } from "./user";
 import { JobPost } from "./JobPost";
 
 export interface JobApplication {
