@@ -1,15 +1,21 @@
-// 📁 src/utils/token.ts
-
-const ACCESS_TOKEN_KEY = "access_token";
-
-export function setAccessToken(token: string) {
-  localStorage.setItem(ACCESS_TOKEN_KEY, token);
+/**
+ * Tương thích ngược cho các import cũ.
+ *
+ * JWT hiện được NextAuth giữ trong cookie HttpOnly và BFF gắn vào request
+ * phía server. Không lưu access token trong localStorage nữa.
+ */
+/** @deprecated Dùng phiên NextAuth thay vì tự lưu JWT. */
+export function setAccessToken(token: string): void {
+  // Cố ý không lưu token ở phía trình duyệt.
+  void token;
 }
 
-export function getAccessToken(): string | null {
-  return localStorage.getItem(ACCESS_TOKEN_KEY);
+/** @deprecated Dùng useSession/getServerSession thay vì đọc JWT thủ công. */
+export function getAccessToken(): null {
+  return null;
 }
 
-export function clearAccessToken() {
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
+/** @deprecated Phiên NextAuth được đăng xuất qua signOut(). */
+export function clearAccessToken(): void {
+  // Cố ý không có thao tác dọn localStorage.
 }

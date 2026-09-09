@@ -27,7 +27,7 @@ export async function loginUser(
 
 /**
  * Lấy thông tin người dùng hiện tại nếu đang đăng nhập.
- * @param token - JWT token lưu trong localStorage
+ * @param token - JWT nội bộ được BFF cấp từ phiên máy chủ
  * @returns Thông tin người dùng nếu token hợp lệ.
  */
 export async function getUser(token: string): Promise<User> {
