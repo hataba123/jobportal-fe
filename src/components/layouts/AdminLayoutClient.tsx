@@ -20,6 +20,7 @@ import {
   ChevronRight,
   ShieldCheck,
   ExternalLink,
+  Settings,
 } from "lucide-react";
 
 export default function AdminLayoutClient({
@@ -76,6 +77,7 @@ export default function AdminLayoutClient({
       title: "Cấu hình hệ thống",
       items: [
         { href: "/admin/notification", label: "Thông báo hệ thống", icon: Bell },
+        { href: "/admin/settings", label: "Cài đặt & Bảo mật", icon: Settings },
       ],
     },
   ];
@@ -98,6 +100,8 @@ export default function AdminLayoutClient({
         return { title: "Kiểm duyệt đánh giá", subtitle: "Xem xét bình luận, chấm điểm sao và xử lý báo cáo vi phạm" };
       case "/admin/notification":
         return { title: "Thông báo hệ thống", subtitle: "Phát thông báo tới toàn thể người dùng hoặc cá nhân" };
+      case "/admin/settings":
+        return { title: "Cài đặt hệ thống", subtitle: "Bảo mật tài khoản quản trị và cấu hình sàn" };
       default:
         return { title: "Admin Portal", subtitle: "Trung tâm quản trị toàn diện JobPortal" };
     }

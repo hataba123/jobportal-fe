@@ -33,6 +33,8 @@ import SafeImage from "@/components/common/SafeImage";
 import { useBlogs } from "@/hooks/useBlogs";
 import { Pagination } from "@/components/common/Pagination";
 import { useRouter } from "@/i18n/navigation";
+import { toast } from "sonner";
+import { subscribeNewsletter } from "@/lib/api/newsletter";
 
 // Fallback data for when API is not available
 const fallbackBlogs = [
@@ -145,6 +147,26 @@ export default function BlogPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedSort, setSelectedSort] = useState("");
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterEmail.trim() || !newsletterEmail.includes("@")) {
+      toast.error("Vui lòng nhập địa chỉ email hợp lệ");
+      return;
+    }
+    setSubscribing(true);
+    try {
+      const res = await subscribeNewsletter(newsletterEmail.trim());
+      toast.success(res.message || "Đăng ký nhận bản tin thành công!");
+      setNewsletterEmail("");
+    } catch {
+      toast.error("Không thể đăng ký nhận tin lúc này. Vui lòng thử lại sau.");
+    } finally {
+      setSubscribing(false);
+    }
+  };
 
   // Use fallback data if API fails or returns empty
   const displayBlogs = blogs.length > 0 ? blogs : fallbackBlogs;
@@ -558,10 +580,18 @@ export default function BlogPage() {
                 <p className="text-sm text-gray-600 mb-4">
                   Nhận những bài viết mới nhất về IT và nghề nghiệp
                 </p>
-                <div className="space-y-3">
-                  <Input placeholder="Email của bạn" />
-                  <Button className="w-full">Đăng ký ngay</Button>
-                </div>
+                <form onSubmit={handleNewsletterSubmit} className="space-y-3">
+                  <Input
+                    placeholder="Email của bạn"
+                    type="email"
+                    required
+                    value={newsletterEmail}
+                    onChange={(e) => setNewsletterEmail(e.target.value)}
+                  />
+                  <Button type="submit" disabled={subscribing} className="w-full">
+                    {subscribing ? "Đang gửi..." : "Đăng ký ngay"}
+                  </Button>
+                </form>
                 <p className="text-xs text-gray-500 mt-2">Hơn 10,000 người đã đăng ký</p>
               </CardContent>
             </Card>

@@ -46,7 +46,6 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Plus,
   Search,
-  Filter,
   Eye,
   Edit,
   FileText,
@@ -68,6 +67,9 @@ import {
 import { toast } from "sonner";
 import { toBackendUrl } from "@/lib/api/url";
 import CompanyLogo from "@/components/common/CompanyLogo";
+import { fetchMyCompany, type CompanyDto } from "@/lib/api/recruiter-dashboard";
+import { fetchCategories } from "@/lib/api/category";
+import type { Category } from "@/types/Category";
 
 interface CandidateApplicationDto {
   id: string;
@@ -81,6 +83,8 @@ interface CandidateApplicationDto {
 
 export default function RecruiterJobsPage() {
   const [jobs, setJobs] = useState<JobPost[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [myCompany, setMyCompany] = useState<CompanyDto | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobPost | null>(null);
@@ -95,70 +99,105 @@ export default function RecruiterJobsPage() {
   const [candidatesDialogOpen, setCandidatesDialogOpen] = useState(false);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchJobs();
+    loadCompanyAndCategories();
   }, []);
+
+  const loadCompanyAndCategories = async () => {
+    try {
+      const [comp, cats] = await Promise.all([
+        fetchMyCompany().catch(() => null),
+        fetchCategories().catch(() => []),
+      ]);
+      setMyCompany(comp);
+      setCategories(cats);
+    } catch {
+      // ignore
+    }
+  };
 
   const fetchJobs = async () => {
     try {
       const data = await fetchMyJobPosts();
       setJobs(data);
     } catch {
-      // error handling if needed
+      // error handling
     }
   };
 
   const handleCreateJobPost = async () => {
     try {
-      await apiCreateJobPost(newJobPost);
+      const payload = {
+        ...newJobPost,
+        companyId: myCompany?.id || newJobPost.companyId,
+        logo: newJobPost.logo || myCompany?.logo || "",
+      };
+      if (!payload.title?.trim()) {
+        toast.error("Vui lòng nhập tiêu đề công việc");
+        return;
+      }
+      if (!payload.categoryId) {
+        toast.error("Vui lòng chọn ngành nghề / danh mục việc làm");
+        return;
+      }
+      await apiCreateJobPost(payload);
+      toast.success("Đăng tin tuyển dụng thành công!");
       setIsCreateDialogOpen(false);
-      setNewJobPost({
-        type: "Full-time",
-        logo: "",
-        tags: [],
-      });
+      resetForm();
       fetchJobs();
-    } catch {
-      // error handling if needed
+    } catch (err: unknown) {
+      const msg = err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : "Đăng tin thất bại. Vui lòng kiểm tra lại thông tin.";
+      toast.error(msg || "Đăng tin thất bại.");
     }
   };
 
   const handleUpdateJobPost = async (id: string) => {
     try {
-      await apiUpdateJobPost(id, newJobPost);
+      const payload = {
+        ...newJobPost,
+        companyId: myCompany?.id || newJobPost.companyId,
+      };
+      await apiUpdateJobPost(id, payload);
+      toast.success("Cập nhật tin tuyển dụng thành công!");
       setIsEditDialogOpen(false);
       setSelectedJob(null);
-      setNewJobPost({
-        type: "Full-time",
-        logo: "",
-        tags: [],
-      });
+      resetForm();
       fetchJobs();
     } catch {
-      // error handling if needed
+      toast.error("Cập nhật tin tuyển dụng thất bại.");
     }
   };
 
   const handleDeleteJobPost = async (id: string) => {
     try {
       await apiDeleteJobPost(id);
+      toast.success("Đã xóa tin tuyển dụng.");
       fetchJobs();
     } catch {
-      // error handling if needed
+      toast.error("Xóa tin tuyển dụng thất bại.");
     }
   };
 
   const handleEdit = (job: JobPost) => {
     setSelectedJob(job);
-    setNewJobPost(job);
+    setNewJobPost({
+      ...job,
+      categoryId: job.categoryId || "",
+      companyId: job.companyId || myCompany?.id,
+    });
     setIsEditDialogOpen(true);
   };
 
   const resetForm = () => {
     setNewJobPost({
       type: "Full-time",
-      logo: "",
+      companyId: myCompany?.id,
+      logo: myCompany?.logo || "",
       tags: [],
     });
   };
@@ -169,7 +208,6 @@ export default function RecruiterJobsPage() {
     setLoadingCandidates(true);
     try {
       const data = await fetchCandidatesForJob(job.id);
-
       setCandidates(data);
     } catch {
       setCandidates([]);
@@ -197,31 +235,38 @@ export default function RecruiterJobsPage() {
     }
   };
 
+  const filteredJobs = jobs.filter((job) =>
+    searchTerm.trim() === ""
+      ? true
+      : job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.location?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Việc làm của tôi</h2>
-          <p className="text-gray-600">Quản lý tất cả việc làm đã đăng</p>
+          <h2 className="text-2xl font-bold text-slate-900">Việc làm của tôi</h2>
+          <p className="text-sm text-slate-500">Quản lý và cập nhật toàn bộ tin đăng tuyển dụng</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={resetForm}>
+            <Button onClick={resetForm} className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold">
               <Plus className="h-4 w-4 mr-2" />
               Đăng việc làm mới
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Đăng việc làm mới</DialogTitle>
               <DialogDescription>
-                Tạo một việc làm mới để thu hút ứng viên
+                Tạo một tin tuyển dụng mới để tiếp cận các ứng viên tiềm năng
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="title">Tiêu đề công việc</Label>
+                  <Label htmlFor="title">Tiêu đề công việc <span className="text-red-500">*</span></Label>
                   <Input
                     id="title"
                     placeholder="VD: Senior Frontend Developer"
@@ -232,10 +277,10 @@ export default function RecruiterJobsPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="location">Địa điểm</Label>
+                  <Label htmlFor="location">Địa điểm làm việc</Label>
                   <Input
                     id="location"
-                    placeholder="VD: Hồ Chí Minh"
+                    placeholder="VD: Hà Nội / TP. Hồ Chí Minh"
                     value={newJobPost.location || ""}
                     onChange={(e) =>
                       setNewJobPost({ ...newJobPost, location: e.target.value })
@@ -243,18 +288,54 @@ export default function RecruiterJobsPage() {
                   />
                 </div>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="salary">Mức lương</Label>
+                  <Label>Doanh nghiệp tuyển dụng</Label>
+                  <div className="mt-1 p-2.5 bg-slate-100 rounded-lg text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    <CompanyLogo src={myCompany?.logo} name={myCompany?.name || "Doanh nghiệp"} size={24} rounded="rounded" />
+                    <span>{myCompany?.name || "Chưa cấu hình công ty"}</span>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="category">Ngành nghề / Danh mục <span className="text-red-500">*</span></Label>
+                  <Select
+                    value={newJobPost.categoryId || ""}
+                    onValueChange={(value) => {
+                      const cat = categories.find((c) => c.id === value);
+                      setNewJobPost({
+                        ...newJobPost,
+                        categoryId: value,
+                        categoryName: cat?.name || "",
+                      });
+                    }}
+                  >
+                    <SelectTrigger id="category">
+                      <SelectValue placeholder="Chọn danh mục..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((c) => (
+                        <SelectItem key={String(c.id)} value={String(c.id)}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="salary">Mức lương (VNĐ hoặc USD)</Label>
                   <Input
                     id="salary"
                     type="number"
-                    placeholder="VD: 1500"
+                    placeholder="VD: 25000000"
                     value={newJobPost.salary || ""}
                     onChange={(e) =>
                       setNewJobPost({
                         ...newJobPost,
-                        salary: Number.parseFloat(e.target.value),
+                        salary: Number.parseFloat(e.target.value) || 0,
                       })
                     }
                   />
@@ -270,23 +351,89 @@ export default function RecruiterJobsPage() {
                       })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="type">
                       <SelectValue placeholder="Chọn loại hình" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Full-time">Full-time</SelectItem>
-                      <SelectItem value="Part-time">Part-time</SelectItem>
-                      <SelectItem value="Contract">Contract</SelectItem>
-                      <SelectItem value="Internship">Internship</SelectItem>
+                      <SelectItem value="Full-time">Full-time (Toàn thời gian)</SelectItem>
+                      <SelectItem value="Part-time">Part-time (Bán thời gian)</SelectItem>
+                      <SelectItem value="Contract">Contract (Hợp đồng)</SelectItem>
+                      <SelectItem value="Internship">Internship (Thực tập)</SelectItem>
+                      <SelectItem value="Remote">Remote (Từ xa)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label htmlFor="minExp">Kinh nghiệm (năm)</Label>
+                  <Input
+                    id="minExp"
+                    type="number"
+                    min="0"
+                    placeholder="VD: 2"
+                    value={newJobPost.minExperienceYears ?? ""}
+                    onChange={(e) =>
+                      setNewJobPost({
+                        ...newJobPost,
+                        minExperienceYears: e.target.value ? Number(e.target.value) : undefined,
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="education">Học vấn</Label>
+                  <Select
+                    value={newJobPost.educationRequirement || "Không yêu cầu"}
+                    onValueChange={(val) =>
+                      setNewJobPost({ ...newJobPost, educationRequirement: val })
+                    }
+                  >
+                    <SelectTrigger id="education">
+                      <SelectValue placeholder="Chọn học vấn" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Không yêu cầu">Không yêu cầu</SelectItem>
+                      <SelectItem value="Trung cấp / Cao đẳng">Trung cấp / Cao đẳng</SelectItem>
+                      <SelectItem value="Đại học">Đại học</SelectItem>
+                      <SelectItem value="Thạc sĩ trở lên">Thạc sĩ trở lên</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="expiresAt">Hạn nộp hồ sơ</Label>
+                  <Input
+                    id="expiresAt"
+                    type="date"
+                    value={newJobPost.expiresAt ? newJobPost.expiresAt.slice(0, 10) : ""}
+                    onChange={(e) =>
+                      setNewJobPost({
+                        ...newJobPost,
+                        expiresAt: e.target.value ? new Date(e.target.value).toISOString() : undefined,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="skillsRequired">Kỹ năng yêu cầu</Label>
+                <Input
+                  id="skillsRequired"
+                  placeholder="VD: React, TypeScript, Next.js"
+                  value={newJobPost.skillsRequired || ""}
+                  onChange={(e) =>
+                    setNewJobPost({ ...newJobPost, skillsRequired: e.target.value })
+                  }
+                />
+              </div>
+
               <div>
                 <Label htmlFor="description">Mô tả công việc</Label>
                 <Textarea
                   id="description"
-                  placeholder="Mô tả chi tiết về công việc..."
+                  placeholder="Mô tả chi tiết về công việc và đãi ngộ..."
                   rows={4}
                   value={newJobPost.description || ""}
                   onChange={(e) =>
@@ -297,36 +444,7 @@ export default function RecruiterJobsPage() {
                   }
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="companyId">ID Công ty</Label>
-                  <Input
-                    id="companyId"
-                    placeholder="VD: comp001"
-                    value={newJobPost.companyId || ""}
-                    onChange={(e) =>
-                      setNewJobPost({
-                        ...newJobPost,
-                        companyId: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="categoryName">Tên danh mục</Label>
-                  <Input
-                    id="categoryName"
-                    placeholder="VD: Software Development"
-                    value={newJobPost.categoryName || ""}
-                    onChange={(e) =>
-                      setNewJobPost({
-                        ...newJobPost,
-                        categoryName: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
+
               <div>
                 <Label htmlFor="tags">Tags (cách nhau bởi dấu phẩy)</Label>
                 <Input
@@ -345,16 +463,6 @@ export default function RecruiterJobsPage() {
                   }
                 />
               </div>
-              <div>
-                <Label htmlFor="logo">Logo URL</Label>
-                <Input
-                  id="logo"
-                  type="url"
-                  placeholder="https://... hoặc /uploads/logo/..."
-                  value={newJobPost.logo || ""}
-                  onChange={(e) => setNewJobPost({ ...newJobPost, logo: e.target.value })}
-                />
-              </div>
             </div>
             <DialogFooter>
               <Button
@@ -363,7 +471,9 @@ export default function RecruiterJobsPage() {
               >
                 Hủy
               </Button>
-              <Button onClick={handleCreateJobPost}>Đăng ngay</Button>
+              <Button onClick={handleCreateJobPost} className="bg-blue-600 hover:bg-blue-700 text-white">
+                Đăng ngay
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -381,12 +491,13 @@ export default function RecruiterJobsPage() {
             <div className="flex items-center space-x-2">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input placeholder="Tìm kiếm..." className="pl-10 w-64" />
+                <Input
+                  placeholder="Tìm kiếm việc làm..."
+                  className="pl-10 w-64"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                Lọc
-              </Button>
             </div>
           </div>
         </CardHeader>
@@ -400,71 +511,77 @@ export default function RecruiterJobsPage() {
                 <TableHead>Lương</TableHead>
                 <TableHead>Loại</TableHead>
                 <TableHead>Danh mục</TableHead>
-                <TableHead>Ngày đăng</TableHead>
+                <TableHead>Hạn nộp</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {jobs.map((job) => (
-                <TableRow key={job.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <CompanyLogo src={job.logo} name={job.companyName || job.title} size={36} rounded="rounded-lg" />
-                      <div>
-                      <p className="font-medium">{job.title}</p>
-                        <p className="text-sm text-gray-500">{job.type}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{job.companyName}</TableCell>
-                  <TableCell>{job.location}</TableCell>
-                  <TableCell>${job.salary}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{job.type}</Badge>
-                  </TableCell>
-                  <TableCell>{job.categoryName}</TableCell>
-                  <TableCell>
-                    {job.createdAt
-                      ? new Date(job.createdAt).toLocaleDateString()
-                      : "N/A"}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="h-4 w-4 mr-2" />
-                          Xem chi tiết
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEdit(job)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Chỉnh sửa
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleViewCandidates(job)}
-                        >
-                          <FileText className="h-4 w-4 mr-2" />
-                          Xem ứng viên
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-red-600"
-                          onClick={() =>
-                            job.id && handleDeleteJobPost(job.id.toString())
-                          }
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Xóa
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+              {filteredJobs.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8 text-slate-500">
+                    Chưa có tin tuyển dụng nào phù hợp.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                filteredJobs.map((job) => (
+                  <TableRow key={job.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <CompanyLogo src={job.logo || myCompany?.logo} name={job.companyName || job.title} size={36} rounded="rounded-lg" />
+                        <div>
+                          <p className="font-medium text-slate-900">{job.title}</p>
+                          <p className="text-xs text-gray-500">{job.type || "Full-time"}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{job.companyName || myCompany?.name || "N/A"}</TableCell>
+                    <TableCell>{job.location || "Toàn quốc"}</TableCell>
+                    <TableCell className="font-medium">
+                      {job.salary ? `${job.salary.toLocaleString("vi-VN")} đ` : "Thỏa thuận"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{job.type || "Full-time"}</Badge>
+                    </TableCell>
+                    <TableCell>{job.categoryName || "Chung"}</TableCell>
+                    <TableCell className="text-xs text-slate-500">
+                      {job.expiresAt
+                        ? new Date(job.expiresAt).toLocaleDateString("vi-VN")
+                        : "Vô thời hạn"}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEdit(job)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Chỉnh sửa
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleViewCandidates(job)}
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            Xem ứng viên ({job.applicants || 0})
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() =>
+                              job.id && handleDeleteJobPost(job.id.toString())
+                            }
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Xóa
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -472,15 +589,15 @@ export default function RecruiterJobsPage() {
 
       {/* Edit Job Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Chỉnh sửa việc làm</DialogTitle>
-            <DialogDescription>Cập nhật thông tin việc làm</DialogDescription>
+            <DialogDescription>Cập nhật thông tin tin tuyển dụng</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="edit-title">Tiêu đề công việc</Label>
+                <Label htmlFor="edit-title">Tiêu đề công việc <span className="text-red-500">*</span></Label>
                 <Input
                   id="edit-title"
                   placeholder="VD: Senior Frontend Developer"
@@ -502,18 +619,54 @@ export default function RecruiterJobsPage() {
                 />
               </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Doanh nghiệp tuyển dụng</Label>
+                <div className="mt-1 p-2.5 bg-slate-100 rounded-lg text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <CompanyLogo src={myCompany?.logo} name={myCompany?.name || "Doanh nghiệp"} size={24} rounded="rounded" />
+                  <span>{myCompany?.name || "Doanh nghiệp"}</span>
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="edit-category">Ngành nghề / Danh mục <span className="text-red-500">*</span></Label>
+                <Select
+                  value={newJobPost.categoryId || ""}
+                  onValueChange={(value) => {
+                    const cat = categories.find((c) => c.id === value);
+                    setNewJobPost({
+                      ...newJobPost,
+                      categoryId: value,
+                      categoryName: cat?.name || "",
+                    });
+                  }}
+                >
+                  <SelectTrigger id="edit-category">
+                    <SelectValue placeholder="Chọn danh mục..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => (
+                      <SelectItem key={String(c.id)} value={String(c.id)}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="edit-salary">Mức lương</Label>
                 <Input
                   id="edit-salary"
                   type="number"
-                  placeholder="VD: 1500"
+                  placeholder="VD: 25000000"
                   value={newJobPost.salary || ""}
                   onChange={(e) =>
                     setNewJobPost({
                       ...newJobPost,
-                      salary: Number.parseFloat(e.target.value),
+                      salary: Number.parseFloat(e.target.value) || 0,
                     })
                   }
                 />
@@ -529,7 +682,7 @@ export default function RecruiterJobsPage() {
                     })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="edit-type">
                     <SelectValue placeholder="Chọn loại hình" />
                   </SelectTrigger>
                   <SelectContent>
@@ -537,10 +690,76 @@ export default function RecruiterJobsPage() {
                     <SelectItem value="Part-time">Part-time</SelectItem>
                     <SelectItem value="Contract">Contract</SelectItem>
                     <SelectItem value="Internship">Internship</SelectItem>
+                    <SelectItem value="Remote">Remote</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label htmlFor="edit-minExp">Kinh nghiệm (năm)</Label>
+                <Input
+                  id="edit-minExp"
+                  type="number"
+                  min="0"
+                  placeholder="VD: 2"
+                  value={newJobPost.minExperienceYears ?? ""}
+                  onChange={(e) =>
+                    setNewJobPost({
+                      ...newJobPost,
+                      minExperienceYears: e.target.value ? Number(e.target.value) : undefined,
+                    })
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-education">Học vấn</Label>
+                <Select
+                  value={newJobPost.educationRequirement || "Không yêu cầu"}
+                  onValueChange={(val) =>
+                    setNewJobPost({ ...newJobPost, educationRequirement: val })
+                  }
+                >
+                  <SelectTrigger id="edit-education">
+                    <SelectValue placeholder="Chọn học vấn" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Không yêu cầu">Không yêu cầu</SelectItem>
+                    <SelectItem value="Trung cấp / Cao đẳng">Trung cấp / Cao đẳng</SelectItem>
+                    <SelectItem value="Đại học">Đại học</SelectItem>
+                    <SelectItem value="Thạc sĩ trở lên">Thạc sĩ trở lên</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="edit-expiresAt">Hạn nộp hồ sơ</Label>
+                <Input
+                  id="edit-expiresAt"
+                  type="date"
+                  value={newJobPost.expiresAt ? newJobPost.expiresAt.slice(0, 10) : ""}
+                  onChange={(e) =>
+                    setNewJobPost({
+                      ...newJobPost,
+                      expiresAt: e.target.value ? new Date(e.target.value).toISOString() : undefined,
+                    })
+                  }
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="edit-skillsRequired">Kỹ năng yêu cầu</Label>
+              <Input
+                id="edit-skillsRequired"
+                placeholder="VD: React, TypeScript, Next.js"
+                value={newJobPost.skillsRequired || ""}
+                onChange={(e) =>
+                  setNewJobPost({ ...newJobPost, skillsRequired: e.target.value })
+                }
+              />
+            </div>
+
             <div>
               <Label htmlFor="edit-description">Mô tả công việc</Label>
               <Textarea
@@ -556,36 +775,7 @@ export default function RecruiterJobsPage() {
                 }
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="edit-companyId">ID Công ty</Label>
-                <Input
-                  id="edit-companyId"
-                  placeholder="VD: comp001"
-                  value={newJobPost.companyId || ""}
-                  onChange={(e) =>
-                    setNewJobPost({
-                      ...newJobPost,
-                      companyId: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-categoryName">Tên danh mục</Label>
-                <Input
-                  id="edit-categoryName"
-                  placeholder="VD: Software Development"
-                  value={newJobPost.categoryName || ""}
-                  onChange={(e) =>
-                    setNewJobPost({
-                      ...newJobPost,
-                      categoryName: e.target.value,
-                    })
-                  }
-                />
-              </div>
-            </div>
+
             <div>
               <Label htmlFor="edit-tags">Tags (cách nhau bởi dấu phẩy)</Label>
               <Input
@@ -604,16 +794,6 @@ export default function RecruiterJobsPage() {
                 }
               />
             </div>
-            <div>
-              <Label htmlFor="edit-logo">Logo URL</Label>
-              <Input
-                id="edit-logo"
-                type="url"
-                placeholder="https://... hoặc /uploads/logo/..."
-                value={newJobPost.logo || ""}
-                onChange={(e) => setNewJobPost({ ...newJobPost, logo: e.target.value })}
-              />
-            </div>
           </div>
           <DialogFooter>
             <Button
@@ -628,6 +808,7 @@ export default function RecruiterJobsPage() {
                 selectedJob.id &&
                 handleUpdateJobPost(selectedJob.id.toString())
               }
+              className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               Cập nhật
             </Button>
@@ -640,17 +821,17 @@ export default function RecruiterJobsPage() {
         open={candidatesDialogOpen}
         onOpenChange={setCandidatesDialogOpen}
       >
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              Ứng viên ứng tuyển cho: {selectedJobForCandidates?.title}
+              Ứng viên ứng tuyển: {selectedJobForCandidates?.title}
             </DialogTitle>
           </DialogHeader>
           {loadingCandidates ? (
-            <div className="py-8 text-center text-gray-500">Đang tải...</div>
+            <div className="py-8 text-center text-gray-500">Đang tải hồ sơ...</div>
           ) : candidates.length === 0 ? (
             <div className="py-8 text-center text-gray-500">
-              Chưa có ứng viên nào ứng tuyển.
+              Chưa có ứng viên nào ứng tuyển vị trí này.
             </div>
           ) : (
             <Table>
@@ -659,30 +840,30 @@ export default function RecruiterJobsPage() {
                   <TableHead>Họ tên</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Ngày ứng tuyển</TableHead>
-                  <TableHead>CV</TableHead>
+                  <TableHead>CV đính kèm</TableHead>
                   <TableHead>Trạng thái</TableHead>
-                  <TableHead>Cập nhật</TableHead>
+                  <TableHead>Cập nhật trạng thái</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {candidates.map((c) => (
                   <TableRow key={c.id}>
-                    <TableCell>{c.fullName || c.candidateName}</TableCell>
+                    <TableCell className="font-semibold text-slate-800">{c.fullName || c.candidateName || "Ứng viên"}</TableCell>
                     <TableCell>{c.email}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-xs text-slate-500">
                       {c.appliedAt
                         ? new Date(c.appliedAt).toLocaleDateString("vi-VN")
                         : ""}
                     </TableCell>
                     <TableCell>
-                      {/* Hiển thị link CV; nối domain API khi backend trả đường dẫn tương đối. */}
                       {c.cvUrl ? (
                         <a
                           href={toBackendUrl(c.cvUrl)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 underline"
+                          className="text-blue-600 underline font-medium text-xs flex items-center gap-1 hover:text-blue-700"
                         >
+                          <FileText className="w-3.5 h-3.5" />
                           Xem CV
                         </a>
                       ) : (
@@ -690,7 +871,6 @@ export default function RecruiterJobsPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      {/* Hiển thị badge màu sắc theo trạng thái, label tiếng Việt chỉ để hiển thị, value vẫn giữ đúng enum tiếng Anh */}
                       <Badge
                         variant={
                           c.status === "Pending"
@@ -705,7 +885,7 @@ export default function RecruiterJobsPage() {
                         }
                         className={
                           c.status === "Accepted"
-                            ? "bg-green-500 text-white border-green-500"
+                            ? "bg-emerald-500 text-white border-emerald-500"
                             : ""
                         }
                       >
@@ -728,7 +908,7 @@ export default function RecruiterJobsPage() {
                         }
                         disabled={updatingStatusId === c.id}
                       >
-                        <SelectTrigger className="w-32">
+                        <SelectTrigger className="w-32 h-8 text-xs">
                           <SelectValue placeholder="Chọn trạng thái" />
                         </SelectTrigger>
                         <SelectContent>

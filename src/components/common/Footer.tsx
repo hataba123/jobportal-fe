@@ -5,23 +5,28 @@ import { Link } from "@/i18n/navigation";
 import BrandLogo from "@/components/common/BrandLogo";
 import { Mail, Phone, MapPin, Send, ArrowRight, Github, Linkedin, Facebook } from "lucide-react";
 import { toast } from "sonner";
+import { subscribeNewsletter } from "@/lib/api/newsletter";
 
 export default function Footer() {
   const [email, setEmail] = useState("");
   const [subscribing, setSubscribing] = useState(false);
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !email.includes("@")) {
       toast.error("Vui lòng nhập địa chỉ email hợp lệ");
       return;
     }
     setSubscribing(true);
-    setTimeout(() => {
-      toast.success("Cảm ơn bạn đã đăng ký nhận bản tin việc làm!");
+    try {
+      const res = await subscribeNewsletter(email.trim());
+      toast.success(res.message || "Cảm ơn bạn đã đăng ký nhận bản tin!");
       setEmail("");
+    } catch {
+      toast.error("Không thể đăng ký nhận tin lúc này. Vui lòng thử lại sau.");
+    } finally {
       setSubscribing(false);
-    }, 600);
+    }
   };
 
   return (

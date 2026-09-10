@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,22 @@ export default function SettingsPage() {
     marketingEmails: false,
     profileVisibility: true,
   });
+
+  // Tải cài đặt đã lưu từ localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined" && user?.id) {
+      const savedPhone = localStorage.getItem(`cand_phone_${user.id}`);
+      if (savedPhone) setPhone(savedPhone);
+      const saved = localStorage.getItem(`cand_prefs_${user.id}`);
+      if (saved) {
+        try {
+          setSettings(JSON.parse(saved));
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }, [user?.id]);
 
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -77,11 +93,21 @@ export default function SettingsPage() {
   };
 
   const handleSaveProfileSettings = () => {
+    if (user?.id && typeof window !== "undefined") {
+      localStorage.setItem(`cand_phone_${user.id}`, phone);
+      localStorage.setItem(`cand_prefs_${user.id}`, JSON.stringify(settings));
+    }
     toast.success("Đã lưu thông tin tài khoản thành công!");
   };
 
   const handleSettingChange = (key: string, value: boolean) => {
-    setSettings((prev) => ({ ...prev, [key]: value }));
+    setSettings((prev) => {
+      const next = { ...prev, [key]: value };
+      if (user?.id && typeof window !== "undefined") {
+        localStorage.setItem(`cand_prefs_${user.id}`, JSON.stringify(next));
+      }
+      return next;
+    });
     toast.success("Đã cập nhật tùy chọn.");
   };
 
