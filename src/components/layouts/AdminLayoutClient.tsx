@@ -24,6 +24,7 @@ import {
   FolderTree,
   Newspaper,
   Receipt,
+  Flag,
 } from "lucide-react";
 
 export default function AdminLayoutClient({
@@ -75,6 +76,7 @@ export default function AdminLayoutClient({
         { href: "/admin/user", label: "Tài khoản người dùng", icon: Users },
         { href: "/admin/company", label: "Doanh nghiệp", icon: Building2 },
         { href: "/admin/review", label: "Kiểm duyệt đánh giá", icon: Star },
+        { href: "/admin/reports", label: "Báo cáo vi phạm", icon: Flag },
       ],
     },
     {

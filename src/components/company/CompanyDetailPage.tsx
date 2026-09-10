@@ -22,6 +22,7 @@ import {
   ArrowLeft,
   DollarSign,
   Briefcase,
+  Heart,
 } from "lucide-react";
 import CompanyLogo from "@/components/common/CompanyLogo";
 import { Company } from "@/types/Company";
@@ -33,6 +34,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { isCompanyFollowed, toggleFollowCompany } from "@/lib/api/company-follow";
 
 interface CompanyDetailPageProps {
   companyId: string;
@@ -47,11 +49,38 @@ export default function CompanyDetailPage({
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [reviewRating, setReviewRating] = useState<number>(5);
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [isFollowed, setIsFollowed] = useState(false);
+
+  useEffect(() => {
+    if (companyId) {
+      setIsFollowed(isCompanyFollowed(companyId, user?.id));
+    }
+  }, [companyId, user?.id]);
+
+  const handleFollowToggle = () => {
+    if (!company) return;
+    const nextState = toggleFollowCompany(
+      {
+        id: String(company.id),
+        name: company.name,
+        logo: company.logo,
+        industry: company.industry,
+        location: company.location,
+      },
+      user?.id
+    );
+    setIsFollowed(nextState);
+    if (nextState) {
+      toast.success(`Đã theo dõi ${company.name}.`);
+    } else {
+      toast.info(`Đã bỏ theo dõi ${company.name}.`);
+    }
+  };
 
   useEffect(() => {
     const fetchCompanyData = async () => {
@@ -196,8 +225,22 @@ export default function CompanyDetailPage({
                 </a>
               </Button>
             )}
-            <Button variant="outline" size="lg">
-              Theo dõi công ty
+            <Button
+              variant={isFollowed ? "default" : "outline"}
+              size="lg"
+              onClick={handleFollowToggle}
+              className={
+                isFollowed
+                  ? "bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100 hover:text-rose-700 font-semibold"
+                  : "font-semibold text-slate-700 hover:text-rose-600 hover:border-rose-300"
+              }
+            >
+              <Heart
+                className={`w-4 h-4 mr-2 transition-transform ${
+                  isFollowed ? "fill-rose-600 text-rose-600 scale-110" : "text-slate-400"
+                }`}
+              />
+              {isFollowed ? "Đang theo dõi" : "Theo dõi công ty"}
             </Button>
           </div>
         </CardContent>

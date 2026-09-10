@@ -33,6 +33,7 @@ import {
   FileText,
   ExternalLink,
   Sparkles,
+  Flag,
 } from "lucide-react";
 import { fetchJobPostById, fetchAllJobPosts } from "@/lib/api/jobpost";
 import { JobPost } from "@/types/JobPost";
@@ -41,6 +42,7 @@ import { toast } from "sonner";
 import { applyJob } from "@/lib/api/job-application";
 import { fetchMyProfile, uploadCv } from "@/lib/api/candidate-profile";
 import { toBackendUrl } from "@/lib/api/url";
+import { submitJobReport } from "@/lib/api/reports";
 
 interface SimilarJob {
   id: string;
@@ -62,6 +64,13 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
   const [newResume, setNewResume] = useState<File | null>(null);
   const [existingCvUrl, setExistingCvUrl] = useState<string | null>(null);
   const [useExistingCv, setUseExistingCv] = useState(true);
+
+  // Report Modal State
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("Dấu hiệu lừa đảo / giả mạo công ty");
+  const [reportDetail, setReportDetail] = useState("");
+  const [reporterEmail, setReporterEmail] = useState("");
+  const [submittingReport, setSubmittingReport] = useState(false);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -177,6 +186,33 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
     } else {
       navigator.clipboard.writeText(window.location.href);
       toast.success("Đã sao chép liên kết vào bộ nhớ tạm!");
+    }
+  };
+
+  const handleReport = async () => {
+    if (!job) return;
+    if (!reportDetail.trim()) {
+      toast.error("Vui lòng nhập chi tiết phản ánh hoặc lý do vi phạm.");
+      return;
+    }
+    setSubmittingReport(true);
+    try {
+      await submitJobReport({
+        jobId: job.id,
+        jobTitle: job.title,
+        companyName: job.employer?.fullName || job.companyName || "Công ty",
+        reason: reportReason,
+        description: reportDetail.trim(),
+        reporterEmail: reporterEmail.trim() || undefined,
+      });
+      toast.success("Báo cáo vi phạm đã được gửi thành công! Ban quản trị sẽ rà soát.");
+      setReportModalOpen(false);
+      setReportDetail("");
+      setReporterEmail("");
+    } catch {
+      toast.error("Có lỗi xảy ra khi gửi báo cáo. Vui lòng thử lại sau.");
+    } finally {
+      setSubmittingReport(false);
     }
   };
 
@@ -304,6 +340,16 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                 <Share2 className="w-5 h-5" />
               </Button>
 
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setReportModalOpen(true)}
+                className="w-11 h-11 rounded-2xl border-slate-200 text-slate-500 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition-all"
+                title="Báo cáo tin tuyển dụng vi phạm"
+              >
+                <Flag className="w-5 h-5" />
+              </Button>
+
               <Dialog open={applyModalOpen} onOpenChange={setApplyModalOpen}>
                 <DialogTrigger asChild>
                   <Button
@@ -333,10 +379,10 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
 
                       {existingCvUrl && (
                         <label
-                          className={`flex items-start gap-3 p-3.5 rounded-2xl border cursor-pointer mb-2 transition-all ${
+                          className={`flex items-start gap-3 p-3.5 rounded-2xl border cursor-pointer transition-all mb-3 ${
                             useExistingCv
-                              ? "bg-blue-50/70 border-blue-500 text-blue-900"
-                              : "border-slate-200 hover:bg-slate-50 text-slate-700"
+                              ? "border-blue-600 bg-blue-50/50"
+                              : "border-slate-200 hover:border-slate-300"
                           }`}
                         >
                           <input
@@ -346,17 +392,9 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                             onChange={() => setUseExistingCv(true)}
                             className="mt-0.5 text-blue-600 focus:ring-blue-500"
                           />
-                          <div className="flex-1 min-w-0 text-xs">
-                            <p className="font-bold">Sử dụng CV trong hồ sơ của bạn</p>
-                            <a
-                              href={toBackendUrl(existingCvUrl)}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-blue-600 underline inline-flex items-center gap-1 mt-0.5"
-                            >
-                              <span>Xem trước CV hiện tại</span>
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
+                          <div className="flex-1 text-xs">
+                            <p className="font-bold text-slate-900">Sử dụng CV sẵn có trong hồ sơ</p>
+                            <p className="text-slate-500 truncate mt-0.5 max-w-xs">{existingCvUrl}</p>
                           </div>
                         </label>
                       )}
@@ -364,8 +402,8 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                       <label
                         className={`flex items-start gap-3 p-3.5 rounded-2xl border cursor-pointer transition-all ${
                           !useExistingCv || !existingCvUrl
-                            ? "bg-blue-50/70 border-blue-500 text-blue-900"
-                            : "border-slate-200 hover:bg-slate-50 text-slate-700"
+                            ? "border-blue-600 bg-blue-50/50"
+                            : "border-slate-200 hover:border-slate-300"
                         }`}
                       >
                         <input
@@ -422,6 +460,83 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                       className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold"
                     >
                       {isApplying ? "Đang gửi hồ sơ..." : "Xác nhận nộp đơn"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              {/* Report Modal */}
+              <Dialog open={reportModalOpen} onOpenChange={setReportModalOpen}>
+                <DialogContent className="sm:max-w-md rounded-3xl p-6">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                      <Flag className="w-5 h-5 text-rose-500" />
+                      Báo cáo tin tuyển dụng vi phạm
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-slate-500">
+                      Chúng tôi cam kết bảo mật danh tính người báo cáo và xử lý nghiêm các trường hợp lừa đảo hoặc vi phạm tiêu chuẩn cộng đồng.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="space-y-4 py-2">
+                    <div>
+                      <Label className="text-xs font-bold text-slate-700 block mb-1.5">
+                        Lý do báo cáo
+                      </Label>
+                      <select
+                        value={reportReason}
+                        onChange={(e) => setReportReason(e.target.value)}
+                        className="w-full text-xs rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 font-medium focus:outline-none focus:ring-2 focus:ring-rose-500"
+                      >
+                        <option value="Dấu hiệu lừa đảo / giả mạo công ty">Dấu hiệu lừa đảo / giả mạo công ty</option>
+                        <option value="Yêu cầu nộp phí / cọc tiền ứng tuyển">Yêu cầu nộp phí / cọc tiền ứng tuyển</option>
+                        <option value="Thông tin mô tả sai lệch, lôi kéo đa cấp">Thông tin mô tả sai lệch, lôi kéo đa cấp</option>
+                        <option value="Nội dung phản cảm hoặc vi phạm pháp luật">Nội dung phản cảm hoặc vi phạm pháp luật</option>
+                        <option value="Lý do khác">Lý do khác</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs font-bold text-slate-700 block mb-1.5">
+                        Chi tiết phản ánh <span className="text-rose-500">*</span>
+                      </Label>
+                      <Textarea
+                        rows={3}
+                        placeholder="Mô tả cụ thể bằng chứng hoặc nội dung vi phạm..."
+                        value={reportDetail}
+                        onChange={(e) => setReportDetail(e.target.value)}
+                        className="rounded-xl text-xs bg-slate-50 border-slate-200 resize-none"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-xs font-bold text-slate-700 block mb-1.5">
+                        Email liên hệ của bạn (tùy chọn)
+                      </Label>
+                      <input
+                        type="email"
+                        placeholder="your-email@domain.com"
+                        value={reporterEmail}
+                        onChange={(e) => setReporterEmail(e.target.value)}
+                        className="w-full text-xs rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                      />
+                    </div>
+                  </div>
+
+                  <DialogFooter className="gap-2 sm:gap-0">
+                    <Button
+                      variant="outline"
+                      onClick={() => setReportModalOpen(false)}
+                      className="rounded-xl"
+                    >
+                      Hủy
+                    </Button>
+                    <Button
+                      onClick={handleReport}
+                      disabled={submittingReport}
+                      className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold"
+                    >
+                      {submittingReport ? "Đang gửi báo cáo..." : "Gửi báo cáo"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
