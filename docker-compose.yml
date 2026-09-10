@@ -5,7 +5,7 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: production
-      BACKEND_API_URL: ${BACKEND_API_URL:-http://host.docker.internal:5000/api}
+      BACKEND_API_URL: ${BACKEND_API_URL:?Set BACKEND_API_URL in the environment}
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?Set NEXTAUTH_SECRET in the environment}
       OAUTH_EXCHANGE_SECRET: ${OAUTH_EXCHANGE_SECRET:?Set OAUTH_EXCHANGE_SECRET in the environment}

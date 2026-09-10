@@ -29,6 +29,7 @@
 - Quản lý công ty và tin tuyển dụng.
 - Xem, tìm kiếm ứng viên và quản lý đơn ứng tuyển.
 - Theo dõi matching, thông báo, gói dịch vụ và credit.
+- Danh sách công ty dùng phân trang, lọc và tổng số bản ghi từ server.
 
 ### Quản trị viên
 
@@ -47,7 +48,7 @@ Trình duyệt
     └── /api/auth/*      ──>  NextAuth
 ```
 
-Ở phía trình duyệt, Axios dùng `/api/backend` để request đi qua Next.js. Ở phía server, Axios dùng trực tiếp `BACKEND_API_URL`. Với môi trường local, backend NestJS mặc định chạy ở `http://localhost:5000/api`.
+Ở phía trình duyệt, Axios dùng `/api/backend` để request đi qua Next.js. Ở phía server, Axios dùng trực tiếp `BACKEND_API_URL`. Backend canonical của frontend là ASP.NET Core 8 + SQL Server, chạy local tại `http://localhost:5042/api`. NestJS/PostgreSQL chỉ được giữ như implementation legacy/reference và không nhận feature mới.
 
 ## Cấu trúc thư mục
 
@@ -108,7 +109,7 @@ Copy-Item .env.example .env.local
 
 | Biến | Bắt buộc | Mô tả |
 | --- | --- | --- |
-| `BACKEND_API_URL` | Có | URL API backend, ví dụ `http://localhost:5000/api` |
+| `BACKEND_API_URL` | Có | URL API ASP.NET Core canonical, ví dụ `http://localhost:5042/api` |
 | `NEXTAUTH_URL` | Có | URL frontend, local là `http://localhost:3000` |
 | `NEXTAUTH_SECRET` | Có | Secret dùng để mã hóa session NextAuth |
 | `OAUTH_EXCHANGE_SECRET` | Có | Phải trùng secret tương ứng ở backend |
@@ -130,13 +131,20 @@ Ngôn ngữ mặc định trong cấu hình hiện tại là `en`.
 
 ## Chạy bằng Docker Compose
 
-Điền các biến môi trường cần thiết rồi chạy:
+Compose canonical đặt ở repository backend `JobPortalApi`, vì nó kết nối cùng lúc frontend, ASP.NET Core API và SQL Server:
 
 ```bash
+cd ../JobPortalApi
+cp .env.example .env
+# điền các biến bắt buộc trong .env
 docker compose up --build
 ```
 
-Frontend chạy ở cổng `3000`. Khi chạy trong container, `BACKEND_API_URL` phải trỏ tới địa chỉ mà container frontend có thể truy cập; giá trị mặc định của Compose là `http://host.docker.internal:5000/api`.
+Frontend chạy ở cổng `3000`. Trong canonical Compose, container frontend gọi backend qua `http://aspnet-api:8080/api`; API gọi SQL Server qua service name `sqlserver`, không dùng `localhost` giữa các container. Named volume `cv-data` giữ dữ liệu CV private và `sqlserver-data` giữ dữ liệu SQL Server.
+
+File `jobportal-fe/docker-compose.yml` chỉ dùng khi chạy frontend độc lập. Khi đó phải cung cấp rõ `BACKEND_API_URL` tới backend có thể truy cập được; không có giá trị mặc định dùng `host.docker.internal`.
+
+`docker compose config` đã được kiểm tra ở local; build image, startup, healthcheck và persistence cần Docker Desktop daemon đang chạy mới có thể xác minh đầy đủ.
 
 ## Lệnh phát triển
 
@@ -168,11 +176,12 @@ npm run contract:test
 - Cấu hình `BACKEND_API_URL` theo network thực tế khi chạy Docker hoặc triển khai cloud.
 - Kiểm tra CORS ở backend khi frontend dùng domain mới.
 - Không commit `.env.local`, token, cookie, CV hoặc dữ liệu người dùng.
+- BFF giữ các secret server-side; browser gọi `/api/backend/*` thay vì truy cập trực tiếp API nội bộ.
 
 ## Liên kết các thành phần
 
-- Backend NestJS: <https://github.com/hataba123/jobportal-be>
-- API ASP.NET Core: <https://github.com/hataba123/JobPortalApi>
+- API canonical: ASP.NET Core 8 + SQL Server: <https://github.com/hataba123/JobPortalApi>
+- Backend NestJS/PostgreSQL: legacy/reference, không phát triển feature mới: <https://github.com/hataba123/jobportal-be>
 
 ## Đóng góp
 
