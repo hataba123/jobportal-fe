@@ -23,6 +23,7 @@ import {
   Settings,
   FolderTree,
   Newspaper,
+  Receipt,
 } from "lucide-react";
 
 export default function AdminLayoutClient({
@@ -65,6 +66,7 @@ export default function AdminLayoutClient({
         { href: "/admin/job-post", label: "Tin tuyển dụng", icon: Briefcase },
         { href: "/admin/job-application", label: "Đơn ứng tuyển", icon: FileText },
         { href: "/admin/plans", label: "Gói tín dụng sàn", icon: CreditCard },
+        { href: "/admin/transactions", label: "Lịch sử giao dịch", icon: Receipt },
       ],
     },
     {
@@ -101,6 +103,8 @@ export default function AdminLayoutClient({
         return { title: "Quản lý đơn ứng tuyển", subtitle: "Giám sát tất cả đơn nộp hồ sơ giữa ứng viên và nhà tuyển dụng" };
       case "/admin/plans":
         return { title: "Quản lý gói dịch vụ", subtitle: "Cấu hình hạn mức tín dụng và phí dịch vụ sàn" };
+      case "/admin/transactions":
+        return { title: "Lịch sử giao dịch & Doanh thu", subtitle: "Theo dõi dòng tiền nạp và thanh toán VNPAY từ nhà tuyển dụng" };
       case "/admin/user":
         return { title: "Quản lý tài khoản", subtitle: "Danh sách ứng viên, nhà tuyển dụng và phân quyền quản trị" };
       case "/admin/company":

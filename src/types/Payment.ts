@@ -35,6 +35,14 @@ export interface PaymentOrder {
   paymentUrl?: string;
 }
 
+export interface PaymentOrderListItem extends PaymentOrder {
+  userId?: string;
+  userFullName?: string;
+  userEmail?: string;
+  planName?: string;
+  providerResponseCode?: string | null;
+}
+
 export interface CreditBalance {
   balances: Partial<Record<CreditType, number>>;
 }

@@ -56,3 +56,21 @@ export const updateAdminPlan = async (
   const response = await axiosInstance.put<ServicePlan>(`/admin/plans/${id}`, payload);
   return response.data;
 };
+
+export const fetchAdminPaymentOrders = async (): Promise<
+  import("@/types/Payment").PaymentOrderListItem[]
+> => {
+  const response = await axiosInstance.get<
+    import("@/types/Payment").PaymentOrderListItem[]
+  >("/admin/payment-orders");
+  return response.data;
+};
+
+export const fetchRecruiterPaymentOrders = async (): Promise<
+  import("@/types/Payment").PaymentOrderListItem[]
+> => {
+  const response = await axiosInstance.get<
+    import("@/types/Payment").PaymentOrderListItem[]
+  >("/recruiter/payment-orders");
+  return response.data;
+};

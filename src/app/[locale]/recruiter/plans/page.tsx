@@ -8,9 +8,10 @@ import {
   createPaymentOrder,
   fetchCreditBalance,
   fetchPlans,
+  fetchRecruiterPaymentOrders,
 } from "@/lib/api/payments";
-import type { CreditBalance, ServicePlan } from "@/types/Payment";
-import { CreditCard, RefreshCw, Sparkles } from "lucide-react";
+import type { CreditBalance, PaymentOrderListItem, ServicePlan } from "@/types/Payment";
+import { CreditCard, RefreshCw, Sparkles, CheckCircle2, Clock, XCircle, Receipt } from "lucide-react";
 
 const creditLabels: Record<string, string> = {
   JobPost: "đăng tin",
@@ -24,6 +25,7 @@ const formatPrice = (price: number, currency: string) =>
 export default function RecruiterPlansPage() {
   const [plans, setPlans] = useState<ServicePlan[]>([]);
   const [balance, setBalance] = useState<CreditBalance>({ balances: {} });
+  const [myOrders, setMyOrders] = useState<PaymentOrderListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -32,12 +34,14 @@ export default function RecruiterPlansPage() {
     setLoading(true);
     setError(null);
     try {
-      const [planResult, balanceResult] = await Promise.all([
+      const [planResult, balanceResult, orderResult] = await Promise.all([
         fetchPlans(),
         fetchCreditBalance(),
+        fetchRecruiterPaymentOrders().catch(() => []),
       ]);
       setPlans(planResult);
       setBalance(balanceResult);
+      setMyOrders(orderResult || []);
     } catch {
       setError("Không thể tải gói tín dụng. Vui lòng thử lại sau.");
     } finally {
@@ -130,6 +134,85 @@ export default function RecruiterPlansPage() {
           ))}
         </div>
       )}
+
+      {/* Lịch sử giao dịch của Recruiter */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Receipt className="h-5 w-5 text-purple-600" />
+              Lịch sử mua gói & nạp tín dụng
+            </CardTitle>
+            <span className="text-xs text-slate-500 font-medium">
+              {myOrders.length} giao dịch
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {myOrders.length === 0 ? (
+            <div className="py-8 text-center text-slate-400 text-sm">
+              Bạn chưa có giao dịch mua gói nào.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-slate-600">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 border-b">
+                  <tr>
+                    <th className="py-3 px-4">Mã đơn (VNPAY)</th>
+                    <th className="py-3 px-4">Gói dịch vụ</th>
+                    <th className="py-3 px-4">Số tiền</th>
+                    <th className="py-3 px-4">Trạng thái</th>
+                    <th className="py-3 px-4">Ngày giao dịch</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {myOrders.map((o) => {
+                    const st = String(o.status).toLowerCase();
+                    const isPaid = st === "paid" || st === "1";
+                    const isPending = st === "pending" || st === "0";
+                    return (
+                      <tr key={o.id} className="hover:bg-slate-50/80">
+                        <td className="py-3 px-4 font-mono text-xs font-semibold text-slate-800">
+                          {o.vnpTxnRef}
+                        </td>
+                        <td className="py-3 px-4 font-medium text-slate-900">
+                          {o.planName || "Gói dịch vụ"}
+                        </td>
+                        <td className="py-3 px-4 font-bold text-slate-900">
+                          {formatPrice(o.amount, o.currency || "VND")}
+                        </td>
+                        <td className="py-3 px-4">
+                          {isPaid ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              Thành công
+                            </span>
+                          ) : isPending ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                              <Clock className="w-3 h-3 text-amber-600" />
+                              Đang chờ
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
+                              <XCircle className="w-3 h-3 text-red-600" />
+                              Thất bại / Hủy
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-xs text-slate-500">
+                          {o.createdAt
+                            ? new Date(o.createdAt).toLocaleString("vi-VN")
+                            : "N/A"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
