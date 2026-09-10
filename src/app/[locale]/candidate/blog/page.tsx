@@ -48,7 +48,7 @@ const fallbackBlogs = [
     views: 2340,
     likes: 156,
     featured: true,
-    image: "/image/Image.jpg",
+    image: "/image/blog/blog-career-profile.jpg",
   },
   {
     id: 2,
@@ -62,7 +62,7 @@ const fallbackBlogs = [
     views: 1890,
     likes: 98,
     featured: true,
-    image: "/image/Image.jpg",
+    image: "/image/blog/blog-team-collaboration.jpg",
   },
   {
     id: 3,
@@ -76,7 +76,7 @@ const fallbackBlogs = [
     views: 3210,
     likes: 234,
     featured: false,
-    image: "/image/Image.jpg",
+    image: "/image/blog/blog-tech-workspace.jpg",
   },
   {
     id: 4,
@@ -90,7 +90,7 @@ const fallbackBlogs = [
     views: 1560,
     likes: 89,
     featured: false,
-    image: "/image/Image.jpg",
+    image: "/image/blog/blog-team-collaboration.jpg",
   },
   {
     id: 5,
@@ -104,7 +104,7 @@ const fallbackBlogs = [
     views: 2100,
     likes: 145,
     featured: false,
-    image: "/image/Image.jpg",
+    image: "/image/blog/blog-career-profile.jpg",
   },
 ];
 
