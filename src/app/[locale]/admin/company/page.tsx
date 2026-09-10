@@ -70,7 +70,7 @@ import {
   Download,
   Upload,
 } from "lucide-react";
-import Image from "next/image";
+import CompanyLogo from "@/components/common/CompanyLogo";
 import { useState, useEffect } from "react";
 import React from "react";
 import { fetchAllCompanies, createCompany as apiCreateCompany, updateCompany as apiUpdateCompany, deleteCompany as apiDeleteCompany, updateCompanyVerification } from "@/lib/api/admin-company";
@@ -117,6 +117,7 @@ export default function Page() {
     employees: "",
     industry: "",
     website: "",
+    logo: "",
     founded: "",
     tags: [],
   });
@@ -192,6 +193,7 @@ export default function Page() {
       employees: "",
       industry: "",
       website: "",
+      logo: "",
       founded: "",
       tags: [],
     });
@@ -264,6 +266,17 @@ export default function Page() {
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div>
+        <Label htmlFor="logo">Logo URL</Label>
+        <Input
+          id="logo"
+          type="url"
+          value={formData.logo || ""}
+          onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
+          placeholder="https://... hoặc /uploads/logo/..."
+        />
       </div>
 
       <div>
@@ -548,13 +561,7 @@ export default function Page() {
                   <TableRow key={company.id}>
                     <TableCell>
                       <div className="flex items-center space-x-3">
-                        <Image
-                          src={company.logo || "/placeholder.svg"}
-                          alt={company.name}
-                          width={40}
-                          height={40}
-                          className="rounded-lg border"
-                        />
+                        <CompanyLogo src={company.logo} name={company.name} size={40} rounded="rounded-lg" />
                         <div>
                           <p className="font-medium">{company.name}</p>
                           <p className="text-sm text-gray-500">
@@ -641,13 +648,7 @@ export default function Page() {
             {selectedCompany && (
               <div className="space-y-6">
                 <div className="flex items-center space-x-4">
-                  <Image
-                    src={selectedCompany.logo || "/placeholder.svg"}
-                    alt={selectedCompany.name}
-                    width={80}
-                    height={80}
-                    className="rounded-lg border"
-                  />
+                  <CompanyLogo src={selectedCompany.logo} name={selectedCompany.name} size={80} rounded="rounded-lg" />
                   <div>
                     <h3 className="text-xl font-semibold">
                       {selectedCompany.name}

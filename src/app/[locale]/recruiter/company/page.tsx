@@ -45,6 +45,7 @@ import {
   type CompanyDto
 } from "@/lib/api/recruiter-dashboard";
 import Link from "next/link";
+import CompanyLogo from "@/components/common/CompanyLogo";
 
 export default function RecruiterCompanyPage() {
   const [company, setCompany] = useState<CompanyDto | null>(null);
@@ -221,6 +222,16 @@ export default function RecruiterCompanyPage() {
                   </div>
                 </div>
                 <div>
+                  <Label htmlFor="logo">Logo URL</Label>
+                  <Input
+                    id="logo"
+                    type="url"
+                    placeholder="https://... hoặc /uploads/logo/..."
+                    value={editForm.logo || ""}
+                    onChange={(e) => setEditForm({ ...editForm, logo: e.target.value })}
+                  />
+                </div>
+                <div>
                   <Label htmlFor="tags">Tags (cách nhau bởi dấu phẩy)</Label>
                   <Input
                     id="tags"
@@ -276,9 +287,7 @@ export default function RecruiterCompanyPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center">
-                  <Building className="h-8 w-8 text-gray-600" />
-                </div>
+                <CompanyLogo src={company.logo} name={company.name} size={64} rounded="rounded-lg" />
                 <div>
                   <CardTitle className="text-2xl">{company.name}</CardTitle>
                   <div className="flex items-center space-x-2 text-gray-600">

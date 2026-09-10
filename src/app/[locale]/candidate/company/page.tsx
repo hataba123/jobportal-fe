@@ -21,7 +21,6 @@ import {
   Grid3X3,
   List,
 } from "lucide-react";
-import Image from "next/image";
 import CompanyLogo from "@/components/common/CompanyLogo";
 import { useState, useMemo } from "react";
 import { useRouter } from "@/i18n/navigation";

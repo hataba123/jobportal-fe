@@ -23,7 +23,6 @@ import {
   DollarSign,
   Briefcase,
 } from "lucide-react";
-import Image from "next/image";
 import CompanyLogo from "@/components/common/CompanyLogo";
 import { Company } from "@/types/Company";
 import { JobPost } from "@/types/JobPost";

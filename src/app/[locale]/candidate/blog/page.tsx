@@ -29,7 +29,7 @@ import {
   Target,
   Loader2,
 } from "lucide-react";
-import Image from "next/image";
+import SafeImage from "@/components/common/SafeImage";
 import { useBlogs } from "@/hooks/useBlogs";
 import { Pagination } from "@/components/common/Pagination";
 import { useRouter } from "@/i18n/navigation";
@@ -276,7 +276,7 @@ export default function BlogPage() {
                     onClick={() => router.push(`/candidate/blog/${post.id}`)}
                   >
                     <div className="relative">
-                      <Image
+                      <SafeImage
                         src={post.image || "/image/Image.jpg"}
                         alt={post.title}
                         width={600}
@@ -295,7 +295,7 @@ export default function BlogPage() {
 
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center space-x-3">
-                          <Image
+                          <SafeImage
                             src={post.author.avatar || "/image/avatar.png"}
                             alt={post.author.name}
                             width={32}
@@ -373,7 +373,7 @@ export default function BlogPage() {
                       >
                         <div className="md:flex">
                           <div className="md:w-1/3">
-                            <Image
+                            <SafeImage
                               src={post.image || "/image/Image.jpg"}
                               alt={post.title}
                               width={400}
@@ -400,7 +400,7 @@ export default function BlogPage() {
 
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
-                                <Image
+                                <SafeImage
                                   src={post.author.avatar || "/image/avatar.png"}
                                   alt={post.author.name}
                                   width={32}
@@ -530,7 +530,7 @@ export default function BlogPage() {
                 <div className="space-y-4">
                   {featuredAuthors.map((author) => (
                     <div key={author.name} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
-                      <Image
+                      <SafeImage
                         src={author.avatar || "/image/avatar.png"}
                         alt={author.name}
                         width={48}

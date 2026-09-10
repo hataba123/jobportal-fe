@@ -6,6 +6,7 @@ import { ArrowLeft, Eye, Heart, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import SafeImage from "@/components/common/SafeImage";
 import { getBlogById, incrementBlogViews, toggleBlogLike } from "@/lib/api/blog";
 import type { Blog } from "@/types/Blog";
 
@@ -72,8 +73,27 @@ export default function BlogDetailClient({ id }: { id: string }) {
           <h1 className="mb-4 text-3xl font-bold text-gray-900 md:text-4xl">
             {blog.title}
           </h1>
+          <SafeImage
+            src={blog.image}
+            alt={blog.title}
+            width={1200}
+            height={520}
+            sizes="(max-width: 896px) 100vw, 896px"
+            className="mb-8 h-64 w-full rounded-xl object-cover md:h-96"
+            priority
+          />
           <div className="mb-8 flex flex-wrap items-center gap-4 text-sm text-gray-500">
-            <span>{blog.author.name}</span>
+            <div className="flex items-center gap-2">
+              <SafeImage
+                src={blog.author.avatar}
+                fallback="/image/avatar.png"
+                alt={blog.author.name}
+                width={32}
+                height={32}
+                className="rounded-full object-cover"
+              />
+              <span>{blog.author.name}</span>
+            </div>
             <span>{new Date(blog.publishedAt).toLocaleDateString("vi-VN")}</span>
             <span className="flex items-center gap-1">
               <Eye className="h-4 w-4" /> {blog.views.toLocaleString()}

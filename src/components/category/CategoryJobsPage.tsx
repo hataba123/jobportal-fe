@@ -34,7 +34,7 @@ import {
 import { fetchCategoryById, fetchJobsByCategory } from "@/lib/api/category";
 import { Category } from "@/types/Category";
 import { JobPost } from "@/types/JobPost";
-import Image from "next/image";
+import CompanyLogo from "@/components/common/CompanyLogo";
 export default function CategoryJobsPage({
   categoryId,
 }: {
@@ -280,12 +280,11 @@ export default function CategoryJobsPage({
                 <CardHeader
                   className={viewMode === "list" ? "flex-shrink-0 p-4" : ""}
                 >
-                  <Image
-                    width={80}
-                    height={80}
-                    src={job.logo || "/placeholder.svg"}
-                    alt={`${job.employer?.fullName || "Company"} Logo`}
-                    className="w-16 h-16 object-contain rounded-full mx-auto md:mx-0"
+                  <CompanyLogo
+                    size={64}
+                    src={job.logo}
+                    name={job.employer?.fullName || "Company"}
+                    className="mx-auto md:mx-0"
                   />
                 </CardHeader>
                 <CardContent className="flex-1 p-4">

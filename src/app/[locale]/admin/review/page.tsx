@@ -63,7 +63,7 @@ import {
   MessageSquare,
   Calendar,
 } from "lucide-react";
-import Image from "next/image";
+import CompanyLogo from "@/components/common/CompanyLogo";
 import { useState, useEffect } from "react";
 import { fetchAllReviews, updateReview as apiUpdateReview, deleteReview as apiDeleteReview } from "@/lib/api/admin-review";
 import { Review } from "@/types/Review";
@@ -380,13 +380,7 @@ export default function AdminReviewDashboard() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
-                        <Image
-                          src="/placeholder.svg"
-                          alt={review.companyId}
-                          width={24}
-                          height={24}
-                          className="rounded-full"
-                        />
+                        <CompanyLogo name={review.companyId} size={24} rounded="rounded-full" />
                         <span>{review.companyId}</span>
                       </div>
                     </TableCell>

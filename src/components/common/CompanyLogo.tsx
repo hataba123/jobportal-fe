@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { toBackendUrl } from "@/lib/api/url";
+import { isExternalImageUrl, toBackendUrl } from "@/lib/api/url";
 
 interface CompanyLogoProps {
   src?: string | null;
@@ -48,6 +48,10 @@ export default function CompanyLogo({
 }: CompanyLogoProps) {
   const [hasError, setHasError] = useState(false);
 
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
+
   const dimMap: Record<string, { size: number; text: string }> = {
     sm: { size: 36, text: "text-xs font-bold" },
     md: { size: 48, text: "text-sm font-bold" },
@@ -82,14 +86,28 @@ export default function CompanyLogo({
       style={{ width: `${dim.size}px`, height: `${dim.size}px` }}
       className={`relative flex-shrink-0 bg-white border border-slate-200/80 overflow-hidden shadow-xs flex items-center justify-center p-1 ${rounded} ${className}`}
     >
-      <Image
-        src={imageUrl}
-        alt={name}
-        width={dim.size}
-        height={dim.size}
-        className="w-full h-full object-contain"
-        onError={() => setHasError(true)}
-      />
+      {isExternalImageUrl(imageUrl) ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={imageUrl}
+          alt={name}
+          width={dim.size}
+          height={dim.size}
+          className="w-full h-full object-contain"
+          referrerPolicy="no-referrer"
+          onError={() => setHasError(true)}
+        />
+      ) : (
+        <Image
+          src={imageUrl}
+          alt={name}
+          width={dim.size}
+          height={dim.size}
+          unoptimized
+          className="w-full h-full object-contain"
+          onError={() => setHasError(true)}
+        />
+      )}
     </div>
   );
 }
