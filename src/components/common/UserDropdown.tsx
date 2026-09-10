@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,8 +25,6 @@ import {
   LogOut,
   ChevronDown,
   Sparkles,
-  Layers,
-  ShieldCheck,
 } from "lucide-react";
 
 type Props = {
@@ -38,6 +37,7 @@ type Props = {
 
 export default function UserDropdown({ user, onLogout }: Props) {
   const router = useRouter();
+  const t = useTranslations("UserDropdown");
 
   const handleLogout = () => {
     onLogout?.();
@@ -47,11 +47,11 @@ export default function UserDropdown({ user, onLogout }: Props) {
   const getRoleBadge = () => {
     switch (user.role) {
       case "ADMIN":
-        return { label: "Quản trị viên", color: "bg-purple-100 text-purple-700 border-purple-200" };
+        return { label: t("role_admin"), color: "bg-purple-100 text-purple-700 border-purple-200" };
       case "RECRUITER":
-        return { label: "Nhà tuyển dụng", color: "bg-amber-100 text-amber-800 border-amber-200" };
+        return { label: t("role_recruiter"), color: "bg-amber-100 text-amber-800 border-amber-200" };
       default:
-        return { label: "Ứng viên", color: "bg-blue-100 text-blue-700 border-blue-200" };
+        return { label: t("role_candidate"), color: "bg-blue-100 text-blue-700 border-blue-200" };
     }
   };
 
@@ -109,42 +109,42 @@ export default function UserDropdown({ user, onLogout }: Props) {
                 className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
               >
                 <User className="w-4 h-4 text-slate-400" />
-                <span>Hồ sơ cá nhân</span>
+                <span>{t("profile")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push("/candidate/userprofiles/applications")}
                 className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
               >
                 <FileText className="w-4 h-4 text-slate-400" />
-                <span>Việc làm đã ứng tuyển</span>
+                <span>{t("applications")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push("/candidate/userprofiles/saved-jobs")}
                 className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
               >
                 <Bookmark className="w-4 h-4 text-slate-400" />
-                <span>Việc làm đã lưu</span>
+                <span>{t("saved_jobs")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push("/candidate/userprofiles/matches")}
                 className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
               >
                 <Sparkles className="w-4 h-4 text-amber-500" />
-                <span>Gợi ý việc làm phù hợp</span>
+                <span>{t("matches")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push("/candidate/userprofiles/notifications")}
                 className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
               >
                 <Bell className="w-4 h-4 text-slate-400" />
-                <span>Thông báo</span>
+                <span>{t("notifications")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push("/candidate/userprofiles/settings")}
                 className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
               >
                 <Settings className="w-4 h-4 text-slate-400" />
-                <span>Cài đặt tài khoản</span>
+                <span>{t("settings")}</span>
               </DropdownMenuItem>
             </>
           )}
@@ -156,42 +156,42 @@ export default function UserDropdown({ user, onLogout }: Props) {
                 className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
               >
                 <LayoutDashboard className="w-4 h-4 text-slate-400" />
-                <span>Recruiter Dashboard</span>
+                <span>{t("recruiter_dashboard")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push("/recruiter/jobs")}
                 className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
               >
                 <Briefcase className="w-4 h-4 text-slate-400" />
-                <span>Quản lý tin tuyển dụng</span>
+                <span>{t("manage_jobs")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push("/recruiter/applications")}
                 className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
               >
                 <FileText className="w-4 h-4 text-slate-400" />
-                <span>Đơn ứng tuyển</span>
+                <span>{t("manage_applications")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push("/recruiter/candidates")}
                 className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
               >
                 <Users className="w-4 h-4 text-slate-400" />
-                <span>Tìm nhân tài (Talent Pool)</span>
+                <span>{t("talent_pool")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push("/recruiter/company")}
                 className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
               >
                 <Building2 className="w-4 h-4 text-slate-400" />
-                <span>Hồ sơ công ty</span>
+                <span>{t("company_profile")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push("/recruiter/settings")}
                 className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
               >
                 <Settings className="w-4 h-4 text-slate-400" />
-                <span>Cài đặt nhà tuyển dụng</span>
+                <span>{t("recruiter_settings")}</span>
               </DropdownMenuItem>
             </>
           )}
@@ -203,28 +203,28 @@ export default function UserDropdown({ user, onLogout }: Props) {
                 className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
               >
                 <LayoutDashboard className="w-4 h-4 text-slate-400" />
-                <span>Admin Dashboard</span>
+                <span>{t("admin_dashboard")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push("/admin/job-post")}
                 className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
               >
                 <Briefcase className="w-4 h-4 text-slate-400" />
-                <span>Quản lý tin tuyển dụng</span>
+                <span>{t("manage_jobs")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push("/admin/user")}
                 className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
               >
                 <Users className="w-4 h-4 text-slate-400" />
-                <span>Quản lý người dùng</span>
+                <span>{t("manage_users")}</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push("/admin/company")}
                 className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl cursor-pointer transition-colors"
               >
                 <Building2 className="w-4 h-4 text-slate-400" />
-                <span>Quản lý công ty</span>
+                <span>{t("manage_companies")}</span>
               </DropdownMenuItem>
             </>
           )}
@@ -237,7 +237,7 @@ export default function UserDropdown({ user, onLogout }: Props) {
           className="flex items-center gap-2.5 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-xl cursor-pointer transition-colors font-medium"
         >
           <LogOut className="w-4 h-4 text-rose-500" />
-          <span>Đăng xuất</span>
+          <span>{t("logout")}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

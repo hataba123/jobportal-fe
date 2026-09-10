@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import BrandLogo from "@/components/common/BrandLogo";
 import HoverDropdown from "@/components/common/HoverDropdown";
 import UserDropdown from "@/components/common/UserDropdown";
@@ -15,12 +16,12 @@ import {
   Briefcase,
   Building2,
   BookOpen,
-  Sparkles,
   ArrowRight,
   PlusCircle,
 } from "lucide-react";
 
 export default function Navbar() {
+  const t = useTranslations("NavBar");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, logout, isAuthenticated, loading } = useAuth();
   const { categories } = useCategories();
@@ -45,7 +46,7 @@ export default function Navbar() {
 
             <nav className="hidden md:flex items-center space-x-1">
               <HoverDropdown
-                label="Việc làm"
+                label={t("jobs")}
                 mainHref="/candidate/job"
                 items={categoryItems}
               />
@@ -58,7 +59,7 @@ export default function Navbar() {
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
                 }`}
               >
-                Công ty
+                {t("companies")}
               </Link>
 
               <Link
@@ -69,7 +70,7 @@ export default function Navbar() {
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
                 }`}
               >
-                Blog
+                {t("blogs")}
               </Link>
             </nav>
           </div>
@@ -85,22 +86,22 @@ export default function Navbar() {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors border border-blue-200"
               >
                 <PlusCircle className="w-4 h-4" />
-                <span>Đăng tin tuyển dụng</span>
+                <span>{t("post_job")}</span>
               </Link>
             ) : roleString === "ADMIN" ? (
               <Link
                 href="/admin/dashboard"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors border border-purple-200"
               >
-                <span>Admin Panel</span>
+                <span>{t("admin_panel")}</span>
               </Link>
             ) : (
               <Link
                 href="/candidate/auth/register"
                 className="hidden lg:inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors"
               >
-                <span>Nhà tuyển dụng?</span>
-                <span className="underline">Đăng tin ngay</span>
+                <span>{t("recruiter_prompt")}</span>
+                <span className="underline">{t("post_now")}</span>
               </Link>
             )}
 
@@ -123,13 +124,13 @@ export default function Navbar() {
                   href="/candidate/auth/login"
                   className="px-3.5 py-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors"
                 >
-                  Đăng nhập
+                  {t("login")}
                 </Link>
                 <Link
                   href="/candidate/auth/register"
                   className="inline-flex items-center gap-1 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs shadow-blue-500/20 hover:shadow-blue-500/30 transition-all active:scale-95"
                 >
-                  <span>Đăng ký</span>
+                  <span>{t("register")}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
@@ -142,7 +143,7 @@ export default function Navbar() {
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none transition-colors"
-              aria-label="Mở menu"
+              aria-label={t("open_menu")}
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -155,7 +156,7 @@ export default function Navbar() {
         <div className="md:hidden border-t border-slate-200/80 bg-white px-4 pt-3 pb-6 space-y-4 shadow-xl animate-in slide-in-from-top-2 duration-150">
           <div className="space-y-1">
             <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Khám phá
+              {t("explore")}
             </p>
             <Link
               href="/candidate/job"
@@ -163,7 +164,7 @@ export default function Navbar() {
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <Briefcase className="w-4 h-4 text-slate-400" />
-              <span>Tất cả việc làm</span>
+              <span>{t("all_jobs")}</span>
             </Link>
             <Link
               href="/candidate/company"
@@ -171,7 +172,7 @@ export default function Navbar() {
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <Building2 className="w-4 h-4 text-slate-400" />
-              <span>Công ty hàng đầu</span>
+              <span>{t("top_companies")}</span>
             </Link>
             <Link
               href="/candidate/blog"
@@ -179,13 +180,13 @@ export default function Navbar() {
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600"
             >
               <BookOpen className="w-4 h-4 text-slate-400" />
-              <span>Blog & Tin tức</span>
+              <span>{t("blog_news")}</span>
             </Link>
           </div>
 
           <div className="pt-2 border-t border-slate-100">
             <div className="flex items-center justify-between px-3 py-2">
-              <span className="text-xs font-medium text-slate-500">Ngôn ngữ</span>
+              <span className="text-xs font-medium text-slate-500">{t("language")}</span>
               <LanguageSwitcher variant="light" />
             </div>
           </div>
@@ -212,14 +213,14 @@ export default function Navbar() {
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center justify-center py-2.5 rounded-xl text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
                 >
-                  Đăng nhập
+                  {t("login")}
                 </Link>
                 <Link
                   href="/candidate/auth/register"
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center justify-center py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-xs"
                 >
-                  Đăng ký
+                  {t("register")}
                 </Link>
               </div>
             )}

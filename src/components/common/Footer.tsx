@@ -2,28 +2,30 @@
 
 import React, { useState } from "react";
 import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import BrandLogo from "@/components/common/BrandLogo";
-import { Mail, Phone, MapPin, Send, ArrowRight, Github, Linkedin, Facebook } from "lucide-react";
+import { Mail, Phone, MapPin, Send } from "lucide-react";
 import { toast } from "sonner";
 import { subscribeNewsletter } from "@/lib/api/newsletter";
 
 export default function Footer() {
+  const t = useTranslations("Footer");
   const [email, setEmail] = useState("");
   const [subscribing, setSubscribing] = useState(false);
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !email.includes("@")) {
-      toast.error("Vui lòng nhập địa chỉ email hợp lệ");
+      toast.error(t("invalid_email"));
       return;
     }
     setSubscribing(true);
     try {
       const res = await subscribeNewsletter(email.trim());
-      toast.success(res.message || "Cảm ơn bạn đã đăng ký nhận bản tin!");
+      toast.success(res.message || t("subscribe_success"));
       setEmail("");
     } catch {
-      toast.error("Không thể đăng ký nhận tin lúc này. Vui lòng thử lại sau.");
+      toast.error(t("subscribe_error"));
     } finally {
       setSubscribing(false);
     }
@@ -37,10 +39,10 @@ export default function Footer() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div>
               <h3 className="text-2xl font-bold text-white tracking-tight">
-                Nhận cơ hội việc làm IT mới nhất mỗi tuần
+                {t("newsletter_title")}
               </h3>
               <p className="mt-2 text-sm text-slate-400 leading-relaxed max-w-lg">
-                Đăng ký bản tin để nhận thông tin về các vị trí tuyển dụng lương cao, xu hướng công nghệ và cẩm nang phỏng vấn.
+                {t("newsletter_desc")}
               </p>
             </div>
             <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2.5 max-w-md lg:ml-auto w-full">
@@ -50,7 +52,7 @@ export default function Footer() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Nhập email của bạn..."
+                  placeholder={t("email_placeholder")}
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   required
                 />
@@ -58,9 +60,9 @@ export default function Footer() {
               <button
                 type="submit"
                 disabled={subscribing}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all active:scale-95 disabled:opacity-60 shadow-xs shadow-blue-500/20"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all active:scale-95 disabled:opacity-60 shadow-xs shadow-blue-500/20 cursor-pointer"
               >
-                <span>{subscribing ? "Đang gửi..." : "Đăng ký"}</span>
+                <span>{subscribing ? t("sending") : t("subscribe")}</span>
                 <Send className="w-3.5 h-3.5" />
               </button>
             </form>
@@ -75,12 +77,12 @@ export default function Footer() {
           <div className="lg:col-span-2 space-y-4">
             <BrandLogo href="/" size="md" variant="dark" />
             <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
-              Nền tảng kết nối nhân tài công nghệ và doanh nghiệp hàng đầu tại Việt Nam. Tìm kiếm việc làm mơ ước với trải nghiệm tuyển dụng minh bạch, nhanh chóng.
+              {t("brand_desc")}
             </p>
             <div className="pt-2 space-y-2 text-xs text-slate-400">
               <div className="flex items-center gap-2.5">
                 <MapPin className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                <span>Khu Công nghệ cao, TP. Thủ Đức, TP. Hồ Chí Minh</span>
+                <span>{t("location_text")}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-blue-500 flex-shrink-0" />
@@ -95,31 +97,31 @@ export default function Footer() {
 
           {/* Candidates Column */}
           <div className="space-y-4">
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Ứng viên</h4>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider">{t("candidate_title")}</h4>
             <ul className="space-y-2.5 text-sm">
               <li>
                 <Link href="/candidate/job" className="hover:text-white transition-colors">
-                  Tìm việc làm IT
+                  {t("find_jobs")}
                 </Link>
               </li>
               <li>
                 <Link href="/candidate/company" className="hover:text-white transition-colors">
-                  Khám phá công ty
+                  {t("explore_companies")}
                 </Link>
               </li>
               <li>
                 <Link href="/candidate/userprofiles/profile" className="hover:text-white transition-colors">
-                  Quản lý CV & Hồ sơ
+                  {t("manage_cv")}
                 </Link>
               </li>
               <li>
                 <Link href="/candidate/userprofiles/matches" className="hover:text-white transition-colors">
-                  Việc làm gợi ý AI
+                  {t("ai_matches")}
                 </Link>
               </li>
               <li>
                 <Link href="/candidate/blog" className="hover:text-white transition-colors">
-                  Bí quyết phỏng vấn
+                  {t("interview_tips")}
                 </Link>
               </li>
             </ul>
@@ -127,31 +129,31 @@ export default function Footer() {
 
           {/* Employers Column */}
           <div className="space-y-4">
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Nhà tuyển dụng</h4>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider">{t("employer_title")}</h4>
             <ul className="space-y-2.5 text-sm">
               <li>
                 <Link href="/recruiter/jobs" className="hover:text-white transition-colors">
-                  Đăng tin tuyển dụng
+                  {t("post_job")}
                 </Link>
               </li>
               <li>
                 <Link href="/recruiter/candidates" className="hover:text-white transition-colors">
-                  Tìm hồ sơ ứng viên
+                  {t("search_candidates")}
                 </Link>
               </li>
               <li>
                 <Link href="/recruiter/plans" className="hover:text-white transition-colors">
-                  Bảng giá & Gói dịch vụ
+                  {t("pricing_plans")}
                 </Link>
               </li>
               <li>
                 <Link href="/recruiter/company" className="hover:text-white transition-colors">
-                  Xây dựng thương hiệu
+                  {t("employer_branding")}
                 </Link>
               </li>
               <li>
                 <Link href="/recruiter/dashboard" className="hover:text-white transition-colors">
-                  Recruiter Portal
+                  {t("recruiter_portal")}
                 </Link>
               </li>
             </ul>
@@ -159,7 +161,7 @@ export default function Footer() {
 
           {/* Hot Categories */}
           <div className="space-y-4">
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider">Ngành nghề hot</h4>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider">{t("hot_categories")}</h4>
             <ul className="space-y-2.5 text-sm">
               <li>
                 <Link href="/candidate/job?category=Frontend" className="hover:text-white transition-colors">
@@ -194,16 +196,16 @@ export default function Footer() {
       {/* Bottom Legal / Copyright */}
       <div className="border-t border-slate-900 bg-slate-950/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} JobPortal. Bản quyền thuộc về JobPortal Platform.</p>
+          <p>© {new Date().getFullYear()} {t("copyright")}</p>
           <div className="flex items-center space-x-6">
             <Link href="/candidate/blog" className="hover:text-slate-400 transition-colors">
-              Chính sách bảo mật
+              {t("privacy_policy")}
             </Link>
             <Link href="/candidate/blog" className="hover:text-slate-400 transition-colors">
-              Điều khoản dịch vụ
+              {t("terms_of_service")}
             </Link>
             <Link href="/candidate/blog" className="hover:text-slate-400 transition-colors">
-              Quy chế hoạt động
+              {t("operation_rules")}
             </Link>
           </div>
         </div>
