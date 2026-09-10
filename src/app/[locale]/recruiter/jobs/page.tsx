@@ -67,6 +67,7 @@ import {
 } from "@/lib/api/job-application";
 import { toast } from "sonner";
 import { toBackendUrl } from "@/lib/api/url";
+import CompanyLogo from "@/components/common/CompanyLogo";
 
 interface CandidateApplicationDto {
   id: string;
@@ -85,7 +86,7 @@ export default function RecruiterJobsPage() {
   const [selectedJob, setSelectedJob] = useState<JobPost | null>(null);
   const [newJobPost, setNewJobPost] = useState<Partial<JobPost>>({
     type: "Full-time",
-    logo: "/placeholder.svg?height=32&width=32",
+    logo: "",
     tags: [],
   });
   const [selectedJobForCandidates, setSelectedJobForCandidates] =
@@ -114,7 +115,7 @@ export default function RecruiterJobsPage() {
       setIsCreateDialogOpen(false);
       setNewJobPost({
         type: "Full-time",
-        logo: "/placeholder.svg?height=32&width=32",
+        logo: "",
         tags: [],
       });
       fetchJobs();
@@ -130,7 +131,7 @@ export default function RecruiterJobsPage() {
       setSelectedJob(null);
       setNewJobPost({
         type: "Full-time",
-        logo: "/placeholder.svg?height=32&width=32",
+        logo: "",
         tags: [],
       });
       fetchJobs();
@@ -157,7 +158,7 @@ export default function RecruiterJobsPage() {
   const resetForm = () => {
     setNewJobPost({
       type: "Full-time",
-      logo: "/placeholder.svg?height=32&width=32",
+      logo: "",
       tags: [],
     });
   };
@@ -344,6 +345,16 @@ export default function RecruiterJobsPage() {
                   }
                 />
               </div>
+              <div>
+                <Label htmlFor="logo">Logo URL</Label>
+                <Input
+                  id="logo"
+                  type="url"
+                  placeholder="https://... hoặc /uploads/logo/..."
+                  value={newJobPost.logo || ""}
+                  onChange={(e) => setNewJobPost({ ...newJobPost, logo: e.target.value })}
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button
@@ -397,9 +408,12 @@ export default function RecruiterJobsPage() {
               {jobs.map((job) => (
                 <TableRow key={job.id}>
                   <TableCell>
-                    <div>
+                    <div className="flex items-center gap-3">
+                      <CompanyLogo src={job.logo} name={job.companyName || job.title} size={36} rounded="rounded-lg" />
+                      <div>
                       <p className="font-medium">{job.title}</p>
-                      <p className="text-sm text-gray-500">{job.type}</p>
+                        <p className="text-sm text-gray-500">{job.type}</p>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>{job.companyName}</TableCell>
@@ -588,6 +602,16 @@ export default function RecruiterJobsPage() {
                     tags: e.target.value.split(",").map((tag) => tag.trim()),
                   })
                 }
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-logo">Logo URL</Label>
+              <Input
+                id="edit-logo"
+                type="url"
+                placeholder="https://... hoặc /uploads/logo/..."
+                value={newJobPost.logo || ""}
+                onChange={(e) => setNewJobPost({ ...newJobPost, logo: e.target.value })}
               />
             </div>
           </div>
