@@ -77,7 +77,7 @@ export default function RecruiterCompanyPage() {
 
   const handleUpdateCompany = async () => {
     try {
-      await updateMyCompany(editForm);
+      await updateMyCompany(editForm, company?.version);
       setIsEditDialogOpen(false);
       fetchCompanyData(); // Refresh data
     } catch (error) {
@@ -88,7 +88,7 @@ export default function RecruiterCompanyPage() {
 
   const handleDeleteCompany = async () => {
     try {
-      await deleteMyCompany();
+      await deleteMyCompany(company?.version);
       setIsDeleteDialogOpen(false);
       setCompany(null);
     } catch (error) {

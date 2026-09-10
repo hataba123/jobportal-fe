@@ -74,6 +74,7 @@ interface JobPost {
   Applicants: number;
   CreatedAt: string;
   CategoryId: string;
+  Version?: string;
 }
 
 const toAdminJobPost = (post: ApiJobPost): JobPost => ({
@@ -91,6 +92,7 @@ const toAdminJobPost = (post: ApiJobPost): JobPost => ({
   Applicants: post.applicants ?? 0,
   CreatedAt: post.createdAt,
   CategoryId: post.categoryId ?? "",
+  Version: post.version,
 });
 
 const toApiJobPost = (post: Partial<JobPost>) => ({
@@ -212,7 +214,7 @@ export default function AdminJobPostDashboard() {
     if (editingJobPost) {
       try {
         setError(null);
-        await updateJobPostApi(editingJobPost.Id, toApiJobPost(editingJobPost));
+        await updateJobPostApi(editingJobPost.Id, toApiJobPost(editingJobPost), editingJobPost.Version);
         await loadJobPosts();
         setIsEditDialogOpen(false);
         setEditingJobPost(null);
@@ -227,7 +229,8 @@ export default function AdminJobPostDashboard() {
     if (jobPostToDelete) {
       try {
         setError(null);
-        await deleteJobPostApi(jobPostToDelete);
+        const version = jobPosts.find((post) => post.Id === jobPostToDelete)?.Version;
+        await deleteJobPostApi(jobPostToDelete, version);
         await loadJobPosts();
         setIsDeleteDialogOpen(false);
         setJobPostToDelete(null);

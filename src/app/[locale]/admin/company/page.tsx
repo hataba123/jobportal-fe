@@ -164,7 +164,7 @@ export default function Page() {
   // Update company by ID
   const handleUpdateCompany = async (id: string) => {
     try {
-      await apiUpdateCompany(id, formData);
+      await apiUpdateCompany(id, formData, selectedCompany?.version);
     setIsEditDialogOpen(false);
     resetForm();
       fetchCompanies();
@@ -176,7 +176,7 @@ export default function Page() {
   // Delete company by ID
   const handleDeleteCompany = async (id: string) => {
     try {
-      await apiDeleteCompany(id);
+      await apiDeleteCompany(id, selectedCompany?.version);
     setIsDeleteDialogOpen(false);
     setSelectedCompany(null);
       fetchCompanies();
@@ -221,7 +221,7 @@ export default function Page() {
   ) => {
     if (!company.id) return;
     try {
-      await updateCompanyVerification(String(company.id), verificationStatus);
+      await updateCompanyVerification(String(company.id), verificationStatus, company.version);
       await fetchCompanies();
     } catch {
       // Giữ trạng thái hiện tại nếu API cập nhật thất bại.

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,7 @@ function getTopCompanies(companies: Company[], reviews: Review[], topN = 6) {
 }
 
 export default function HomepageContent() {
+  const t = useTranslations("HomePage");
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
@@ -158,20 +160,20 @@ export default function HomepageContent() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/70 text-blue-700 text-xs font-semibold mb-6 shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-            <span>Nền tảng tuyển dụng công nghệ hàng đầu Việt Nam</span>
+            <span>{t("badge")}</span>
           </div>
 
           {/* Heading */}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight max-w-4xl mx-auto leading-tight sm:leading-tight">
-            Khám phá cơ hội việc làm{" "}
+            {t("hero_title_prefix")}{" "}
             <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              IT đỉnh cao
+              {t("hero_title_highlight")}
             </span>{" "}
-            của bạn
+            {t("hero_title_suffix")}
           </h1>
 
           <p className="mt-5 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Kết nối trực tiếp với hơn 5,000+ doanh nghiệp công nghệ uy tín. Tối ưu hóa hồ sơ, nhận gợi ý việc làm chuẩn xác với thuật toán so khớp thông minh.
+            {t("hero_description")}
           </p>
 
           {/* Search Box */}
@@ -184,7 +186,7 @@ export default function HomepageContent() {
                     <Search className="w-4 h-4 text-slate-400 mr-2.5 flex-shrink-0" />
                     <input
                       type="text"
-                      placeholder="Vị trí tuyển dụng, kỹ năng (React, .NET, Golang...)"
+                      placeholder={t("search_keyword_placeholder")}
                       className="w-full bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
                       value={searchTerm}
                       onChange={(e) => {
@@ -223,7 +225,7 @@ export default function HomepageContent() {
                     <MapPin className="w-4 h-4 text-slate-400 mr-2.5 flex-shrink-0" />
                     <input
                       type="text"
-                      placeholder="Địa điểm (Hà Nội, TP.HCM...)"
+                      placeholder={t("search_location_placeholder")}
                       className="w-full bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
                       value={location}
                       onChange={(e) => {
@@ -263,7 +265,7 @@ export default function HomepageContent() {
                     className="w-full h-[42px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
                     onClick={handleSearch}
                   >
-                    <span>Tìm việc</span>
+                    <span>{t("search_button")}</span>
                     <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
@@ -280,11 +282,11 @@ export default function HomepageContent() {
                   />
                   <span className="font-medium text-slate-600 flex items-center gap-1">
                     <SlidersHorizontal className="w-3 h-3 text-blue-600" />
-                    Bật thuật toán tìm kiếm đa chiều (AI Matching v1)
+                    {t("complex_search_label")}
                   </span>
                 </label>
                 <span className="hidden sm:inline text-slate-400">
-                  Gợi ý: Tìm kiếm theo kỹ năng để có độ chuẩn xác cao nhất
+                  {t("search_tip")}
                 </span>
               </div>
             </div>
@@ -294,19 +296,19 @@ export default function HomepageContent() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mt-12 pt-6">
             <div className="p-4 rounded-2xl bg-white/70 backdrop-blur-xs border border-slate-200/60 shadow-2xs">
               <div className="text-2xl sm:text-3xl font-extrabold text-blue-600">10,000+</div>
-              <div className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">Việc làm IT tuyển dụng</div>
+              <div className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">{t("stats_jobs")}</div>
             </div>
             <div className="p-4 rounded-2xl bg-white/70 backdrop-blur-xs border border-slate-200/60 shadow-2xs">
               <div className="text-2xl sm:text-3xl font-extrabold text-indigo-600">5,000+</div>
-              <div className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">Doanh nghiệp công nghệ</div>
+              <div className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">{t("stats_companies")}</div>
             </div>
             <div className="p-4 rounded-2xl bg-white/70 backdrop-blur-xs border border-slate-200/60 shadow-2xs">
               <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600">50,000+</div>
-              <div className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">Ứng viên tài năng</div>
+              <div className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">{t("stats_candidates")}</div>
             </div>
             <div className="p-4 rounded-2xl bg-white/70 backdrop-blur-xs border border-slate-200/60 shadow-2xs">
               <div className="text-2xl sm:text-3xl font-extrabold text-amber-600">98%</div>
-              <div className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">Tỷ lệ hài lòng</div>
+              <div className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">{t("stats_satisfaction")}</div>
             </div>
           </div>
         </div>
@@ -318,13 +320,13 @@ export default function HomepageContent() {
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Cơ hội tuyển dụng hot</span>
+              <span>{t("featured_jobs_badge")}</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-              Việc làm nổi bật hôm nay
+              {t("featured_jobs_title")}
             </h2>
             <p className="text-sm text-slate-500 mt-1">
-              Được chọn lọc từ các công ty công nghệ có đãi ngộ tốt và môi trường làm việc lý tưởng
+              {t("featured_jobs_desc")}
             </p>
           </div>
           <Button
@@ -332,7 +334,7 @@ export default function HomepageContent() {
             onClick={() => router.push("/candidate/job")}
             className="rounded-xl border-slate-300 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 self-start md:self-auto text-xs font-semibold"
           >
-            <span>Xem tất cả việc làm</span>
+            <span>{t("view_all_jobs")}</span>
             <ArrowRight className="ml-1.5 w-3.5 h-3.5" />
           </Button>
         </div>
@@ -356,8 +358,8 @@ export default function HomepageContent() {
         ) : featuredJobs.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl border border-slate-200/80 p-8">
             <Briefcase className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-base font-semibold text-slate-700">Chưa có việc làm nổi bật</p>
-            <p className="text-xs text-slate-400 mt-1">Hãy quay lại sau hoặc khám phá tất cả công việc trong hệ thống</p>
+            <p className="text-base font-semibold text-slate-700">{t("no_featured_jobs")}</p>
+            <p className="text-xs text-slate-400 mt-1">{t("no_featured_jobs_desc")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -372,7 +374,7 @@ export default function HomepageContent() {
                   <div className="flex items-start gap-4 mb-4">
                     <CompanyLogo
                       src={job.logo}
-                      name={job.employer?.fullName || job.companyName || "Công ty"}
+                      name={job.employer?.fullName || job.companyName || t("company_default")}
                       size="md"
                     />
                     <div className="flex-1 min-w-0">
@@ -381,7 +383,7 @@ export default function HomepageContent() {
                       </h3>
                       <p className="text-xs text-slate-500 line-clamp-1 mt-0.5 flex items-center gap-1">
                         <Building2 className="w-3 h-3 text-slate-400 flex-shrink-0" />
-                        <span>{job.employer?.fullName || job.companyName || "Công ty công nghệ"}</span>
+                        <span>{job.employer?.fullName || job.companyName || t("company_default")}</span>
                       </p>
                     </div>
                   </div>
@@ -390,11 +392,11 @@ export default function HomepageContent() {
                   <div className="flex flex-wrap items-center gap-2 mb-4 text-xs">
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-bold border border-emerald-200/60">
                       <DollarSign className="w-3.5 h-3.5" />
-                      {Number(job.salary) > 0 ? `${Number(job.salary).toLocaleString()}$ / tháng` : "Thương lượng"}
+                      {Number(job.salary) > 0 ? `${Number(job.salary).toLocaleString()}$ ${t("per_month")}` : t("salary_negotiable")}
                     </span>
                     <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 text-slate-600">
                       <MapPin className="w-3 h-3 text-slate-400" />
-                      {job.location || "Toàn quốc"}
+                      {job.location || t("nationwide")}
                     </span>
                     <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 text-slate-600">
                       <Clock className="w-3 h-3 text-slate-400" />
@@ -427,11 +429,13 @@ export default function HomepageContent() {
                 <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 mt-2">
                   <span>
                     {job.createdAt
-                      ? `${Math.max(1, Math.floor((Date.now() - new Date(job.createdAt).getTime()) / (1000 * 60 * 60 * 24)))} ngày trước`
-                      : "Mới đăng"}
+                      ? t("days_ago", {
+                          days: Math.max(1, Math.floor((Date.now() - new Date(job.createdAt).getTime()) / (1000 * 60 * 60 * 24))),
+                        })
+                      : t("just_posted")}
                   </span>
                   <span className="font-medium text-slate-500">
-                    {job.applicants ?? 0} ứng viên đã nộp
+                    {t("applicants_submitted", { count: job.applicants ?? 0 })}
                   </span>
                 </div>
               </div>

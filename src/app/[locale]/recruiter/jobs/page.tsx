@@ -154,7 +154,7 @@ export default function RecruiterJobsPage() {
         ...newJobPost,
         companyId: myCompany?.id || newJobPost.companyId,
       };
-      await apiUpdateJobPost(id, payload);
+      await apiUpdateJobPost(id, payload, selectedJob?.version);
       toast.success("Cập nhật tin tuyển dụng thành công!");
       setIsEditDialogOpen(false);
       setSelectedJob(null);
@@ -165,9 +165,9 @@ export default function RecruiterJobsPage() {
     }
   };
 
-  const handleDeleteJobPost = async (id: string) => {
+  const handleDeleteJobPost = async (id: string, version?: string) => {
     try {
-      await apiDeleteJobPost(id);
+      await apiDeleteJobPost(id, version);
       toast.success("Đã xóa tin tuyển dụng.");
       fetchJobs();
     } catch {
@@ -564,7 +564,7 @@ export default function RecruiterJobsPage() {
                           <DropdownMenuItem
                             className="text-red-600"
                             onClick={() =>
-                              job.id && handleDeleteJobPost(job.id.toString())
+                              job.id && handleDeleteJobPost(job.id.toString(), job.version)
                             }
                           >
                             <Trash2 className="h-4 w-4 mr-2" />

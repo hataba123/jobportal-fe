@@ -28,7 +28,7 @@ const navigationItems = [
     icon: Bookmark,
   },
   {
-    name: "Gợi ý việc làm AI",
+    name: "Gợi ý việc làm thông minh",
     href: "/candidate/userprofiles/matches",
     icon: Sparkles,
   },
