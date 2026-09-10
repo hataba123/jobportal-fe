@@ -20,18 +20,13 @@ import {
   MapPin,
   DollarSign,
   Briefcase,
-  CalendarDays,
   Users,
   Share2,
   Bookmark,
   Building2,
-  Globe,
   ArrowLeft,
   ArrowRight,
-  CheckCircle2,
-  UploadCloud,
   FileText,
-  ExternalLink,
   Sparkles,
   Flag,
 } from "lucide-react";
@@ -41,7 +36,6 @@ import { fetchSavedJobs, saveJob, unsaveJob } from "@/lib/api/saved-job";
 import { toast } from "sonner";
 import { applyJob } from "@/lib/api/job-application";
 import { fetchMyProfile, uploadCv } from "@/lib/api/candidate-profile";
-import { toBackendUrl } from "@/lib/api/url";
 import { submitJobReport } from "@/lib/api/reports";
 
 interface SimilarJob {
@@ -253,12 +247,16 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
           <span>/</span>
           {job.categoryName && (
             <>
-              <Link
-                href={`/candidate/category/${job.categoryId || "all"}`}
-                className="hover:text-blue-600 transition-colors"
-              >
-                {job.categoryName}
-              </Link>
+              {job.categoryId ? (
+                <Link
+                  href={`/candidate/category/${job.categoryId}`}
+                  className="hover:text-blue-600 transition-colors"
+                >
+                  {job.categoryName}
+                </Link>
+              ) : (
+                <span>{job.categoryName}</span>
+              )}
               <span>/</span>
             </>
           )}
@@ -283,12 +281,16 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                 </h1>
                 <p className="text-sm font-semibold text-blue-600 flex items-center gap-1.5">
                   <Building2 className="w-4 h-4" />
-                  <Link
-                    href={`/candidate/company/${job.companyId}`}
-                    className="hover:underline"
-                  >
-                    {job.employer?.fullName || job.companyName || "Công ty đối tác"}
-                  </Link>
+                  {job.companyId ? (
+                    <Link
+                      href={`/candidate/company/${job.companyId}`}
+                      className="hover:underline"
+                    >
+                      {job.employer?.fullName || job.companyName || "Công ty đối tác"}
+                    </Link>
+                  ) : (
+                    <span>{job.employer?.fullName || job.companyName || "Công ty đối tác"}</span>
+                  )}
                 </p>
                 <div className="flex flex-wrap items-center gap-3 pt-2 text-xs sm:text-sm text-slate-600">
                   <span className="inline-flex items-center gap-1 font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/60">

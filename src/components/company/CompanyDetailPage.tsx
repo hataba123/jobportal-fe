@@ -109,7 +109,7 @@ export default function CompanyDetailPage({
   const averageRating =
     reviews.length > 0
       ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
-      : 0;
+      : company?.rating ?? 0;
 
   if (isLoading) {
     return (

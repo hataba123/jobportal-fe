@@ -44,7 +44,16 @@ const normalizeBackendUser = (user: BackendUserWire): BackendUser => {
         admin: RoleEnum.ADMIN,
         recruiter: RoleEnum.RECRUITER,
         candidate: RoleEnum.CANDIDATE,
-      } as const)[user.role.toLowerCase() as "admin" | "recruiter" | "candidate"]
+        "0": RoleEnum.ADMIN,
+        "1": RoleEnum.RECRUITER,
+        "2": RoleEnum.CANDIDATE,
+      } as const)[user.role.trim().toLowerCase() as
+        | "admin"
+        | "recruiter"
+        | "candidate"
+        | "0"
+        | "1"
+        | "2"]
     : user.role;
 
   if (![RoleEnum.ADMIN, RoleEnum.RECRUITER, RoleEnum.CANDIDATE].includes(role)) {

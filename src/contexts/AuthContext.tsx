@@ -26,11 +26,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session } = useSession();
 
   useEffect(() => {
-    if (session?.backendUser) {
-      setUser(session.backendUser);
-    } else {
+    const sessionUser = session?.backendUser;
+    if (!sessionUser) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // NextAuth may restore a session created by an older build where the
+      // enum was serialized as a role name instead of a number.
+      mapRoleEnumToString(sessionUser.role);
+      setUser(sessionUser);
+    } catch (error) {
+      console.error("Invalid role in the current session", error);
       setUser(null);
     }
+
     setLoading(false);
   }, [session]);
 
@@ -98,7 +110,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export const mapRoleEnumToString = (roleEnum: RoleEnum): Role => {
+export const mapRoleEnumToString = (roleEnum: RoleEnum | number | string): Role => {
+  if (typeof roleEnum === "string") {
+    const normalizedRole = roleEnum.trim().toUpperCase();
+
+    switch (normalizedRole) {
+      case "ADMIN":
+      case "0":
+        return "ADMIN";
+      case "RECRUITER":
+      case "1":
+        return "RECRUITER";
+      case "CANDIDATE":
+      case "2":
+        return "CANDIDATE";
+      default:
+        throw new Error(`❌ Vai trò không hợp lệ: ${roleEnum}`);
+    }
+  }
+
   switch (roleEnum) {
     case RoleEnum.ADMIN:
       return "ADMIN";

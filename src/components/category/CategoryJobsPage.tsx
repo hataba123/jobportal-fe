@@ -137,7 +137,7 @@ export default function CategoryJobsPage({
         <p className="text-gray-600 mb-6">
           Danh mục bạn đang tìm kiếm không tồn tại.
         </p>
-        <Button onClick={() => router.push("/candidate/dashboard")}>
+        <Button onClick={() => router.push("/candidate")}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Quay lại trang chủ
         </Button>
@@ -150,7 +150,7 @@ export default function CategoryJobsPage({
       {/* Breadcrumb */}
       <div className="flex items-center text-sm text-gray-600 mb-6">
         <button
-          onClick={() => router.push("/candidate/dashboard")}
+          onClick={() => router.push("/candidate")}
           className="hover:text-blue-600"
         >
           Trang chủ
@@ -176,7 +176,7 @@ export default function CategoryJobsPage({
                 <span>{jobs.length} việc làm có sẵn</span>
               </div>
             </div>
-            <Button onClick={() => router.push("/candidate/dashboard")}>
+            <Button onClick={() => router.push("/candidate")}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Trang chủ
             </Button>

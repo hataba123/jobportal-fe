@@ -58,15 +58,22 @@ export default function AllCompaniesPage() {
   // Calculate company statistics
   const companiesWithStats = useMemo(() => {
     return companies.map((company) => {
-      const companyJobs = jobPosts.filter((job) => job.companyId === company.id);
-      const companyReviews = reviews.filter((review) => review.companyId === company.id);
+      const companyJobs = jobPosts.filter(
+        (job) => String(job.companyId) === String(company.id),
+      );
+      const companyReviews = reviews.filter(
+        (review) => String(review.companyId) === String(company.id),
+      );
       const averageRating = companyReviews.length > 0 
         ? companyReviews.reduce((sum, review) => sum + review.rating, 0) / companyReviews.length 
-        : 0;
+        : company.rating;
 
       return {
         ...company,
-        openJobs: companyJobs.length,
+        // The public job DTO does not include companyId, so keep the
+        // authoritative count returned by the company endpoint when the
+        // relation cannot be reconstructed from the job list.
+        openJobs: companyJobs.length > 0 ? companyJobs.length : company.openJobs,
         rating: averageRating,
         reviewCount: companyReviews.length,
       };
