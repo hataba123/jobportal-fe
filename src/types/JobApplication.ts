@@ -9,6 +9,7 @@ export interface JobApplication {
   status: ApplicationStatus;
   appliedAt: string;
   updatedAt: string;
+  version?: string;
   coverLetter?: string;
   resume?: string;
   candidate?: User;
@@ -16,5 +17,9 @@ export interface JobApplication {
 }
 
 export interface UpdateApplyStatusRequest {
-  status: ApplicationStatus;
-} 
+  toStatus?: ApplicationStatus;
+  /** @deprecated Use toStatus; retained only for gradual UI rollout. */
+  status?: ApplicationStatus;
+  reason?: string;
+  version?: string;
+}

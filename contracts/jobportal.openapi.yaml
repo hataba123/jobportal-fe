@@ -11,6 +11,9 @@ tags:
   - name: Jobs
   - name: Companies
   - name: Applications
+  - name: Interviews
+  - name: Reports
+  - name: Administration
   - name: Notifications
   - name: Matches
   - name: Payments
@@ -184,6 +187,18 @@ paths:
         '200': { description: Đã xóa mềm tin }
         '403': { $ref: '#/components/responses/Forbidden' }
   /jobapplication:
+    get:
+      tags: [Applications]
+      operationId: listApplications
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/PageSize' }
+        - { $ref: '#/components/parameters/SortBy' }
+        - { $ref: '#/components/parameters/SortDir' }
+      responses:
+        '200': { description: Danh sách hồ sơ ứng tuyển, content: { application/json: { schema: { $ref: '#/components/schemas/PagedApplications' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
     post:
       tags: [Applications]
       operationId: applyToJob
@@ -192,10 +207,197 @@ paths:
         required: true
         content:
           application/json:
-            schema: { type: object, required: [jobPostId], properties: { jobPostId: { $ref: '#/components/schemas/Uuid' }, cvUrl: { type: string } } }
+            schema: { type: object, required: [jobPostId], properties: { jobPostId: { $ref: '#/components/schemas/Uuid' } } }
       responses:
         '200': { description: Đã ứng tuyển }
         '409': { description: Đã tồn tại đơn ứng tuyển }
+  /jobapplication/my-jobs:
+    get:
+      tags: [Applications]
+      operationId: listMyApplications
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/PageSize' }
+      responses:
+        '200': { description: Hồ sơ của ứng viên hiện tại, content: { application/json: { schema: { $ref: '#/components/schemas/PagedApplications' } } } }
+  /jobapplication/{id}/status:
+    parameters: [{ $ref: '#/components/parameters/Id' }, { $ref: '#/components/parameters/IfMatch' }]
+    put:
+      tags: [Applications]
+      operationId: transitionApplication
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ApplicationTransitionRequest' }
+      responses:
+        '200': { description: Đã chuyển trạng thái, content: { application/json: { schema: { $ref: '#/components/schemas/Application' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '428': { $ref: '#/components/responses/PreconditionRequired' }
+  /jobapplication/{id}/withdraw:
+    parameters: [{ $ref: '#/components/parameters/Id' }, { $ref: '#/components/parameters/IfMatch' }]
+    post:
+      tags: [Applications]
+      operationId: withdrawApplication
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReasonRequest' }
+      responses:
+        '200': { description: Đã rút hồ sơ, content: { application/json: { schema: { $ref: '#/components/schemas/Application' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '428': { $ref: '#/components/responses/PreconditionRequired' }
+  /jobapplication/{id}/history:
+    get:
+      tags: [Applications]
+      operationId: getApplicationHistory
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/Id' }]
+      responses:
+        '200': { description: Lịch sử trạng thái bất biến, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/ApplicationStatusHistory' } } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/jobapplications/{id}/status:
+    parameters: [{ $ref: '#/components/parameters/Id' }, { $ref: '#/components/parameters/IfMatch' }]
+    put:
+      tags: [Administration, Applications]
+      operationId: overrideApplicationStatus
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ApplicationTransitionRequest' }
+      responses:
+        '200': { description: Admin đã override trạng thái }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '428': { $ref: '#/components/responses/PreconditionRequired' }
+  /jobapplication/{applicationId}/interviews:
+    post:
+      tags: [Interviews]
+      operationId: scheduleInterview
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: applicationId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InterviewWrite' }
+      responses:
+        '201': { description: Đã lên lịch phỏng vấn, content: { application/json: { schema: { $ref: '#/components/schemas/Interview' } } } }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '428': { $ref: '#/components/responses/PreconditionRequired' }
+  /interviews:
+    get:
+      tags: [Interviews]
+      operationId: listInterviews
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/PageSize' }
+        - { name: applicationId, in: query, schema: { $ref: '#/components/schemas/Uuid' } }
+        - { name: status, in: query, schema: { type: string, enum: [Scheduled, Completed, Cancelled] } }
+      responses:
+        '200': { description: Lịch phỏng vấn theo quyền sở hữu, content: { application/json: { schema: { $ref: '#/components/schemas/PagedInterviews' } } } }
+  /interviews/{id}:
+    parameters: [{ $ref: '#/components/parameters/Id' }, { $ref: '#/components/parameters/IfMatch' }]
+    put:
+      tags: [Interviews]
+      operationId: rescheduleInterview
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InterviewUpdate' }
+      responses:
+        '200': { description: Đã dời lịch, content: { application/json: { schema: { $ref: '#/components/schemas/Interview' } } } }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '428': { $ref: '#/components/responses/PreconditionRequired' }
+  /interviews/{id}/complete:
+    parameters: [{ $ref: '#/components/parameters/Id' }, { $ref: '#/components/parameters/IfMatch' }]
+    post:
+      tags: [Interviews]
+      operationId: completeInterview
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CompleteInterviewRequest' }
+      responses:
+        '200': { description: Đã hoàn tất phỏng vấn và chuyển hồ sơ }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '428': { $ref: '#/components/responses/PreconditionRequired' }
+  /interviews/{id}/cancel:
+    parameters: [{ $ref: '#/components/parameters/Id' }, { $ref: '#/components/parameters/IfMatch' }]
+    post:
+      tags: [Interviews]
+      operationId: cancelInterview
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Đã hủy lịch phỏng vấn }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '428': { $ref: '#/components/responses/PreconditionRequired' }
+  /reports:
+    get:
+      tags: [Reports]
+      operationId: listReports
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/PageSize' }
+        - { name: status, in: query, schema: { type: string, enum: [Pending, Resolved, Dismissed] } }
+      responses:
+        '200': { description: Báo cáo dành cho Admin, content: { application/json: { schema: { $ref: '#/components/schemas/PagedReports' } } } }
+    post:
+      tags: [Reports]
+      operationId: createReport
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReportWrite' }
+      responses:
+        '201': { description: Đã tạo báo cáo, content: { application/json: { schema: { $ref: '#/components/schemas/Report' } } } }
+  /reports/{id}:
+    patch:
+      tags: [Reports]
+      operationId: updateReport
+      security: [{ bearerAuth: [] }]
+      parameters: [{ $ref: '#/components/parameters/Id' }, { $ref: '#/components/parameters/IfMatch' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [status], properties: { status: { type: string, enum: [Pending, Resolved, Dismissed] } } }
+      responses:
+        '200': { description: Đã xử lý báo cáo }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '428': { $ref: '#/components/responses/PreconditionRequired' }
+  /newsletter/subscribe:
+    post:
+      tags: [Administration]
+      operationId: subscribeNewsletter
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Đã đăng ký newsletter }
+  /newsletter/unsubscribe:
+    post:
+      tags: [Administration]
+      operationId: unsubscribeNewsletter
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Đã hủy đăng ký newsletter }
   /notifications:
     get:
       tags: [Notifications]
@@ -320,12 +522,16 @@ components:
     Id: { name: id, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
     Page: { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
     PageSize: { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+    SortBy: { name: sortBy, in: query, schema: { type: string } }
+    SortDir: { name: sortDir, in: query, schema: { type: string, enum: [asc, desc], default: asc } }
+    IfMatch: { name: If-Match, in: header, required: true, schema: { type: string }, description: Opaque concurrency token từ ETag/version }
   responses:
     BadRequest: { description: Dữ liệu không hợp lệ, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
     Conflict: { description: Xung đột dữ liệu, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
     Unauthorized: { description: Chưa xác thực }
     Forbidden: { description: Không đủ quyền }
     NotFound: { description: Không tìm thấy }
+    PreconditionRequired: { description: Thiếu If-Match để chống ghi đè đồng thời }
   schemas:
     Uuid: { type: string, format: uuid }
     DateTime: { type: string, format: date-time, description: UTC ISO-8601 }
@@ -438,12 +644,132 @@ components:
             applicants: { type: integer }
     PagedJobPosts:
       type: object
-      required: [items, page, pageSize, total]
+      required: [items, page, pageSize, totalCount, totalPages]
       properties:
         items: { type: array, items: { $ref: '#/components/schemas/JobPost' } }
         page: { type: integer }
         pageSize: { type: integer }
-        total: { type: integer }
+        totalCount: { type: integer }
+        totalPages: { type: integer }
+    ApplicationStatus:
+      type: string
+      enum: [Applied, Screening, Interview, Offer, Hired, Rejected, Withdrawn]
+    Application:
+      type: object
+      required: [id, candidateId, jobPostId, status, appliedAt, version]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        candidateId: { $ref: '#/components/schemas/Uuid' }
+        jobPostId: { $ref: '#/components/schemas/Uuid' }
+        jobTitle: { type: string }
+        status: { $ref: '#/components/schemas/ApplicationStatus' }
+        appliedAt: { $ref: '#/components/schemas/DateTime' }
+        version: { type: string }
+    PagedApplications:
+      type: object
+      required: [items, totalCount, page, pageSize, totalPages]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Application' } }
+        totalCount: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+        totalPages: { type: integer }
+    ApplicationTransitionRequest:
+      type: object
+      required: [toStatus, reason]
+      properties:
+        toStatus: { $ref: '#/components/schemas/ApplicationStatus' }
+        reason: { type: string, minLength: 1, maxLength: 1000 }
+    ReasonRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, minLength: 1, maxLength: 1000 }
+    ApplicationStatusHistory:
+      type: object
+      required: [id, applicationId, toStatus, changedAt]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        applicationId: { $ref: '#/components/schemas/Uuid' }
+        fromStatus: { $ref: '#/components/schemas/ApplicationStatus' }
+        toStatus: { $ref: '#/components/schemas/ApplicationStatus' }
+        changedBy: { $ref: '#/components/schemas/Uuid' }
+        changedAt: { $ref: '#/components/schemas/DateTime' }
+        reason: { type: string }
+    InterviewWrite:
+      type: object
+      required: [type, startAt, endAt]
+      properties:
+        type: { type: string, enum: [Online, Onsite, Phone] }
+        startAt: { $ref: '#/components/schemas/DateTime' }
+        endAt: { $ref: '#/components/schemas/DateTime' }
+        location: { type: string, maxLength: 500 }
+        meetingUrl: { type: string, format: uri, pattern: '^https://' }
+        notes: { type: string, maxLength: 4000 }
+    InterviewUpdate:
+      allOf:
+        - $ref: '#/components/schemas/InterviewWrite'
+    CompleteInterviewRequest:
+      type: object
+      required: [result]
+      properties:
+        result: { type: string, enum: [Passed, Failed] }
+        notes: { type: string, maxLength: 4000 }
+        applicationVersion: { type: string }
+    Interview:
+      type: object
+      required: [id, applicationId, candidateId, jobPostId, type, startAt, endAt, status, result, version]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        applicationId: { $ref: '#/components/schemas/Uuid' }
+        candidateId: { $ref: '#/components/schemas/Uuid' }
+        jobPostId: { $ref: '#/components/schemas/Uuid' }
+        candidateName: { type: string }
+        jobTitle: { type: string }
+        type: { type: string, enum: [Online, Onsite, Phone] }
+        startAt: { $ref: '#/components/schemas/DateTime' }
+        endAt: { $ref: '#/components/schemas/DateTime' }
+        location: { type: string, nullable: true }
+        meetingUrl: { type: string, format: uri, nullable: true }
+        status: { type: string, enum: [Scheduled, Completed, Cancelled] }
+        result: { type: string, enum: [Pending, Passed, Failed] }
+        version: { type: string }
+        applicationVersion: { type: string }
+    PagedInterviews:
+      type: object
+      required: [items, totalCount, page, pageSize, totalPages]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Interview' } }
+        totalCount: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+        totalPages: { type: integer }
+    ReportWrite:
+      type: object
+      required: [jobPostId, reason, description]
+      properties:
+        jobPostId: { $ref: '#/components/schemas/Uuid' }
+        reason: { type: string, maxLength: 200 }
+        description: { type: string, maxLength: 4000 }
+    Report:
+      allOf:
+        - $ref: '#/components/schemas/ReportWrite'
+        - type: object
+          required: [id, status, createdAt, version]
+          properties:
+            id: { $ref: '#/components/schemas/Uuid' }
+            status: { type: string, enum: [Pending, Resolved, Dismissed] }
+            createdAt: { $ref: '#/components/schemas/DateTime' }
+            version: { type: string }
+    PagedReports:
+      type: object
+      required: [items, totalCount, page, pageSize, totalPages]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Report' } }
+        totalCount: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+        totalPages: { type: integer }
     Notification:
       type: object
       required: [id, userId, message, read, createdAt]

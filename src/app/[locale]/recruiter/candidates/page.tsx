@@ -418,25 +418,31 @@ const CandidatesPage = () => {
                               {/* Hiển thị badge trạng thái với màu sắc và label theo API trả về */}
                               <Badge
                                 className={
-                                  app.status === "Pending"
+                                  app.status === "Applied"
                                     ? "bg-yellow-100 text-yellow-800"
-                                    : app.status === "Accepted"
+                                    : app.status === "Offer" || app.status === "Hired"
                                     ? "bg-green-100 text-green-800"
-                                    : app.status === "Rejected"
+                                    : app.status === "Rejected" || app.status === "Withdrawn"
                                     ? "bg-red-100 text-red-800"
-                                    : app.status === "Reviewed"
+                                    : app.status === "Screening" || app.status === "Interview"
                                     ? "bg-blue-100 text-blue-800"
                                     : "bg-gray-100 text-gray-800"
                                 }
                               >
-                                {app.status === "Pending"
+                                {app.status === "Applied"
                                   ? "Chờ xử lý"
-                                  : app.status === "Accepted"
-                                  ? "Được chấp nhận"
+                                  : app.status === "Offer"
+                                  ? "Đề nghị"
+                                  : app.status === "Hired"
+                                  ? "Đã tuyển"
                                   : app.status === "Rejected"
                                   ? "Từ chối"
-                                  : app.status === "Reviewed"
+                                  : app.status === "Screening"
                                   ? "Đang xem xét"
+                                  : app.status === "Interview"
+                                  ? "Phỏng vấn"
+                                  : app.status === "Withdrawn"
+                                  ? "Đã rút"
                                   : app.status}
                               </Badge>
                             </TableCell>

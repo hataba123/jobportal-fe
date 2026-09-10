@@ -1,4 +1,5 @@
 import axiosInstance from "../axiosInstance";
+import { ApplicationStatus } from "@/types/ApplyStatus";
 
 // DTOs
 export interface CandidateProfileBriefDto {
@@ -35,7 +36,8 @@ export interface CandidateApplicationDto {
   jobTitle: string;
   appliedAt: string;
   cvUrl: string;
-  status: string;
+  status: ApplicationStatus;
+  version?: string;
 }
 
 export interface CandidateSearchRequest {
@@ -43,12 +45,21 @@ export interface CandidateSearchRequest {
   skill?: string;
   education?: string;
   minYearsExperience?: number;
+  experienceFrom?: number;
+  experienceTo?: number;
+  location?: string;
+  page?: number;
+  pageSize?: number;
+  sortBy?: string;
+  sortDir?: "asc" | "desc";
 }
+
+type PagedResponse<T> = { items?: T[]; totalCount?: number; page?: number; pageSize?: number; totalPages?: number };
 
 // API calls
 export const searchCandidates = async (params: CandidateSearchRequest) => {
   const res = await axiosInstance.get("/candidate-profile/recruiter/search", { params });
-  return res.data as CandidateProfileBriefDto[];
+  return (res.data as PagedResponse<CandidateProfileBriefDto>).items ?? [];
 };
 
 export const getCandidateById = async (id: string) => {
@@ -56,12 +67,12 @@ export const getCandidateById = async (id: string) => {
   return res.data as CandidateProfileDetailDto;
 };
 
-export const getCandidateApplications = async (id: string) => {
-  const res = await axiosInstance.get(`/candidate-profile/recruiter/${id}/applications`);
-  return res.data as CandidateApplicationDto[];
+export const getCandidateApplications = async (id: string, page = 1, pageSize = 20) => {
+  const res = await axiosInstance.get<PagedResponse<CandidateApplicationDto>>(`/candidate-profile/recruiter/${id}/applications`, { params: { page, pageSize } });
+  return res.data.items ?? [];
 };
 
-export const getCandidatesAppliedToMyJobs = async () => {
-  const res = await axiosInstance.get("/candidate-profile/recruiter/applied");
-  return res.data as CandidateProfileBriefDto[];
+export const getCandidatesAppliedToMyJobs = async (params?: CandidateSearchRequest) => {
+  const res = await axiosInstance.get<PagedResponse<CandidateProfileBriefDto>>("/candidate-profile/recruiter/applied", { params });
+  return res.data.items ?? [];
 }; 

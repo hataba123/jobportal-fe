@@ -28,6 +28,7 @@ import {
 import { toBackendUrl } from "@/lib/api/url";
 import { useAuth } from "@/contexts/AuthContext";
 import { InterviewItem, fetchInterviews } from "@/lib/api/interviews";
+import { ApplicationStatus } from "@/types/ApplyStatus";
 import {
   FileText,
   Calendar,
@@ -49,21 +50,28 @@ type Application = {
   location: string;
   salary: string;
   appliedAt: string;
-  status: "PENDING" | "REVIEWING" | "ACCEPTED" | "REJECTED";
+  status: ApplicationStatus;
+  version?: string;
 };
 
 const getStatusBadge = (status: Application["status"]) => {
   const statusConfig = {
-    PENDING: { label: "Chờ xử lý", className: "bg-yellow-100 text-yellow-800" },
-    REVIEWING: {
+    Applied: { label: "Đã ứng tuyển", className: "bg-yellow-100 text-yellow-800" },
+    Screening: {
       label: "Đang xem xét",
       className: "bg-blue-100 text-blue-800",
     },
-    ACCEPTED: {
-      label: "Được chấp nhận",
+    Interview: {
+      label: "Phỏng vấn",
+      className: "bg-indigo-100 text-indigo-800",
+    },
+    Offer: {
+      label: "Đề nghị",
       className: "bg-green-100 text-green-800",
     },
-    REJECTED: { label: "Từ chối", className: "bg-red-100 text-red-800" },
+    Hired: { label: "Đã tuyển", className: "bg-emerald-100 text-emerald-800" },
+    Rejected: { label: "Từ chối", className: "bg-red-100 text-red-800" },
+    Withdrawn: { label: "Đã rút", className: "bg-slate-100 text-slate-700" },
   };
 
   const config = statusConfig[status];
@@ -93,16 +101,34 @@ export default function ApplicationsPage() {
     fetchMyAppliedJobs().then((data: unknown) => {
       const arr = Array.isArray(data) ? data : [];
 
-      const statusMap = [
-        "PENDING",
-        "REVIEWING",
-        "ACCEPTED",
-        "REJECTED",
-      ] as const;
+      const legacyStatusMap: Record<number, ApplicationStatus> = {
+        0: "Applied",
+        1: "Screening",
+        2: "Offer",
+        3: "Rejected",
+      };
+      const normalizeStatus = (value: unknown): ApplicationStatus => {
+        if (typeof value === "number") return legacyStatusMap[value] ?? "Applied";
+        const normalized = String(value ?? "Applied").toLowerCase();
+        return (
+          {
+            applied: "Applied",
+            pending: "Applied",
+            screening: "Screening",
+            reviewed: "Screening",
+            interview: "Interview",
+            offer: "Offer",
+            accepted: "Offer",
+            hired: "Hired",
+            rejected: "Rejected",
+            withdrawn: "Withdrawn",
+          } as Record<string, ApplicationStatus>
+        )[normalized] ?? "Applied";
+      };
 
       setApplications(
         arr.map((item) => {
-          const app = item as Partial<Application> & { status?: number };
+          const app = item as Partial<Application> & { status?: unknown };
           return {
             id: app.id || "",
             jobPostId: app.jobPostId || "",
@@ -112,7 +138,8 @@ export default function ApplicationsPage() {
             location: app.location || "",
             salary: app.salary ? app.salary.toLocaleString() : "",
             appliedAt: app.appliedAt || "",
-            status: statusMap[app.status ?? 0] ?? "PENDING",
+            status: normalizeStatus(app.status),
+            version: app.version,
           };
         })
       );
@@ -122,7 +149,7 @@ export default function ApplicationsPage() {
   const loadInterviews = async () => {
     setInterviewsLoading(true);
     try {
-      const data = await fetchInterviews(user?.id ? { candidateId: user.id } : undefined);
+      const data = await fetchInterviews();
       setInterviews(data);
     } catch (err: unknown) {
       console.error("Error loading candidate interviews:", err);
@@ -153,7 +180,7 @@ export default function ApplicationsPage() {
   const handleCancel = async (app: Application) => {
     setDeletingId(app.id);
     try {
-      await deleteJobApplication(app.id);
+      await deleteJobApplication(app.id, app.version, "Ứng viên rút hồ sơ");
       setApplications((prev) => prev.filter((a) => a.id !== app.id));
       toast.success("Đã hủy đơn ứng tuyển.");
     } catch {
@@ -245,7 +272,7 @@ export default function ApplicationsPage() {
                               >
                                 Xem chi tiết
                               </Button>
-                              {application.status === "PENDING" && (
+                              {!(["Hired", "Rejected", "Withdrawn"] as ApplicationStatus[]).includes(application.status) && (
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -272,7 +299,7 @@ export default function ApplicationsPage() {
             <Card className="rounded-2xl border border-slate-200">
               <CardContent className="p-4">
                 <div className="text-2xl font-black text-amber-600">
-                  {applications.filter((app) => app.status === "PENDING").length}
+                  {applications.filter((app) => app.status === "Applied").length}
                 </div>
                 <div className="text-xs text-gray-500 font-semibold uppercase mt-1">Chờ xử lý</div>
               </CardContent>
@@ -280,7 +307,7 @@ export default function ApplicationsPage() {
             <Card className="rounded-2xl border border-slate-200">
               <CardContent className="p-4">
                 <div className="text-2xl font-black text-blue-600">
-                  {applications.filter((app) => app.status === "REVIEWING").length}
+                  {applications.filter((app) => app.status === "Screening").length}
                 </div>
                 <div className="text-xs text-gray-500 font-semibold uppercase mt-1">Đang xem xét</div>
               </CardContent>
@@ -288,7 +315,7 @@ export default function ApplicationsPage() {
             <Card className="rounded-2xl border border-slate-200">
               <CardContent className="p-4">
                 <div className="text-2xl font-black text-emerald-600">
-                  {applications.filter((app) => app.status === "ACCEPTED").length}
+                  {applications.filter((app) => app.status === "Offer").length}
                 </div>
                 <div className="text-xs text-gray-500 font-semibold uppercase mt-1">Được chấp nhận</div>
               </CardContent>
@@ -296,7 +323,7 @@ export default function ApplicationsPage() {
             <Card className="rounded-2xl border border-slate-200">
               <CardContent className="p-4">
                 <div className="text-2xl font-black text-rose-600">
-                  {applications.filter((app) => app.status === "REJECTED").length}
+                  {applications.filter((app) => app.status === "Rejected").length}
                 </div>
                 <div className="text-xs text-gray-500 font-semibold uppercase mt-1">Từ chối</div>
               </CardContent>
@@ -354,17 +381,17 @@ export default function ApplicationsPage() {
                         </div>
                         <Badge
                           variant={
-                            item.status === "completed"
+                            item.status === "Completed"
                               ? "default"
-                              : item.status === "cancelled"
+                              : item.status === "Cancelled"
                               ? "destructive"
                               : "secondary"
                           }
                           className="capitalize text-xs font-semibold rounded-lg"
                         >
-                          {item.status === "scheduled"
+                          {item.status === "Scheduled"
                             ? "Sắp diễn ra"
-                            : item.status === "completed"
+                            : item.status === "Completed"
                             ? "Đã hoàn thành"
                             : "Đã hủy"}
                         </Badge>
@@ -397,7 +424,7 @@ export default function ApplicationsPage() {
                           </span>
                           {item.format === "online" && (
                             <button
-                              onClick={() => copyToClipboard(item.meetingUrl)}
+                              onClick={() => copyToClipboard(item.meetingUrl ?? "")}
                               className="text-slate-400 hover:text-slate-700 ml-auto p-1"
                               title="Sao chép link"
                             >
@@ -415,9 +442,9 @@ export default function ApplicationsPage() {
 
                       {/* Action buttons */}
                       <div className="flex items-center justify-between gap-2 pt-1">
-                        {item.format === "online" && item.status === "scheduled" ? (
+                        {item.format === "online" && item.status === "Scheduled" ? (
                           <a
-                            href={item.meetingUrl}
+                            href={item.meetingUrl ?? "#"}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-colors shadow-xs"
@@ -478,7 +505,7 @@ export default function ApplicationsPage() {
                     {getStatusBadge(
                       (d.status as Application["status"]) ||
                         selected?.status ||
-                        "PENDING"
+                        "Applied"
                     )}
                   </div>
                   {typeof d.cvUrl === "string" && d.cvUrl ? (

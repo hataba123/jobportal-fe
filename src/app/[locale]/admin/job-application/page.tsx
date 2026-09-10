@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -71,12 +72,16 @@ import { useState, useEffect } from "react";
 import { fetchAllJobApplications, updateJobApplicationStatus as apiUpdateStatus, deleteJobApplication as apiDeleteJobApplication } from "@/lib/api/admin-jobapplication";
 import { JobApplication, UpdateApplyStatusRequest } from "@/types/JobApplication";
 import { ApplicationStatus } from "@/types/ApplyStatus";
+import { toast } from "sonner";
 
 const applicationStatuses: { value: ApplicationStatus; label: string; color: string }[] = [
-  { value: "pending", label: "Chờ xử lý", color: "bg-yellow-100 text-yellow-800" },
-  { value: "reviewed", label: "Đã xem xét", color: "bg-blue-100 text-blue-800" },
-  { value: "accepted", label: "Chấp nhận", color: "bg-green-100 text-green-800" },
-  { value: "rejected", label: "Từ chối", color: "bg-red-100 text-red-800" },
+  { value: "Applied", label: "Đã nộp", color: "bg-yellow-100 text-yellow-800" },
+  { value: "Screening", label: "Sàng lọc", color: "bg-blue-100 text-blue-800" },
+  { value: "Interview", label: "Phỏng vấn", color: "bg-indigo-100 text-indigo-800" },
+  { value: "Offer", label: "Đề nghị", color: "bg-violet-100 text-violet-800" },
+  { value: "Hired", label: "Đã tuyển", color: "bg-green-100 text-green-800" },
+  { value: "Rejected", label: "Từ chối", color: "bg-red-100 text-red-800" },
+  { value: "Withdrawn", label: "Đã rút", color: "bg-gray-100 text-gray-800" },
 ];
 
 export default function Page() {
@@ -90,7 +95,8 @@ export default function Page() {
 
   // Status update form
   const [statusForm, setStatusForm] = useState<UpdateApplyStatusRequest>({
-    status: "pending",
+    toStatus: "Applied",
+    reason: "",
   });
 
   useEffect(() => {
@@ -119,10 +125,14 @@ export default function Page() {
   };
 
   const handleUpdateStatus = async (id: string) => {
+    if (!statusForm.reason?.trim()) {
+      toast.error("Admin override bắt buộc phải có lý do.");
+      return;
+    }
     try {
       await apiUpdateStatus(id, statusForm);
       setIsStatusDialogOpen(false);
-      setStatusForm({ status: "pending" });
+      setStatusForm({ toStatus: "Applied", reason: "" });
       fetchApplications();
     } catch {
       // error handling if needed
@@ -147,7 +157,7 @@ export default function Page() {
 
   const handleUpdateStatusClick = (application: JobApplication) => {
     setSelectedApplication(application);
-    setStatusForm({ status: application.status });
+    setStatusForm({ toStatus: application.status, version: application.version, reason: "" });
     setIsStatusDialogOpen(true);
   };
 
@@ -167,13 +177,13 @@ export default function Page() {
 
   const getStatusIcon = (status: ApplicationStatus) => {
     switch (status) {
-      case "pending":
+      case "Applied":
         return <Clock className="h-4 w-4 text-yellow-500" />;
-      case "reviewed":
+      case "Screening":
         return <AlertCircle className="h-4 w-4 text-blue-500" />;
-      case "accepted":
+      case "Hired":
         return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case "rejected":
+      case "Rejected":
         return <XCircle className="h-4 w-4 text-red-500" />;
       default:
         return <Clock className="h-4 w-4 text-gray-500" />;
@@ -230,7 +240,7 @@ export default function Page() {
                     Chờ xử lý
                   </p>
                   <p className="text-3xl font-bold text-yellow-600">
-                    {jobApplications.filter((a) => a.status === "pending").length}
+                    {jobApplications.filter((a) => a.status === "Applied").length}
                   </p>
                 </div>
                 <Clock className="h-8 w-8 text-yellow-600" />
@@ -245,7 +255,7 @@ export default function Page() {
                     Chấp nhận
                   </p>
                   <p className="text-3xl font-bold text-green-600">
-                    {jobApplications.filter((a) => a.status === "accepted").length}
+                    {jobApplications.filter((a) => a.status === "Hired").length}
                   </p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-green-600" />
@@ -260,7 +270,7 @@ export default function Page() {
                     Từ chối
                   </p>
                   <p className="text-3xl font-bold text-red-600">
-                    {jobApplications.filter((a) => a.status === "rejected").length}
+                    {jobApplications.filter((a) => a.status === "Rejected").length}
                   </p>
                 </div>
                 <XCircle className="h-8 w-8 text-red-600" />
@@ -477,9 +487,9 @@ export default function Page() {
               <div>
                 <Label htmlFor="status">Trạng thái</Label>
                 <Select
-                  value={statusForm.status}
+                  value={statusForm.toStatus ?? "Applied"}
                   onValueChange={(value) =>
-                    setStatusForm({ status: value as ApplicationStatus })
+                    setStatusForm((previous) => ({ ...previous, toStatus: value as ApplicationStatus }))
                   }
                 >
                   <SelectTrigger>
@@ -493,6 +503,18 @@ export default function Page() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <Label htmlFor="override-reason">Lý do override</Label>
+                <Textarea
+                  id="override-reason"
+                  value={statusForm.reason ?? ""}
+                  onChange={(event) =>
+                    setStatusForm((previous) => ({ ...previous, reason: event.target.value }))
+                  }
+                  placeholder="Nhập lý do bắt buộc cho thay đổi quản trị"
+                  maxLength={1000}
+                />
               </div>
             </div>
             <DialogFooter>

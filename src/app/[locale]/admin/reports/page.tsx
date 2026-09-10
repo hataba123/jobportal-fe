@@ -22,7 +22,7 @@ export default function AdminReportsPage() {
   const [reports, setReports] = useState<JobReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "resolved" | "dismissed">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | JobReport["status"]>("all");
   const [selectedReport, setSelectedReport] = useState<JobReport | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -42,14 +42,15 @@ export default function AdminReportsPage() {
     loadReports();
   }, []);
 
-  const handleStatusChange = async (reportId: string, newStatus: "pending" | "resolved" | "dismissed") => {
+  const handleStatusChange = async (reportId: string, newStatus: JobReport["status"]) => {
     setUpdatingId(reportId);
     try {
-      await updateReportStatus(reportId, newStatus);
+      const currentReport = reports.find((report) => report.id === reportId);
+      const result = await updateReportStatus(reportId, newStatus, currentReport?.version);
       toast.success(
-        newStatus === "resolved"
+        newStatus === "Resolved"
           ? "Đã đánh dấu báo cáo là ĐÃ XỬ LÝ."
-          : newStatus === "dismissed"
+          : newStatus === "Dismissed"
           ? "Đã bỏ qua báo cáo này."
           : "Đã chuyển lại trạng thái Chờ xử lý."
       );
@@ -59,7 +60,8 @@ export default function AdminReportsPage() {
             ? {
                 ...r,
                 status: newStatus,
-                resolvedAt: newStatus !== "pending" ? new Date().toISOString() : undefined,
+                version: result.data?.version ?? r.version,
+                resolvedAt: newStatus !== "Pending" ? new Date().toISOString() : undefined,
               }
             : r
         )
@@ -70,7 +72,8 @@ export default function AdminReportsPage() {
             ? {
                 ...prev,
                 status: newStatus,
-                resolvedAt: newStatus !== "pending" ? new Date().toISOString() : undefined,
+                version: result.data?.version ?? prev.version,
+                resolvedAt: newStatus !== "Pending" ? new Date().toISOString() : undefined,
               }
             : null
         );
@@ -85,9 +88,9 @@ export default function AdminReportsPage() {
   // KPI counts
   const stats = useMemo(() => {
     const total = reports.length;
-    const pending = reports.filter((r) => r.status === "pending").length;
-    const resolved = reports.filter((r) => r.status === "resolved").length;
-    const dismissed = reports.filter((r) => r.status === "dismissed").length;
+    const pending = reports.filter((r) => r.status === "Pending").length;
+    const resolved = reports.filter((r) => r.status === "Resolved").length;
+    const dismissed = reports.filter((r) => r.status === "Dismissed").length;
     return { total, pending, resolved, dismissed };
   }, [reports]);
 
@@ -108,21 +111,21 @@ export default function AdminReportsPage() {
 
   const getStatusBadge = (status: JobReport["status"]) => {
     switch (status) {
-      case "pending":
+      case "Pending":
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
             <Clock className="w-3.5 h-3.5" />
             Chờ xử lý
           </span>
         );
-      case "resolved":
+      case "Resolved":
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
             <CheckCircle2 className="w-3.5 h-3.5" />
             Đã xử lý
           </span>
         );
-      case "dismissed":
+      case "Dismissed":
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
             <XCircle className="w-3.5 h-3.5" />
@@ -212,9 +215,9 @@ export default function AdminReportsPage() {
           {(
             [
               { key: "all", label: "Tất cả" },
-              { key: "pending", label: "Chờ xử lý" },
-              { key: "resolved", label: "Đã xử lý" },
-              { key: "dismissed", label: "Bỏ qua" },
+              { key: "Pending", label: "Chờ xử lý" },
+              { key: "Resolved", label: "Đã xử lý" },
+              { key: "Dismissed", label: "Bỏ qua" },
             ] as const
           ).map((tab) => (
             <button
@@ -304,9 +307,9 @@ export default function AdminReportsPage() {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        {report.status !== "resolved" && (
+                        {report.status !== "Resolved" && (
                           <button
-                            onClick={() => handleStatusChange(report.id, "resolved")}
+                            onClick={() => handleStatusChange(report.id, "Resolved")}
                             disabled={updatingId === report.id}
                             className="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                             title="Xác nhận xử lý"
@@ -314,9 +317,9 @@ export default function AdminReportsPage() {
                             <CheckCircle2 className="w-4 h-4" />
                           </button>
                         )}
-                        {report.status !== "dismissed" && (
+                        {report.status !== "Dismissed" && (
                           <button
-                            onClick={() => handleStatusChange(report.id, "dismissed")}
+                            onClick={() => handleStatusChange(report.id, "Dismissed")}
                             disabled={updatingId === report.id}
                             className="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                             title="Bỏ qua báo cáo"
@@ -369,7 +372,7 @@ export default function AdminReportsPage() {
                   <span>{selectedReport.companyName}</span>
                 </div>
                 <Link
-                  href={`/candidate/job/${selectedReport.jobId}`}
+                  href={`/candidate/job/${selectedReport.jobPostId}`}
                   target="_blank"
                   className="inline-flex items-center gap-1 text-blue-600 hover:underline mt-2 font-semibold"
                 >
@@ -422,14 +425,14 @@ export default function AdminReportsPage() {
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => handleStatusChange(selectedReport.id, "dismissed")}
+                  onClick={() => handleStatusChange(selectedReport.id, "Dismissed")}
                   disabled={updatingId === selectedReport.id}
                   className="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
                 >
                   Bỏ qua
                 </button>
                 <button
-                  onClick={() => handleStatusChange(selectedReport.id, "resolved")}
+                  onClick={() => handleStatusChange(selectedReport.id, "Resolved")}
                   disabled={updatingId === selectedReport.id}
                   className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-sm"
                 >

@@ -26,8 +26,12 @@ async function proxyRequest(request: NextRequest, context: RouteContext) {
   const headers = new Headers();
   const contentType = request.headers.get("content-type");
   const accept = request.headers.get("accept");
+  const ifMatch = request.headers.get("if-match");
+  const correlationId = request.headers.get("x-correlation-id");
   if (contentType) headers.set("content-type", contentType);
   if (accept) headers.set("accept", accept);
+  if (ifMatch) headers.set("if-match", ifMatch);
+  if (correlationId) headers.set("x-correlation-id", correlationId);
   if (token?.jwt) headers.set("authorization", `Bearer ${token.jwt}`);
 
   const body = ["GET", "HEAD"].includes(request.method)
@@ -43,6 +47,10 @@ async function proxyRequest(request: NextRequest, context: RouteContext) {
   const responseHeaders = new Headers();
   const responseContentType = response.headers.get("content-type");
   if (responseContentType) responseHeaders.set("content-type", responseContentType);
+  const etag = response.headers.get("etag");
+  const responseCorrelationId = response.headers.get("x-correlation-id");
+  if (etag) responseHeaders.set("etag", etag);
+  if (responseCorrelationId) responseHeaders.set("x-correlation-id", responseCorrelationId);
   return new NextResponse(await response.arrayBuffer(), {
     status: response.status,
     headers: responseHeaders,

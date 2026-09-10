@@ -69,7 +69,6 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportReason, setReportReason] = useState("Dấu hiệu lừa đảo / giả mạo công ty");
   const [reportDetail, setReportDetail] = useState("");
-  const [reporterEmail, setReporterEmail] = useState("");
   const [submittingReport, setSubmittingReport] = useState(false);
 
   useEffect(() => {
@@ -138,7 +137,7 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
         return;
       }
 
-      await applyJob(jobId, cvUrl);
+      await applyJob(jobId);
       toast.success("Nộp đơn ứng tuyển thành công! Nhà tuyển dụng sẽ sớm liên hệ.");
       setApplyModalOpen(false);
       setCoverLetter("");
@@ -198,17 +197,13 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
     setSubmittingReport(true);
     try {
       await submitJobReport({
-        jobId: job.id,
-        jobTitle: job.title,
-        companyName: job.employer?.fullName || job.companyName || "Công ty",
+        jobPostId: job.id,
         reason: reportReason,
         description: reportDetail.trim(),
-        reporterEmail: reporterEmail.trim() || undefined,
       });
       toast.success("Báo cáo vi phạm đã được gửi thành công! Ban quản trị sẽ rà soát.");
       setReportModalOpen(false);
       setReportDetail("");
-      setReporterEmail("");
     } catch {
       toast.error("Có lỗi xảy ra khi gửi báo cáo. Vui lòng thử lại sau.");
     } finally {
@@ -509,18 +504,6 @@ export default function JobDetailPage({ jobId }: { jobId: string }) {
                       />
                     </div>
 
-                    <div>
-                      <Label className="text-xs font-bold text-slate-700 block mb-1.5">
-                        Email liên hệ của bạn (tùy chọn)
-                      </Label>
-                      <input
-                        type="email"
-                        placeholder="your-email@domain.com"
-                        value={reporterEmail}
-                        onChange={(e) => setReporterEmail(e.target.value)}
-                        className="w-full text-xs rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-500"
-                      />
-                    </div>
                   </div>
 
                   <DialogFooter className="gap-2 sm:gap-0">

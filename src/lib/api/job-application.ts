@@ -1,31 +1,59 @@
 import axiosInstance from "../axiosInstance";
+import { ApplicationStatus } from "@/types/ApplyStatus";
 
-export const fetchMyAppliedJobs = async () => {
-  const res = await axiosInstance.get("/jobapplication/my-jobs");
-  return res.data;
+type PageResponse<T> = { items?: T[]; data?: T[] };
+export interface JobCandidateApplication {
+  id: string;
+  fullName?: string;
+  candidateName?: string;
+  email: string;
+  appliedAt: string;
+  cvUrl?: string;
+  status: ApplicationStatus;
+  version?: string;
+}
+const itemsOf = <T,>(value: PageResponse<T> | T[] | undefined): T[] =>
+  Array.isArray(value) ? value : value?.items ?? value?.data ?? [];
+
+export const fetchMyAppliedJobs = async (page = 1, pageSize = 20) => {
+  const res = await axiosInstance.get<PageResponse<Record<string, unknown>>>(`/jobapplication/my-jobs?page=${page}&pageSize=${pageSize}`);
+  return itemsOf(res.data);
 };
 
-export const deleteJobApplication = async (id: string) => {
-  return await axiosInstance.delete(`/jobapplication/${id}`);
-};
+export const deleteJobApplication = async (id: string, version?: string, reason = "Ứng viên rút hồ sơ") =>
+  axiosInstance.post(`/jobapplication/${id}/withdraw`, { reason }, {
+    headers: version ? { "If-Match": version } : undefined,
+  });
 
 export const fetchJobApplicationDetail = async (id: string) => {
   const res = await axiosInstance.get(`/jobapplication/${id}`);
   return res.data;
-}; 
-// chức năng mới
-export const applyJob = async (jobPostId: string, cvUrl?: string) => {
-  return await axiosInstance.post("/jobapplication", { jobPostId, cvUrl });
 };
-export const fetchCandidatesForJob = async (jobPostId: string) => {
-  const res = await axiosInstance.get(`/jobapplication/job/${jobPostId}/candidates`);
-  return res.data;
+
+export const applyJob = async (jobPostId: string) =>
+  axiosInstance.post("/jobapplication", { jobPostId });
+
+export const fetchCandidatesForJob = async (jobPostId: string, page = 1, pageSize = 20) => {
+  const res = await axiosInstance.get<PageResponse<JobCandidateApplication>>(`/jobapplication/job/${jobPostId}/candidates?page=${page}&pageSize=${pageSize}`);
+  return itemsOf(res.data);
 };
+
+const legacyStatusMap: Record<string, ApplicationStatus> = {
+  Pending: "Applied",
+  Reviewed: "Screening",
+  Accepted: "Offer",
+  Rejected: "Rejected",
+};
+
 export const updateJobApplicationStatus = async (
   applicationId: string,
-  status: "Pending" | "Reviewed" | "Accepted" | "Rejected"
+  status: ApplicationStatus | keyof typeof legacyStatusMap,
+  version?: string,
+  reason?: string,
 ) => {
-  return await axiosInstance.put(`/jobapplication/${applicationId}/status`, {
-    status,
-  });
+  const toStatus = legacyStatusMap[status] ?? status;
+  return axiosInstance.put(`/jobapplication/${applicationId}/status`, {
+    toStatus,
+    reason,
+  }, { headers: version ? { "If-Match": version } : undefined });
 };

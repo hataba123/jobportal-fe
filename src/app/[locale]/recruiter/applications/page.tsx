@@ -32,6 +32,7 @@ import {
 } from "@/lib/api/recruiter-candidates";
 import {
   InterviewItem,
+  InterviewStatus,
   fetchInterviews,
   createInterview,
   updateInterviewStatus,
@@ -84,7 +85,7 @@ const ApplicationsPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getCandidatesAppliedToMyJobs();
+      const data = await getCandidatesAppliedToMyJobs({ page: 1, pageSize: 100 });
       setCandidates(data);
     } catch (err: unknown) {
       console.error("Error fetching candidates:", err);
@@ -98,7 +99,7 @@ const ApplicationsPage = () => {
   const loadInterviews = async () => {
     setInterviewsLoading(true);
     try {
-      const data = await fetchInterviews(user?.id ? { recruiterId: user.id } : undefined);
+      const data = await fetchInterviews();
       setInterviews(data);
     } catch (err: unknown) {
       console.error("Error fetching interviews:", err);
@@ -175,16 +176,12 @@ const ApplicationsPage = () => {
     try {
       const res = await createInterview({
         applicationId: schedulingApp.jobId,
-        jobPostId: schedulingApp.jobId,
-        jobTitle: schedulingApp.jobTitle,
-        companyName: (user as { companyName?: string } | null)?.companyName || user?.fullName || "Công ty tuyển dụng",
-        candidateId: selectedCandidate.userId,
-        candidateName: selectedCandidate.fullName,
-        recruiterId: user?.id,
         scheduledAt: new Date(interviewDate).toISOString(),
         format: interviewFormat,
         meetingUrl: meetingUrl.trim(),
+        location: interviewFormat === "offline" ? meetingUrl.trim() : undefined,
         notes: interviewNotes.trim(),
+        version: schedulingApp.version,
       });
 
       if (res.success) {
@@ -203,14 +200,15 @@ const ApplicationsPage = () => {
 
   const handleUpdateStatus = async (
     id: string,
-    status: "scheduled" | "completed" | "cancelled"
+    status: InterviewStatus
   ) => {
     try {
-      await updateInterviewStatus(id, status);
+      const current = interviews.find((item) => item.id === id);
+      await updateInterviewStatus(id, status, current?.version, "Passed", current?.applicationVersion);
       toast.success(
-        status === "completed"
+        status === "Completed"
           ? "Đã đánh dấu buổi phỏng vấn là Hoàn thành."
-          : status === "cancelled"
+          : status === "Cancelled"
           ? "Đã hủy lịch phỏng vấn."
           : "Đã cập nhật trạng thái."
       );
@@ -434,17 +432,17 @@ const ApplicationsPage = () => {
                         </div>
                         <Badge
                           variant={
-                            item.status === "completed"
+                            item.status === "Completed"
                               ? "default"
-                              : item.status === "cancelled"
+                              : item.status === "Cancelled"
                               ? "destructive"
                               : "secondary"
                           }
                           className="capitalize text-xs font-semibold rounded-lg"
                         >
-                          {item.status === "scheduled"
+                          {item.status === "Scheduled"
                             ? "Sắp tới"
-                            : item.status === "completed"
+                            : item.status === "Completed"
                             ? "Đã hoàn thành"
                             : "Đã hủy"}
                         </Badge>
@@ -475,9 +473,9 @@ const ApplicationsPage = () => {
                             {item.format === "online" ? "Phỏng vấn Trực tuyến: " : "Địa điểm: "}
                             {item.meetingUrl}
                           </span>
-                          {item.format === "online" && (
+                              {item.format === "online" && (
                             <button
-                              onClick={() => copyToClipboard(item.meetingUrl)}
+                              onClick={() => copyToClipboard(item.meetingUrl ?? "")}
                               className="text-slate-400 hover:text-slate-700 ml-auto p-1"
                               title="Sao chép link"
                             >
@@ -495,9 +493,9 @@ const ApplicationsPage = () => {
 
                       {/* Action buttons */}
                       <div className="flex items-center justify-between gap-2 pt-1">
-                        {item.format === "online" && item.status === "scheduled" && (
+                        {item.format === "online" && item.status === "Scheduled" && (
                           <a
-                            href={item.meetingUrl}
+                            href={item.meetingUrl ?? "#"}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
@@ -508,12 +506,12 @@ const ApplicationsPage = () => {
                         )}
 
                         <div className="flex items-center gap-2 ml-auto">
-                          {item.status === "scheduled" && (
+                          {item.status === "Scheduled" && (
                             <>
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleUpdateStatus(item.id, "cancelled")}
+                                onClick={() => handleUpdateStatus(item.id, "Cancelled")}
                                 className="h-8 rounded-xl text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50"
                               >
                                 <XCircle className="w-3.5 h-3.5 mr-1" />
@@ -521,7 +519,7 @@ const ApplicationsPage = () => {
                               </Button>
                               <Button
                                 size="sm"
-                                onClick={() => handleUpdateStatus(item.id, "completed")}
+                                onClick={() => handleUpdateStatus(item.id, "Completed")}
                                 className="h-8 rounded-xl text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
                               >
                                 <CheckCircle className="w-3.5 h-3.5 mr-1" />
@@ -622,11 +620,11 @@ const ApplicationsPage = () => {
                             <TableCell>
                               <Badge
                                 variant={
-                                  app.status === "PENDING"
+                                  app.status === "Applied"
                                     ? "secondary"
-                                    : app.status === "ACCEPTED"
+                                    : app.status === "Offer" || app.status === "Hired"
                                     ? "default"
-                                    : app.status === "REJECTED"
+                                    : app.status === "Rejected" || app.status === "Withdrawn"
                                     ? "destructive"
                                     : "outline"
                                 }
@@ -651,14 +649,14 @@ const ApplicationsPage = () => {
                               )}
                             </TableCell>
                             <TableCell className="text-right">
-                              <Button
+                              {app.status === "Screening" && <Button
                                 size="sm"
                                 onClick={() => openScheduleModal(app)}
                                 className="rounded-xl text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs"
                               >
                                 <Calendar className="w-3.5 h-3.5 mr-1.5" />
                                 Lên lịch PV
-                              </Button>
+                              </Button>}
                             </TableCell>
                           </TableRow>
                         ))}

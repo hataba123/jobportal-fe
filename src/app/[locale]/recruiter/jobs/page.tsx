@@ -63,23 +63,15 @@ import { JobPost } from "@/types/JobPost";
 import {
   fetchCandidatesForJob,
   updateJobApplicationStatus,
+  type JobCandidateApplication,
 } from "@/lib/api/job-application";
+import { ApplicationStatus } from "@/types/ApplyStatus";
 import { toast } from "sonner";
 import { toBackendUrl } from "@/lib/api/url";
 import CompanyLogo from "@/components/common/CompanyLogo";
 import { fetchMyCompany, type CompanyDto } from "@/lib/api/recruiter-dashboard";
 import { fetchCategories } from "@/lib/api/category";
 import type { Category } from "@/types/Category";
-
-interface CandidateApplicationDto {
-  id: string;
-  fullName?: string;
-  candidateName?: string;
-  email: string;
-  appliedAt: string;
-  cvUrl?: string;
-  status: "Pending" | "Reviewed" | "Accepted" | "Rejected";
-}
 
 export default function RecruiterJobsPage() {
   const [jobs, setJobs] = useState<JobPost[]>([]);
@@ -95,7 +87,7 @@ export default function RecruiterJobsPage() {
   });
   const [selectedJobForCandidates, setSelectedJobForCandidates] =
     useState<JobPost | null>(null);
-  const [candidates, setCandidates] = useState<CandidateApplicationDto[]>([]);
+  const [candidates, setCandidates] = useState<JobCandidateApplication[]>([]);
   const [candidatesDialogOpen, setCandidatesDialogOpen] = useState(false);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
@@ -216,12 +208,14 @@ export default function RecruiterJobsPage() {
     }
   };
 
-  const handleUpdateStatus = async (applicationId: string, status: string) => {
+  const handleUpdateStatus = async (applicationId: string, status: ApplicationStatus, version?: string) => {
     setUpdatingStatusId(applicationId);
     try {
       await updateJobApplicationStatus(
         applicationId,
-        status as "Pending" | "Reviewed" | "Accepted" | "Rejected"
+        status,
+        version,
+        status === "Rejected" ? "Không phù hợp với yêu cầu tuyển dụng" : undefined
       );
       if (selectedJobForCandidates) {
         const data = await fetchCandidatesForJob(selectedJobForCandidates.id);
@@ -873,30 +867,36 @@ export default function RecruiterJobsPage() {
                     <TableCell>
                       <Badge
                         variant={
-                          c.status === "Pending"
+                          c.status === "Applied"
                             ? "secondary"
-                            : c.status === "Reviewed"
+                            : c.status === "Screening" || c.status === "Interview"
                             ? "default"
-                            : c.status === "Accepted"
+                            : c.status === "Offer" || c.status === "Hired"
                             ? "outline"
-                            : c.status === "Rejected"
+                            : c.status === "Rejected" || c.status === "Withdrawn"
                             ? "destructive"
                             : undefined
                         }
                         className={
-                          c.status === "Accepted"
+                          c.status === "Offer" || c.status === "Hired"
                             ? "bg-emerald-500 text-white border-emerald-500"
                             : ""
                         }
                       >
-                        {c.status === "Pending"
+                        {c.status === "Applied"
                           ? "Chờ xử lý"
-                          : c.status === "Reviewed"
+                          : c.status === "Screening"
                           ? "Đang xem xét"
-                          : c.status === "Accepted"
-                          ? "Chấp nhận"
+                          : c.status === "Interview"
+                          ? "Phỏng vấn"
+                          : c.status === "Offer"
+                          ? "Đề nghị"
+                          : c.status === "Hired"
+                          ? "Đã tuyển"
                           : c.status === "Rejected"
                           ? "Từ chối"
+                          : c.status === "Withdrawn"
+                          ? "Đã rút"
                           : c.status}
                       </Badge>
                     </TableCell>
@@ -904,7 +904,7 @@ export default function RecruiterJobsPage() {
                       <Select
                         value={c.status}
                         onValueChange={(value) =>
-                          handleUpdateStatus(c.id, value)
+                          handleUpdateStatus(c.id, value as ApplicationStatus, c.version)
                         }
                         disabled={updatingStatusId === c.id}
                       >
@@ -912,10 +912,13 @@ export default function RecruiterJobsPage() {
                           <SelectValue placeholder="Chọn trạng thái" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Pending">Chờ xử lý</SelectItem>
-                          <SelectItem value="Reviewed">Đang xem xét</SelectItem>
-                          <SelectItem value="Accepted">Chấp nhận</SelectItem>
+                          <SelectItem value="Applied">Đã ứng tuyển</SelectItem>
+                          <SelectItem value="Screening">Đang xem xét</SelectItem>
+                          <SelectItem value="Interview">Phỏng vấn</SelectItem>
+                          <SelectItem value="Offer">Đề nghị</SelectItem>
+                          <SelectItem value="Hired">Đã tuyển</SelectItem>
                           <SelectItem value="Rejected">Từ chối</SelectItem>
+                          <SelectItem value="Withdrawn">Đã rút</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
