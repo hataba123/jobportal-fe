@@ -1,5 +1,6 @@
 import axiosInstance from "../axiosInstance";
 import { ApplicationStatus } from "@/types/ApplyStatus";
+import { itemsOf, type PageResponse } from "./contract";
 
 // DTOs
 export interface CandidateProfileBriefDto {
@@ -54,12 +55,10 @@ export interface CandidateSearchRequest {
   sortDir?: "asc" | "desc";
 }
 
-type PagedResponse<T> = { items?: T[]; totalCount?: number; page?: number; pageSize?: number; totalPages?: number };
-
 // API calls
 export const searchCandidates = async (params: CandidateSearchRequest) => {
-  const res = await axiosInstance.get("/candidate-profile/recruiter/search", { params });
-  return (res.data as PagedResponse<CandidateProfileBriefDto>).items ?? [];
+  const res = await axiosInstance.get<PageResponse<CandidateProfileBriefDto>>("/candidate-profile/recruiter/search", { params });
+  return itemsOf(res.data);
 };
 
 export const getCandidateById = async (id: string) => {
@@ -68,11 +67,11 @@ export const getCandidateById = async (id: string) => {
 };
 
 export const getCandidateApplications = async (id: string, page = 1, pageSize = 20) => {
-  const res = await axiosInstance.get<PagedResponse<CandidateApplicationDto>>(`/candidate-profile/recruiter/${id}/applications`, { params: { page, pageSize } });
-  return res.data.items ?? [];
+  const res = await axiosInstance.get<PageResponse<CandidateApplicationDto>>(`/candidate-profile/recruiter/${id}/applications`, { params: { page, pageSize } });
+  return itemsOf(res.data);
 };
 
 export const getCandidatesAppliedToMyJobs = async (params?: CandidateSearchRequest) => {
-  const res = await axiosInstance.get<PagedResponse<CandidateProfileBriefDto>>("/candidate-profile/recruiter/applied", { params });
-  return res.data.items ?? [];
+  const res = await axiosInstance.get<PageResponse<CandidateProfileBriefDto>>("/candidate-profile/recruiter/applied", { params });
+  return itemsOf(res.data);
 }; 

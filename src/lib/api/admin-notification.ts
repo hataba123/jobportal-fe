@@ -1,9 +1,12 @@
 import axiosInstance from "../axiosInstance";
 import { Notification } from "@/types/Notification";
+import { normalizePage, type PageResponse } from "./contract";
 
-export const fetchAllNotifications = async (): Promise<Notification[]> => {
-  const res = await axiosInstance.get("/admin/notifications");
-  return res.data;
+export const fetchAllNotifications = async (page = 1, pageSize = 100): Promise<Notification[]> => {
+  const res = await axiosInstance.get<PageResponse<Notification>>("/admin/notifications", {
+    params: { page, pageSize },
+  });
+  return normalizePage(res.data, { page, pageSize }).items;
 };
 
 export const fetchNotificationById = async (id: string): Promise<Notification> => {
@@ -21,4 +24,4 @@ export const markNotificationAsRead = async (id: string) => {
 
 export const deleteNotification = async (id: string) => {
   return await axiosInstance.delete(`/admin/notifications/${id}`);
-}; 
+};

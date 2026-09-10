@@ -10,12 +10,12 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import axiosInstance from "@/lib/axiosInstance";
 import type { SessionStrategy } from "next-auth";
 import type { JWT } from "next-auth/jwt";
+import { RoleEnum, type User } from "@/types/user";
 
-type BackendUser = {
-  id: string;
-  email: string;
-  fullName: string;
-  role: number;
+type BackendUser = User;
+
+type BackendUserWire = Omit<BackendUser, "role"> & {
+  role: number | string;
 };
 
 type OAuthUser = NextAuthUser & {
@@ -35,7 +35,23 @@ type OAuthSession = Session & {
 
 type OAuthResponse = {
   token: string;
-  user: BackendUser;
+  user: BackendUserWire;
+};
+
+const normalizeBackendUser = (user: BackendUserWire): BackendUser => {
+  const role = typeof user.role === "string"
+    ? ({
+        admin: RoleEnum.ADMIN,
+        recruiter: RoleEnum.RECRUITER,
+        candidate: RoleEnum.CANDIDATE,
+      } as const)[user.role.toLowerCase() as "admin" | "recruiter" | "candidate"]
+    : user.role;
+
+  if (![RoleEnum.ADMIN, RoleEnum.RECRUITER, RoleEnum.CANDIDATE].includes(role)) {
+    throw new Error(`Vai trò backend không hợp lệ: ${String(user.role)}`);
+  }
+
+  return { ...user, role };
 };
 
 export const authOptions: NextAuthOptions = {
@@ -63,12 +79,13 @@ export const authOptions: NextAuthOptions = {
         if (!response.ok) return null;
 
         const data = (await response.json()) as OAuthResponse;
+        const backendUser = normalizeBackendUser(data.user);
         return {
-          id: data.user.id,
-          email: data.user.email,
-          name: data.user.fullName,
+          id: backendUser.id,
+          email: backendUser.email,
+          name: backendUser.fullName,
           jwt: data.token,
-          backendUser: data.user,
+          backendUser,
         } as OAuthUser;
       },
     }),
@@ -92,6 +109,12 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account }) {
+      if (account?.provider === "credentials") {
+        // CredentialsProvider đã xác thực và nhận backend JWT trong authorize().
+        // OAuth access_token không tồn tại ở flow này và không được yêu cầu.
+        return Boolean((user as OAuthUser).jwt);
+      }
+
       if (!account?.provider || !account.access_token) {
         return false;
       }
@@ -113,7 +136,7 @@ export const authOptions: NextAuthOptions = {
 
         const oauthUser = user as OAuthUser;
         oauthUser.jwt = response.data.token;
-        oauthUser.backendUser = response.data.user;
+        oauthUser.backendUser = normalizeBackendUser(response.data.user);
         return true;
       } catch (error: unknown) {
         console.error("OAuth login failed", error);

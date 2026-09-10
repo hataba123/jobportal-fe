@@ -1,11 +1,10 @@
 import axiosInstance from "../axiosInstance";
 import { JobApplication, UpdateApplyStatusRequest } from "@/types/JobApplication";
-
-type PageResponse<T> = { items?: T[]; data?: T[] };
+import { itemsOf, type PageResponse } from "./contract";
 
 export const fetchAllJobApplications = async (page = 1, pageSize = 20): Promise<JobApplication[]> => {
   const res = await axiosInstance.get<PageResponse<JobApplication>>(`/jobapplication?page=${page}&pageSize=${pageSize}`);
-  return res.data?.items ?? res.data?.data ?? [];
+  return itemsOf(res.data);
 };
 
 export const fetchJobApplicationById = async (id: string): Promise<JobApplication> => {

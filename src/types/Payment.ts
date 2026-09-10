@@ -7,6 +7,8 @@ export type PaymentOrderStatus =
 
 export type CreditType = "JobPost" | "FeaturedJob" | "MatchUnlock";
 
+export type CreditLedgerEntryType = "Grant" | "Debit" | "Refund" | "Adjustment";
+
 export interface PlanEntitlement {
   creditType: CreditType;
   quantity: number;
@@ -50,6 +52,7 @@ export interface CreditBalance {
 export interface CreditLedgerEntry {
   id: string;
   creditType: CreditType;
+  entryType: CreditLedgerEntryType;
   quantity: number;
   expiresAt?: string | null;
   createdAt: string;

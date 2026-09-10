@@ -1,4 +1,5 @@
 import axiosInstance from "../axiosInstance";
+import { ifMatchHeaders } from "./contract";
 
 export interface RecruiterDashboardDto {
   totalJobPosts: number;
@@ -37,6 +38,7 @@ export interface CompanyDto {
   tags: string[];
   verificationStatus?: "Pending" | "Verified" | "Rejected";
   verifiedAt?: string;
+  version?: string;
 }
 
 // Lấy dashboard data cho recruiter
@@ -52,11 +54,15 @@ export const fetchMyCompany = async (): Promise<CompanyDto> => {
 };
 
 // Cập nhật thông tin công ty
-export const updateMyCompany = async (data: Partial<CompanyDto>): Promise<void> => {
-  await axiosInstance.put("/recruiter/company", data);
+export const updateMyCompany = async (data: Partial<CompanyDto>, version?: string): Promise<void> => {
+  await axiosInstance.put("/recruiter/company", data, {
+    headers: ifMatchHeaders(version),
+  });
 };
 
 // Xóa công ty
-export const deleteMyCompany = async (): Promise<void> => {
-  await axiosInstance.delete("/recruiter/company");
+export const deleteMyCompany = async (version?: string): Promise<void> => {
+  await axiosInstance.delete("/recruiter/company", {
+    headers: ifMatchHeaders(version),
+  });
 };

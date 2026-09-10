@@ -1,9 +1,10 @@
 import axiosInstance from "../axiosInstance";
 import { JobPost } from "@/types/JobPost";
+import { normalizePage, type PageResponse } from "./contract";
 
 export interface PagedJobPosts {
   items: JobPost[];
-  total: number;
+  totalItems: number;
   page: number;
   pageSize: number;
   totalPages: number;
@@ -18,19 +19,10 @@ export const fetchPagedJobPosts = async (
   page = 1,
   pageSize = 20,
 ): Promise<PagedJobPosts> => {
-  const res = await axiosInstance.get("/jobpost", {
+  const res = await axiosInstance.get<PageResponse<JobPost>>("/jobpost", {
     params: { page, pageSize },
   });
-  if (Array.isArray(res.data)) {
-    return {
-      items: res.data,
-      total: res.data.length,
-      page,
-      pageSize,
-      totalPages: res.data.length ? 1 : 0,
-    };
-  }
-  return res.data;
+  return normalizePage(res.data, { page, pageSize });
 };
 
 export const fetchAllJobPosts = async (): Promise<JobPost[]> => {

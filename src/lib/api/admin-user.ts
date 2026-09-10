@@ -1,9 +1,12 @@
 import axiosInstance from "../axiosInstance";
 import { User } from "@/types/user";
+import { normalizePage, type PageResponse } from "./contract";
 
-export const fetchAllUsers = async (): Promise<User[]> => {
-  const res = await axiosInstance.get("/admin/users");
-  return res.data;
+export const fetchAllUsers = async (page = 1, pageSize = 100): Promise<User[]> => {
+  const res = await axiosInstance.get<PageResponse<User>>("/admin/users", {
+    params: { page, pageSize },
+  });
+  return normalizePage(res.data, { page, pageSize }).items;
 };
 
 export const fetchUserById = async (id: string): Promise<User> => {

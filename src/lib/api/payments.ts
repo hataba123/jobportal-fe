@@ -21,6 +21,13 @@ export const fetchPaymentOrder = async (id: string): Promise<PaymentOrder> => {
   return response.data;
 };
 
+export const fetchPaymentOrderByTxnRef = async (txnRef: string): Promise<PaymentOrder> => {
+  const response = await axiosInstance.get<PaymentOrder>(
+    `/payment-orders/by-txn-ref/${encodeURIComponent(txnRef)}`
+  );
+  return response.data;
+};
+
 export const fetchCreditBalance = async (): Promise<CreditBalance> => {
   const response = await axiosInstance.get<CreditBalance>("/credits/balance");
   return response.data;

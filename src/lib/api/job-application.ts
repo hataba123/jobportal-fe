@@ -1,7 +1,6 @@
 import axiosInstance from "../axiosInstance";
 import { ApplicationStatus } from "@/types/ApplyStatus";
-
-type PageResponse<T> = { items?: T[]; data?: T[] };
+import { itemsOf, type PageResponse } from "./contract";
 export interface JobCandidateApplication {
   id: string;
   fullName?: string;
@@ -12,9 +11,6 @@ export interface JobCandidateApplication {
   status: ApplicationStatus;
   version?: string;
 }
-const itemsOf = <T,>(value: PageResponse<T> | T[] | undefined): T[] =>
-  Array.isArray(value) ? value : value?.items ?? value?.data ?? [];
-
 export const fetchMyAppliedJobs = async (page = 1, pageSize = 20) => {
   const res = await axiosInstance.get<PageResponse<Record<string, unknown>>>(`/jobapplication/my-jobs?page=${page}&pageSize=${pageSize}`);
   return itemsOf(res.data);

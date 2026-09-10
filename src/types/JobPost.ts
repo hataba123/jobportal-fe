@@ -23,4 +23,5 @@ export interface JobPost {
   expiresAt?: string;
   minExperienceYears?: number;
   educationRequirement?: string;
+  version?: string;
 }
