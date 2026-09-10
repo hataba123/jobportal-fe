@@ -12,13 +12,13 @@ import {
   CheckCheck,
   FileText,
   Briefcase,
-  Info,
   Clock,
   ExternalLink,
   Sparkles,
 } from "lucide-react";
 import {
   fetchMyNotifications,
+  isUnauthorizedNotificationError,
   markNotificationAsRead,
 } from "@/lib/api/candidate-notification";
 import type { Notification as ApiNotification } from "@/types/Notification";
@@ -36,6 +36,7 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function NotificationBell() {
       setLoading(true);
       fetchMyNotifications()
         .then((data) => {
+          setError(null);
           setNotifications(
             data.map((n: ApiNotification) => ({
               id: n.id,
@@ -57,6 +59,12 @@ export default function NotificationBell() {
             }))
           );
         })
+        .catch((error: unknown) => {
+          setNotifications([]);
+          if (!isUnauthorizedNotificationError(error)) {
+            setError("Không thể tải thông báo lúc này.");
+          }
+        })
         .finally(() => setLoading(false));
     }
   }, [open]);
@@ -64,6 +72,7 @@ export default function NotificationBell() {
   // Initial fetch for unread badge count
   useEffect(() => {
     fetchMyNotifications().then((data) => {
+      setError(null);
       setNotifications(
         data.map((n: ApiNotification) => ({
           id: n.id,
@@ -77,17 +86,29 @@ export default function NotificationBell() {
               : "system",
         }))
       );
+    }).catch((error: unknown) => {
+      setNotifications([]);
+      if (!isUnauthorizedNotificationError(error)) {
+        setError("Không thể tải thông báo lúc này.");
+      }
     });
   }, []);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const handleNotificationClick = async (notification: NotificationItem) => {
-    if (!notification.isRead) {
-      await markNotificationAsRead(notification.id);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n))
-      );
+    try {
+      if (!notification.isRead) {
+        await markNotificationAsRead(notification.id);
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n))
+        );
+      }
+    } catch (error: unknown) {
+      if (!isUnauthorizedNotificationError(error)) {
+        setError("Không thể cập nhật thông báo lúc này.");
+      }
+      return;
     }
     setOpen(false);
     router.push("/candidate/userprofiles/notifications");
@@ -95,10 +116,16 @@ export default function NotificationBell() {
 
   const handleMarkAllRead = async () => {
     const unread = notifications.filter((n) => !n.isRead);
-    for (const item of unread) {
-      await markNotificationAsRead(item.id);
+    try {
+      for (const item of unread) {
+        await markNotificationAsRead(item.id);
+      }
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch (error: unknown) {
+      if (!isUnauthorizedNotificationError(error)) {
+        setError("Không thể cập nhật thông báo lúc này.");
+      }
     }
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
   };
 
   const getNotificationIcon = (type: NotificationItem["type"]) => {
@@ -155,7 +182,9 @@ export default function NotificationBell() {
 
         {/* Notifications List */}
         <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
-          {loading ? (
+          {error ? (
+            <div className="p-8 text-center text-slate-500 text-sm">{error}</div>
+          ) : loading ? (
             <div className="p-8 text-center text-slate-400 text-sm">Đang tải thông báo...</div>
           ) : notifications.length === 0 ? (
             <div className="p-8 text-center">

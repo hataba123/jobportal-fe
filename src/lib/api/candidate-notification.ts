@@ -1,6 +1,10 @@
+import axios from "axios";
 import axiosInstance from "../axiosInstance";
 import { Notification } from "@/types/Notification";
 import { itemsOf, type PageResponse } from "./contract";
+
+export const isUnauthorizedNotificationError = (error: unknown): boolean =>
+  axios.isAxiosError(error) && error.response?.status === 401;
 
 // Lấy danh sách thông báo của user hiện tại
 export const fetchMyNotifications = async (page = 1, pageSize = 20): Promise<Notification[]> => {

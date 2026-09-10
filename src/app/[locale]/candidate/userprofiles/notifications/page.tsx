@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   fetchMyNotifications,
+  isUnauthorizedNotificationError,
   markNotificationAsRead,
   deleteNotification as apiDeleteNotification,
 } from "@/lib/api/candidate-notification";
@@ -52,9 +53,11 @@ const getNotificationBadge = (type: Notification["type"]) => {
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activeTab, setActiveTab] = useState("all");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMyNotifications().then((data) => {
+      setError(null);
       setNotifications(
         data.map((n: ApiNotification) => ({
           id: n.id,
@@ -69,6 +72,11 @@ export default function NotificationsPage() {
           actionUrl: n.actionUrl,
         }))
       );
+    }).catch((error: unknown) => {
+      setNotifications([]);
+      if (!isUnauthorizedNotificationError(error)) {
+        setError("Không thể tải thông báo lúc này.");
+      }
     });
   }, []);
 
@@ -78,24 +86,42 @@ export default function NotificationsPage() {
   const readNotifications = notifications.filter((n) => n.isRead);
 
   const markAsRead = async (id: string) => {
-    await markNotificationAsRead(id);
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
+    try {
+      await markNotificationAsRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      );
+    } catch (error: unknown) {
+      if (!isUnauthorizedNotificationError(error)) {
+        setError("Không thể cập nhật thông báo lúc này.");
+      }
+    }
   };
 
   const markAllAsRead = async () => {
-    await Promise.all(
-      notifications
-        .filter((n) => !n.isRead)
-        .map((n) => markNotificationAsRead(n.id))
-    );
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    try {
+      await Promise.all(
+        notifications
+          .filter((n) => !n.isRead)
+          .map((n) => markNotificationAsRead(n.id))
+      );
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch (error: unknown) {
+      if (!isUnauthorizedNotificationError(error)) {
+        setError("Không thể cập nhật thông báo lúc này.");
+      }
+    }
   };
 
   const deleteNotification = async (id: string) => {
-    await apiDeleteNotification(id);
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    try {
+      await apiDeleteNotification(id);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    } catch (error: unknown) {
+      if (!isUnauthorizedNotificationError(error)) {
+        setError("Không thể xóa thông báo lúc này.");
+      }
+    }
   };
 
   const getFilteredNotifications = () => {
@@ -124,6 +150,12 @@ export default function NotificationsPage() {
           </Button>
         )}
       </div>
+
+      {error && (
+        <Card className="mb-4 border-amber-200 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-800">{error}</CardContent>
+        </Card>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
