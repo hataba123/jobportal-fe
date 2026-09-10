@@ -149,7 +149,12 @@
     "job_type_full_time": "Full-time",
     "job_type_part_time": "Part-time",
     "job_type_contract": "Contract",
-    "job_type_internship": "Internship"
+    "job_type_internship": "Internship",
+    "quick_filter_hint": "Quick filters:",
+    "salary_above_1500": "Salary > $1,500",
+    "filtering": "filtering",
+    "filter_active": "Filters active",
+    "verified": "Verified"
   },
   "AllCompaniesPage": {
     "title": "All Companies",

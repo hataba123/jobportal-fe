@@ -149,7 +149,12 @@
     "job_type_full_time": "Toàn thời gian",
     "job_type_part_time": "Bán thời gian",
     "job_type_contract": "Hợp đồng",
-    "job_type_internship": "Thực tập"
+    "job_type_internship": "Thực tập",
+    "quick_filter_hint": "Gợi ý lọc nhanh:",
+    "salary_above_1500": "Lương > $1,500",
+    "filtering": "đang lọc",
+    "filter_active": "Bộ lọc đang kích hoạt",
+    "verified": "Xác thực"
   },
   "AllCompaniesPage": {
     "title": "Tất cả công ty",

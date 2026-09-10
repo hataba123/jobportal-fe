@@ -2,10 +2,10 @@
 
 import React, { useState, useMemo } from "react";
 import { useRouter } from "@/i18n/navigation";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import CompanyLogo from "@/components/common/CompanyLogo";
 import {
@@ -17,22 +17,24 @@ import {
   Briefcase,
   CalendarDays,
   X,
-  SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   Building2,
+  ShieldCheck,
 } from "lucide-react";
 import { useJobPosts } from "@/hooks/useJobPosts";
 
 export default function AllJobsPage() {
   const router = useRouter();
+  const t = useTranslations("AllJobsPage");
+  const tHome = useTranslations("HomePage");
   const { jobPosts, loading } = useJobPosts();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [locationFilter, setLocationFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [salaryFilter, setSalaryFilter] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 9;
@@ -41,13 +43,15 @@ export default function AllJobsPage() {
     Boolean(searchTerm.trim()) ||
     locationFilter !== "all" ||
     typeFilter !== "all" ||
-    categoryFilter !== "all";
+    categoryFilter !== "all" ||
+    salaryFilter !== null;
 
   const handleResetFilters = () => {
     setSearchTerm("");
     setLocationFilter("all");
     setTypeFilter("all");
     setCategoryFilter("all");
+    setSalaryFilter(null);
     setCurrentPage(1);
   };
 
@@ -60,7 +64,7 @@ export default function AllJobsPage() {
         (job) =>
           job.title?.toLowerCase().includes(lower) ||
           job.description?.toLowerCase().includes(lower) ||
-          (Array.isArray(job.tags) && job.tags.some((t) => t.toLowerCase().includes(lower))) ||
+          (Array.isArray(job.tags) && job.tags.some((tg) => tg.toLowerCase().includes(lower))) ||
           job.employer?.fullName?.toLowerCase().includes(lower)
       );
     }
@@ -77,8 +81,12 @@ export default function AllJobsPage() {
       filtered = filtered.filter((job) => job.categoryName === categoryFilter);
     }
 
+    if (salaryFilter !== null) {
+      filtered = filtered.filter((job) => Number(job.salary || 0) >= salaryFilter);
+    }
+
     return filtered;
-  }, [jobPosts, searchTerm, locationFilter, typeFilter, categoryFilter]);
+  }, [jobPosts, searchTerm, locationFilter, typeFilter, categoryFilter, salaryFilter]);
 
   const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
   const currentJobs = useMemo(() => {
@@ -96,7 +104,13 @@ export default function AllJobsPage() {
     return ["all", ...Array.from(cats)];
   }, [jobPosts]);
 
-  const jobTypes = ["all", "Full-time", "Part-time", "Contract", "Internship"];
+  const jobTypes = [
+    { value: "all", label: t("all_types") },
+    { value: "Full-time", label: t("job_type_full_time") },
+    { value: "Part-time", label: t("job_type_part_time") },
+    { value: "Contract", label: t("job_type_contract") },
+    { value: "Internship", label: t("job_type_internship") },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-50/50 py-10">
@@ -105,13 +119,13 @@ export default function AllJobsPage() {
         <div className="mb-8">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">
             <Briefcase className="w-3.5 h-3.5" />
-            <span>Thị trường việc làm IT</span>
+            <span>{t("market_badge")}</span>
           </div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-            Tất cả Việc làm tuyển dụng
+            {t("title")}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Tìm kiếm công việc lý tưởng theo vị trí, kỹ năng công nghệ, loại hình và mức lương
+            {t("subtitle")}
           </p>
         </div>
 
@@ -123,7 +137,7 @@ export default function AllJobsPage() {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Tìm việc làm theo chức danh, kỹ năng..."
+                placeholder={t("search_placeholder")}
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -151,12 +165,12 @@ export default function AllJobsPage() {
                 }}
               >
                 <SelectTrigger className="rounded-xl h-[42px] border-slate-200 bg-slate-50 text-xs sm:text-sm">
-                  <SelectValue placeholder="Địa điểm" />
+                  <SelectValue placeholder={t("location")} />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl shadow-xl">
                   {uniqueLocations.map((loc) => (
                     <SelectItem key={loc} value={loc} className="rounded-lg text-xs sm:text-sm">
-                      {loc === "all" ? "Tất cả địa điểm" : loc}
+                      {loc === "all" ? t("all_locations") : loc}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -170,12 +184,12 @@ export default function AllJobsPage() {
                 }}
               >
                 <SelectTrigger className="rounded-xl h-[42px] border-slate-200 bg-slate-50 text-xs sm:text-sm">
-                  <SelectValue placeholder="Loại hình" />
+                  <SelectValue placeholder={t("type")} />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl shadow-xl">
-                  {jobTypes.map((t) => (
-                    <SelectItem key={t} value={t} className="rounded-lg text-xs sm:text-sm">
-                      {t === "all" ? "Tất cả loại hình" : t}
+                  {jobTypes.map((item) => (
+                    <SelectItem key={item.value} value={item.value} className="rounded-lg text-xs sm:text-sm">
+                      {item.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -189,12 +203,12 @@ export default function AllJobsPage() {
                 }}
               >
                 <SelectTrigger className="rounded-xl h-[42px] border-slate-200 bg-slate-50 text-xs sm:text-sm">
-                  <SelectValue placeholder="Danh mục" />
+                  <SelectValue placeholder={t("category")} />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl shadow-xl">
                   {uniqueCategories.map((c) => (
                     <SelectItem key={c} value={c} className="rounded-lg text-xs sm:text-sm">
-                      {c === "all" ? "Tất cả danh mục" : c}
+                      {c === "all" ? t("all_categories") : c}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -209,7 +223,7 @@ export default function AllJobsPage() {
                   className={`p-1.5 rounded-lg transition-colors ${
                     viewMode === "grid" ? "bg-white text-blue-600 shadow-xs font-bold" : "text-slate-500 hover:text-slate-800"
                   }`}
-                  aria-label="Xem dạng lưới"
+                  aria-label={t("view_grid")}
                 >
                   <LayoutGrid className="w-4 h-4" />
                 </button>
@@ -218,7 +232,7 @@ export default function AllJobsPage() {
                   className={`p-1.5 rounded-lg transition-colors ${
                     viewMode === "list" ? "bg-white text-blue-600 shadow-xs font-bold" : "text-slate-500 hover:text-slate-800"
                   }`}
-                  aria-label="Xem dạng danh sách"
+                  aria-label={t("view_list")}
                 >
                   <List className="w-4 h-4" />
                 </button>
@@ -232,20 +246,97 @@ export default function AllJobsPage() {
                   className="rounded-xl text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700 h-[40px] px-3 font-semibold"
                 >
                   <X className="w-3.5 h-3.5 mr-1" />
-                  Xóa lọc
+                  {t("reset_filters")}
                 </Button>
               )}
             </div>
           </div>
 
+          {/* Quick Filter Chips (1-Click Filtering) */}
+          <div className="pt-2 border-t border-slate-100 flex items-center gap-2 overflow-x-auto scrollbar-none text-xs">
+            <span className="font-semibold text-slate-400 shrink-0 text-[11px] uppercase tracking-wider">
+              {t("quick_filter_hint")}
+            </span>
+            <button
+              onClick={() => {
+                setSalaryFilter(salaryFilter === 1500 ? null : 1500);
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1 rounded-lg border transition-all text-xs font-medium shrink-0 flex items-center gap-1 ${
+                salaryFilter === 1500
+                  ? "bg-emerald-50 border-emerald-300 text-emerald-700 font-bold shadow-2xs"
+                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              <DollarSign className="w-3 h-3 text-emerald-600" />
+              <span>{t("salary_above_1500")}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setTypeFilter(typeFilter === "Full-time" ? "all" : "Full-time");
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1 rounded-lg border transition-all text-xs font-medium shrink-0 ${
+                typeFilter === "Full-time"
+                  ? "bg-blue-50 border-blue-300 text-blue-700 font-bold shadow-2xs"
+                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              {t("job_type_full_time")}
+            </button>
+
+            <button
+              onClick={() => {
+                setTypeFilter(typeFilter === "Internship" ? "all" : "Internship");
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1 rounded-lg border transition-all text-xs font-medium shrink-0 ${
+                typeFilter === "Internship"
+                  ? "bg-purple-50 border-purple-300 text-purple-700 font-bold shadow-2xs"
+                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              {t("job_type_internship")}
+            </button>
+
+            <button
+              onClick={() => {
+                setLocationFilter(locationFilter === "Hồ Chí Minh" ? "all" : "Hồ Chí Minh");
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1 rounded-lg border transition-all text-xs font-medium shrink-0 ${
+                locationFilter === "Hồ Chí Minh"
+                  ? "bg-indigo-50 border-indigo-300 text-indigo-700 font-bold shadow-2xs"
+                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              Hồ Chí Minh
+            </button>
+
+            <button
+              onClick={() => {
+                setLocationFilter(locationFilter === "Hà Nội" ? "all" : "Hà Nội");
+                setCurrentPage(1);
+              }}
+              className={`px-3 py-1 rounded-lg border transition-all text-xs font-medium shrink-0 ${
+                locationFilter === "Hà Nội"
+                  ? "bg-indigo-50 border-indigo-300 text-indigo-700 font-bold shadow-2xs"
+                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              Hà Nội
+            </button>
+          </div>
+
           {/* Results Summary */}
           <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
             <span>
-              Tìm thấy <strong className="text-slate-900">{filteredJobs.length}</strong> việc làm
-              {hasActiveFilters && " (đang lọc)"}
+              {t("showing")} <strong className="text-slate-900">{filteredJobs.length}</strong> {t("jobs")}
+              {hasActiveFilters && ` (${t("filtering")})`}
             </span>
             {hasActiveFilters && (
-              <span className="text-blue-600 font-medium">Bộ lọc đang hoạt động</span>
+              <span className="text-blue-600 font-medium">{t("filter_active")}</span>
             )}
           </div>
         </div>
@@ -254,29 +345,33 @@ export default function AllJobsPage() {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((n) => (
-              <div key={n} className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs animate-pulse space-y-4">
+              <div key={n} className="p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-4">
                 <div className="flex gap-4 items-center">
-                  <div className="w-12 h-12 bg-slate-200 rounded-xl"></div>
+                  <Skeleton className="w-12 h-12 rounded-xl" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-slate-200 rounded w-3/4"></div>
-                    <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                    <Skeleton className="h-4 w-3/4 rounded-lg" />
+                    <Skeleton className="h-3 w-1/2 rounded-lg" />
                   </div>
                 </div>
-                <div className="h-3 bg-slate-200 rounded w-full"></div>
-                <div className="h-3 bg-slate-200 rounded w-2/3"></div>
+                <Skeleton className="h-4 w-full rounded-lg" />
+                <Skeleton className="h-4 w-2/3 rounded-lg" />
+                <div className="flex gap-2 pt-2">
+                  <Skeleton className="h-6 w-16 rounded-lg" />
+                  <Skeleton className="h-6 w-16 rounded-lg" />
+                </div>
               </div>
             ))}
           </div>
         ) : filteredJobs.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl border border-slate-200/80 p-8">
             <Briefcase className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-slate-800">Không tìm thấy việc làm nào</h3>
+            <h3 className="text-lg font-bold text-slate-800">{t("no_jobs")}</h3>
             <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">
-              Thử điều chỉnh từ khóa tìm kiếm hoặc xóa các điều kiện lọc để hiển thị nhiều kết quả hơn.
+              {t("try_adjusting")}
             </p>
             {hasActiveFilters && (
               <Button onClick={handleResetFilters} variant="outline" className="mt-5 rounded-xl">
-                Xóa tất cả bộ lọc
+                {t("clear_filters")}
               </Button>
             )}
           </div>
@@ -303,17 +398,23 @@ export default function AllJobsPage() {
                     <div className="flex items-start gap-4 mb-4">
                       <CompanyLogo
                         src={job.logo}
-                        name={job.employer?.fullName || job.companyName || "Công ty"}
+                        name={job.employer?.fullName || job.companyName || tHome("company_default")}
                         size="md"
                       />
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-base text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
                           {job.title}
                         </h3>
-                        <p className="text-xs text-slate-500 line-clamp-1 mt-0.5 flex items-center gap-1">
-                          <Building2 className="w-3 h-3 text-slate-400 flex-shrink-0" />
-                          <span>{job.employer?.fullName || job.companyName || "Công ty công nghệ"}</span>
-                        </p>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          <p className="text-xs text-slate-500 line-clamp-1 flex items-center gap-1">
+                            <Building2 className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                            <span>{job.employer?.fullName || job.companyName || tHome("company_default")}</span>
+                          </p>
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                            <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                            {t("verified")}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
@@ -321,11 +422,11 @@ export default function AllJobsPage() {
                     <div className="flex flex-wrap items-center gap-2 mb-4 text-xs">
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-bold border border-emerald-200/60">
                         <DollarSign className="w-3.5 h-3.5" />
-                        {Number(job.salary) > 0 ? `${Number(job.salary).toLocaleString()}$ / tháng` : "Thương lượng"}
+                        {Number(job.salary) > 0 ? `${Number(job.salary).toLocaleString()}$ ${tHome("per_month")}` : t("negotiable")}
                       </span>
                       <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 text-slate-600">
                         <MapPin className="w-3 h-3 text-slate-400" />
-                        {job.location || "Toàn quốc"}
+                        {job.location || tHome("nationwide")}
                       </span>
                       <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 text-slate-600">
                         <Briefcase className="w-3 h-3 text-slate-400" />
@@ -359,8 +460,10 @@ export default function AllJobsPage() {
                       <CalendarDays className="w-3 h-3" />
                       <span>
                         {job.createdAt
-                          ? `${Math.max(1, Math.floor((Date.now() - new Date(job.createdAt).getTime()) / (1000 * 60 * 60 * 24)))} ngày trước`
-                          : "Mới đăng"}
+                          ? tHome("days_ago", {
+                              days: Math.max(1, Math.floor((Date.now() - new Date(job.createdAt).getTime()) / (1000 * 60 * 60 * 24))),
+                            })
+                          : tHome("just_posted")}
                       </span>
                     </div>
                     <Button
@@ -371,7 +474,7 @@ export default function AllJobsPage() {
                         router.push(`/candidate/job/${job.id}`);
                       }}
                     >
-                      Chi tiết
+                      {t("details")}
                     </Button>
                   </div>
                 </div>
@@ -389,7 +492,7 @@ export default function AllJobsPage() {
                   className="rounded-xl"
                 >
                   <ChevronLeft className="w-4 h-4 mr-1" />
-                  Trước
+                  {t("previous")}
                 </Button>
 
                 <div className="flex items-center gap-1">
@@ -418,7 +521,7 @@ export default function AllJobsPage() {
                   disabled={currentPage === totalPages}
                   className="rounded-xl"
                 >
-                  Sau
+                  {t("next")}
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </div>
