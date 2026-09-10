@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import SafeImage from "@/components/common/SafeImage";
 import { getBlogById, incrementBlogViews, toggleBlogLike } from "@/lib/api/blog";
+import { FALLBACK_BLOGS } from "@/lib/data/fallbackBlogs";
 import type { Blog } from "@/types/Blog";
 
 export default function BlogDetailClient({ id }: { id: string }) {
@@ -30,7 +31,16 @@ export default function BlogDetailClient({ id }: { id: string }) {
         setBlog(data);
         void incrementBlogViews(blogId);
       })
-      .catch(() => setError("Không thể tải bài viết."))
+      .catch(() => {
+        const fallbackBlog = FALLBACK_BLOGS.find((item) => item.id === blogId);
+        if (fallbackBlog) {
+          setBlog(fallbackBlog);
+          setError(null);
+          return;
+        }
+
+        setError("Không thể tải bài viết.");
+      })
       .finally(() => setLoading(false));
   }, [id]);
 

@@ -35,83 +35,10 @@ import { Pagination } from "@/components/common/Pagination";
 import { useRouter } from "@/i18n/navigation";
 import { toast } from "sonner";
 import { subscribeNewsletter } from "@/lib/api/newsletter";
-
-// Fallback data for when API is not available
-const fallbackBlogs = [
-  {
-    id: 1,
-    title: "10 Kỹ năng lập trình viên cần có trong năm 2024",
-    excerpt: "Khám phá những kỹ năng quan trọng nhất mà mọi lập trình viên cần phát triển để thành công trong thị trường công nghệ hiện tại.",
-    author: { name: "Nguyễn Văn Tech", avatar: "/image/avatar.png", role: "Senior Developer" },
-    category: "Kỹ năng",
-    tags: ["Programming", "Skills", "Career"],
-    publishedAt: "2024-01-15",
-    readTime: "8 phút đọc",
-    views: 2340,
-    likes: 156,
-    featured: true,
-    image: "/image/blog/blog-career-profile.jpg",
-  },
-  {
-    id: 2,
-    title: "Xu hướng tuyển dụng IT 2024: Những gì nhà tuyển dụng đang tìm kiếm",
-    excerpt: "Phân tích chi tiết về xu hướng tuyển dụng trong ngành IT và những yêu cầu mới từ các nhà tuyển dụng hàng đầu.",
-    author: { name: "Trần Thị HR", avatar: "/image/avatar.png", role: "HR Manager" },
-    category: "Tuyển dụng",
-    tags: ["Recruitment", "Trends", "HR"],
-    publishedAt: "2024-01-12",
-    readTime: "6 phút đọc",
-    views: 1890,
-    likes: 98,
-    featured: true,
-    image: "/image/blog/blog-team-collaboration.jpg",
-  },
-  {
-    id: 3,
-    title: "Làm thế nào để viết CV IT thu hút nhà tuyển dụng",
-    excerpt: "Hướng dẫn chi tiết cách tạo một CV IT ấn tượng, từ cấu trúc đến nội dung, giúp bạn nổi bật trong mắt nhà tuyển dụng.",
-    author: { name: "Lê Văn Career", avatar: "/image/avatar.png", role: "Career Coach" },
-    category: "Nghề nghiệp",
-    tags: ["CV", "Career", "Tips"],
-    publishedAt: "2024-01-10",
-    readTime: "10 phút đọc",
-    views: 3210,
-    likes: 234,
-    featured: false,
-    image: "/image/blog/blog-tech-workspace.jpg",
-  },
-  {
-    id: 4,
-    title: "Remote Work: Bí quyết làm việc hiệu quả từ xa",
-    excerpt: "Chia sẻ kinh nghiệm và mẹo hay để duy trì hiệu suất làm việc cao khi làm việc từ xa trong ngành IT.",
-    author: { name: "Phạm Thị Remote", avatar: "/image/avatar.png", role: "Product Manager" },
-    category: "Làm việc",
-    tags: ["Remote", "Productivity", "Work-Life"],
-    publishedAt: "2024-01-08",
-    readTime: "7 phút đọc",
-    views: 1560,
-    likes: 89,
-    featured: false,
-    image: "/image/blog/blog-team-collaboration.jpg",
-  },
-  {
-    id: 5,
-    title: "Startup vs Công ty lớn: Nên chọn môi trường nào để phát triển sự nghiệp?",
-    excerpt: "So sánh ưu nhược điểm của việc làm tại startup và công ty lớn, giúp bạn đưa ra quyết định phù hợp với mục tiêu nghề nghiệp.",
-    author: { name: "Hoàng Văn Startup", avatar: "/image/avatar.png", role: "Entrepreneur" },
-    category: "Nghề nghiệp",
-    tags: ["Startup", "Career", "Choice"],
-    publishedAt: "2024-01-05",
-    readTime: "9 phút đọc",
-    views: 2100,
-    likes: 145,
-    featured: false,
-    image: "/image/blog/blog-career-profile.jpg",
-  },
-];
+import { FALLBACK_BLOGS } from "@/lib/data/fallbackBlogs";
 
 const fallbackCategories = [
-  { name: "Tất cả", count: fallbackBlogs.length },
+  { name: "Tất cả", count: FALLBACK_BLOGS.length },
   { name: "Kỹ năng", count: 15 },
   { name: "Nghề nghiệp", count: 23 },
   { name: "Tuyển dụng", count: 18 },
@@ -169,8 +96,8 @@ export default function BlogPage() {
   };
 
   // Use fallback data if API fails or returns empty
-  const displayBlogs = blogs.length > 0 ? blogs : fallbackBlogs;
-  const displayFeaturedBlogs = featuredBlogs.length > 0 ? featuredBlogs : fallbackBlogs.filter(post => post.featured);
+  const displayBlogs = blogs.length > 0 ? blogs : FALLBACK_BLOGS;
+  const displayFeaturedBlogs = featuredBlogs.length > 0 ? featuredBlogs : FALLBACK_BLOGS.filter(post => post.featured);
   const displayCategories = categories.length > 0 ? categories : fallbackCategories;
   const displayTags = popularTags.length > 0 ? popularTags : fallbackTags;
 
