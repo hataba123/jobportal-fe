@@ -19,7 +19,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
 
   const target = `${getBackendOrigin()}/${path.map(encodeURIComponent).join("/")}${request.nextUrl.search}`;
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  const token = process.env.NEXTAUTH_SECRET
+    ? await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
+    : null;
   const headers = new Headers();
   const accept = request.headers.get("accept");
   if (accept) headers.set("accept", accept);
