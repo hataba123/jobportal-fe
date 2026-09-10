@@ -58,6 +58,7 @@ import {
   updateJobPost as updateJobPostApi,
 } from "@/lib/api/admin-jobpost";
 import type { JobPost as ApiJobPost } from "@/types/JobPost";
+import CompanyLogo from "@/components/common/CompanyLogo";
 interface JobPost {
   Id: string;
   Title: string;
@@ -304,7 +305,12 @@ export default function AdminJobPostDashboard() {
                   {filteredJobPosts.map((post) => (
                     <TableRow key={post.Id}>
                       <TableCell className="font-medium">{post.Id}</TableCell>
-                      <TableCell>{post.Title}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <CompanyLogo src={post.Logo} name={post.Title} size={36} rounded="rounded-lg" />
+                          <span>{post.Title}</span>
+                        </div>
+                      </TableCell>
                       <TableCell>{post.Location}</TableCell>
                       <TableCell>
                         <Badge variant="outline">{post.Type}</Badge>
@@ -473,6 +479,17 @@ export default function AdminJobPostDashboard() {
                 onChange={(e) =>
                   setNewJobPost({ ...newJobPost, Title: e.target.value })
                 }
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="logo" className="text-right">Logo URL</Label>
+              <Input
+                id="logo"
+                type="url"
+                placeholder="https://... hoặc /uploads/logo/..."
+                value={newJobPost.Logo || ""}
+                onChange={(e) => setNewJobPost({ ...newJobPost, Logo: e.target.value })}
                 className="col-span-3"
               />
             </div>
@@ -649,6 +666,17 @@ export default function AdminJobPostDashboard() {
                       Title: e.target.value,
                     })
                   }
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-logo" className="text-right">Logo URL</Label>
+                <Input
+                  id="edit-logo"
+                  type="url"
+                  placeholder="https://... hoặc /uploads/logo/..."
+                  value={editingJobPost.Logo}
+                  onChange={(e) => setEditingJobPost({ ...editingJobPost, Logo: e.target.value })}
                   className="col-span-3"
                 />
               </div>
