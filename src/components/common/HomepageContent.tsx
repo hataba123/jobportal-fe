@@ -449,10 +449,10 @@ export default function HomepageContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-              Khám phá theo ngành nghề
+              {t("categories_title")}
             </h2>
             <p className="text-sm text-slate-500 mt-2">
-              Tìm kiếm các vị trí phù hợp nhất theo từng lĩnh vực chuyên sâu trong ngành IT
+              {t("categories_desc")}
             </p>
           </div>
 
@@ -481,7 +481,7 @@ export default function HomepageContent() {
                       {category.name}
                     </h3>
                     <p className="text-xs text-slate-500 mt-1">
-                      {jobCount} việc làm đang tuyển
+                      {t("jobs_open_count", { count: jobCount })}
                     </p>
                   </div>
                 );
@@ -497,13 +497,13 @@ export default function HomepageContent() {
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2">
               <Building2 className="w-3.5 h-3.5" />
-              <span>Nhà tuyển dụng uy tín</span>
+              <span>{t("top_companies_badge")}</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-              Top doanh nghiệp công nghệ hàng đầu
+              {t("top_companies_title")}
             </h2>
             <p className="text-sm text-slate-500 mt-1">
-              Khám phá môi trường làm việc lý tưởng và văn hóa doanh nghiệp hiện đại
+              {t("top_companies_desc")}
             </p>
           </div>
           <Button
@@ -511,7 +511,7 @@ export default function HomepageContent() {
             onClick={() => router.push("/candidate/company")}
             className="rounded-xl border-slate-300 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 self-start md:self-auto text-xs font-semibold"
           >
-            <span>Tất cả công ty</span>
+            <span>{t("view_all_companies")}</span>
             <ArrowRight className="ml-1.5 w-3.5 h-3.5" />
           </Button>
         </div>
@@ -539,7 +539,7 @@ export default function HomepageContent() {
                       </h3>
                       <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-1">
                         <Users className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{company.employees || "50-100"} nhân viên</span>
+                        <span>{t("employees_count", { count: company.employees || "50-100" })}</span>
                       </p>
                     </div>
                   </div>
@@ -547,7 +547,7 @@ export default function HomepageContent() {
 
                 <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
                   <span className="font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">
-                    {company.openJobs || 0} việc làm đang mở
+                    {t("jobs_open_badge", { count: company.openJobs || 0 })}
                   </span>
                   <div className="flex items-center gap-1 text-slate-700 font-bold">
                     <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
@@ -566,10 +566,10 @@ export default function HomepageContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-14">
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              Tại sao hàng ngàn lập trình viên chọn JobPortal?
+              {t("why_us_title")}
             </h2>
             <p className="text-sm text-slate-400 mt-2">
-              Chúng tôi cam kết xây dựng hệ sinh thái tuyển dụng công bằng, minh bạch và hiệu quả nhất
+              {t("why_us_desc")}
             </p>
           </div>
 
@@ -578,9 +578,9 @@ export default function HomepageContent() {
               <div className="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
                 <ShieldCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold">Xác thực công ty 100%</h3>
+              <h3 className="text-lg font-bold">{t("why_us_feat1_title")}</h3>
               <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                Mọi bài đăng và doanh nghiệp trên nền tảng đều được kiểm duyệt thông tin pháp lý, phòng tránh tin lừa đảo.
+                {t("why_us_feat1_desc")}
               </p>
             </div>
 
@@ -588,9 +588,9 @@ export default function HomepageContent() {
               <div className="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
                 <Sparkles className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold">Matching CV thông minh</h3>
+              <h3 className="text-lg font-bold">{t("why_us_feat2_title")}</h3>
               <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                Thuật toán tự động phân tích kỹ năng và kinh nghiệm trong hồ sơ để gợi ý việc làm chuẩn xác nhất.
+                {t("why_us_feat2_desc")}
               </p>
             </div>
 
@@ -598,9 +598,9 @@ export default function HomepageContent() {
               <div className="w-12 h-12 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
                 <TrendingUp className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold">Phản hồi siêu tốc</h3>
+              <h3 className="text-lg font-bold">{t("why_us_feat3_title")}</h3>
               <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                Thông báo tiến độ hồ sơ theo thời gian thực (Đã xem, Phỏng vấn, Chấp nhận) ngay trên giao diện cá nhân.
+                {t("why_us_feat3_desc")}
               </p>
             </div>
           </div>
@@ -614,13 +614,13 @@ export default function HomepageContent() {
           <div className="p-8 rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-xl shadow-blue-500/10 flex flex-col justify-between space-y-6">
             <div>
               <span className="inline-flex px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white mb-4">
-                Dành cho ứng viên
+                {t("candidate_badge")}
               </span>
               <h3 className="text-2xl font-extrabold tracking-tight">
-                Sẵn sàng cho bước tiến sự nghiệp mới?
+                {t("candidate_title")}
               </h3>
               <p className="text-sm text-blue-100 mt-2 leading-relaxed">
-                Tải lên CV của bạn để nhà tuyển dụng chủ động liên hệ hoặc khám phá danh sách việc làm IT hấp dẫn nhất.
+                {t("candidate_desc")}
               </p>
             </div>
             <div>
@@ -628,7 +628,7 @@ export default function HomepageContent() {
                 onClick={() => router.push("/candidate/job")}
                 className="h-11 px-6 rounded-xl bg-white text-blue-700 font-bold hover:bg-blue-50 active:scale-95 transition-all shadow-md"
               >
-                <span>Tìm việc ngay</span>
+                <span>{t("candidate_btn")}</span>
                 <ArrowRight className="ml-1.5 w-4 h-4" />
               </Button>
             </div>
@@ -638,13 +638,13 @@ export default function HomepageContent() {
           <div className="p-8 rounded-3xl bg-slate-900 text-white border border-slate-800 shadow-xl flex flex-col justify-between space-y-6">
             <div>
               <span className="inline-flex px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-amber-400 border border-slate-700 mb-4">
-                Dành cho nhà tuyển dụng
+                {t("recruiter_badge")}
               </span>
               <h3 className="text-2xl font-extrabold tracking-tight">
-                Doanh nghiệp bạn đang tìm nhân tài IT?
+                {t("recruiter_title")}
               </h3>
               <p className="text-sm text-slate-400 mt-2 leading-relaxed">
-                Đăng tin tuyển dụng tiếp cận hơn 50,000+ ứng viên chất lượng cao. Quản lý hồ sơ và xếp hạng ứng viên tiện lợi.
+                {t("recruiter_desc")}
               </p>
             </div>
             <div>
@@ -652,7 +652,7 @@ export default function HomepageContent() {
                 onClick={() => router.push("/recruiter/jobs")}
                 className="h-11 px-6 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 active:scale-95 transition-all shadow-md shadow-blue-500/20"
               >
-                <span>Đăng tin tuyển dụng</span>
+                <span>{t("recruiter_btn")}</span>
                 <ArrowRight className="ml-1.5 w-4 h-4" />
               </Button>
             </div>
