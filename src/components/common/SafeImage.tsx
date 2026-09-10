@@ -1,5 +1,8 @@
 "use client";
 
+/* External images intentionally bypass next/image hostname allow-list. */
+/* eslint-disable @next/next/no-img-element */
+
 import Image from "next/image";
 import { useState } from "react";
 import { isExternalImageUrl, toBackendUrl } from "@/lib/api/url";
