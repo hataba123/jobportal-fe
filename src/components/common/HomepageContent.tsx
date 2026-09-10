@@ -5,8 +5,6 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import CompanyLogo from "@/components/common/CompanyLogo";
 import {
   Search,
@@ -18,7 +16,6 @@ import {
   Star,
   ArrowRight,
   ShieldCheck,
-  CheckCircle2,
   Sparkles,
   Building2,
   Briefcase,
@@ -466,7 +463,15 @@ export default function HomepageContent() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {categories.map((category) => {
                 const IconComponent = category.icon ? categoryIconMap[category.icon] || Code : Code;
-                const jobCount = jobPosts.filter((job) => job.categoryId === category.id).length;
+                const categoryId = category.id == null ? "" : String(category.id);
+                const categoryName = category.name.trim().toLocaleLowerCase();
+                const jobCount = jobPosts.filter((job) => {
+                  const belongsToCategory =
+                    (Boolean(job.categoryId) && String(job.categoryId) === categoryId) ||
+                    job.categoryName?.trim().toLocaleLowerCase() === categoryName;
+
+                  return belongsToCategory && (!job.status || job.status === "Active");
+                }).length;
 
                 return (
                   <div
