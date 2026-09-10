@@ -22,7 +22,7 @@ import {
   List,
 } from "lucide-react";
 import CompanyLogo from "@/components/common/CompanyLogo";
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useJobPosts } from "@/hooks/useJobPosts";
@@ -31,9 +31,6 @@ import { useTranslations } from 'next-intl';
 
 export default function AllCompaniesPage() {
   const router = useRouter();
-  const { companies, loading } = useCompanies();
-  const { jobPosts } = useJobPosts();
-  const { reviews } = useReviews();
   const t = useTranslations();
   
   const [searchTerm, setSearchTerm] = useState("");
@@ -43,6 +40,20 @@ export default function AllCompaniesPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const companiesPerPage = 9;
+  const { companies, totalItems, totalPages, loading } = useCompanies({
+    page: currentPage,
+    pageSize: companiesPerPage,
+    search: searchTerm || undefined,
+    industry: industryFilter === "all" ? undefined : industryFilter,
+    location: locationFilter === "all" ? undefined : locationFilter,
+    employees: sizeFilter === "all" ? undefined : sizeFilter,
+  });
+  const { jobPosts } = useJobPosts();
+  const { reviews } = useReviews();
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, industryFilter, locationFilter, sizeFilter]);
 
   // Calculate company statistics
   const companiesWithStats = useMemo(() => {
@@ -62,40 +73,7 @@ export default function AllCompaniesPage() {
     });
   }, [companies, jobPosts, reviews]);
 
-  const filteredCompanies = useMemo(() => {
-    let filtered = companiesWithStats;
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (company) =>
-          company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          company.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          company.industry?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (Array.isArray(company.tags) && company.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()))),
-      );
-    }
-
-    if (industryFilter !== "all") {
-      filtered = filtered.filter((company) => company.industry === industryFilter);
-    }
-
-    if (locationFilter !== "all") {
-      filtered = filtered.filter((company) => company.location === locationFilter);
-    }
-
-    if (sizeFilter !== "all") {
-      filtered = filtered.filter((company) => company.employees === sizeFilter);
-    }
-
-    return filtered;
-  }, [companiesWithStats, searchTerm, industryFilter, locationFilter, sizeFilter]);
-
-  const totalPages = Math.ceil(filteredCompanies.length / companiesPerPage);
-  const currentCompanies = useMemo(() => {
-    const startIndex = (currentPage - 1) * companiesPerPage;
-    const endIndex = startIndex + companiesPerPage;
-    return filteredCompanies.slice(startIndex, endIndex);
-  }, [filteredCompanies, currentPage, companiesPerPage]);
+  const currentCompanies = companiesWithStats;
 
   const uniqueIndustries = useMemo(() => {
     const industries = new Set(
@@ -236,7 +214,7 @@ export default function AllCompaniesPage() {
 
       {/* Results */}
       <section className="container mx-auto px-4 py-8">
-        {filteredCompanies.length === 0 ? (
+        {currentCompanies.length === 0 ? (
           <div className="text-center text-gray-500 py-10">
             <Building2 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
             <h3 className="text-lg font-semibold mb-2">{t('AllCompaniesPage.no_companies')}</h3>
@@ -246,7 +224,7 @@ export default function AllCompaniesPage() {
           <>
             <div className="mb-4">
               <p className="text-gray-600">
-                {t('AllCompaniesPage.showing')} {currentCompanies.length} {t('AllCompaniesPage.of')} {filteredCompanies.length} {t('AllCompaniesPage.companies')}
+                {t('AllCompaniesPage.showing')} {currentCompanies.length} {t('AllCompaniesPage.of')} {totalItems} {t('AllCompaniesPage.companies')}
               </p>
             </div>
 

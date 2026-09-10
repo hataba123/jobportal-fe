@@ -2,6 +2,30 @@ import axiosInstance from "@/lib/axiosInstance";
 import { Company } from "@/types/Company";
 import { JobPost } from "@/types/JobPost";
 import { Review } from "@/types/Review";
+import { normalizePage, type NormalizedPage, type PageResponse } from "./contract";
+
+export type CompanyPageQuery = {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  industry?: string;
+  location?: string;
+  employees?: string;
+};
+
+export const fetchCompaniesPage = async ({
+  page = 1,
+  pageSize = 20,
+  search,
+  industry,
+  location,
+  employees,
+}: CompanyPageQuery = {}): Promise<NormalizedPage<Company>> => {
+  const response = await axiosInstance.get<PageResponse<Company>>("/companies", {
+    params: { page, pageSize, search, industry, location, employees },
+  });
+  return normalizePage(response.data, { page, pageSize });
+};
 
 /**
  * Fetch all companies
@@ -126,4 +150,4 @@ export const deleteCompany = async (id: string): Promise<void> => {
     }
     throw new Error("Không thể xóa công ty. Vui lòng thử lại sau.");
   }
-}; 
+};

@@ -13,4 +13,5 @@ export interface Company {
   tags?: string[];
   verificationStatus?: "Pending" | "Verified" | "Rejected";
   verifiedAt?: string;
+  version?: string;
 }
