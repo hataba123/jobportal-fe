@@ -50,10 +50,12 @@ import {
   XCircle,
   ExternalLink,
   Copy,
+  Download,
 } from "lucide-react";
-import { toBackendUrl } from "@/lib/api/url";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import PdfPreviewDrawer from "@/components/common/PdfPreviewDrawer";
+import { generateGoogleCalendarUrl, downloadIcsFile } from "@/utils/calendar";
 
 const ApplicationsPage = () => {
   const { user } = useAuth();
@@ -80,6 +82,14 @@ const ApplicationsPage = () => {
   const [meetingUrl, setMeetingUrl] = useState("https://meet.google.com/new");
   const [interviewNotes, setInterviewNotes] = useState("");
   const [submittingSchedule, setSubmittingSchedule] = useState(false);
+
+  // PDF Inline Preview Drawer State
+  const [previewCvState, setPreviewCvState] = useState<{
+    isOpen: boolean;
+    cvUrl?: string | null;
+    candidateName?: string;
+    jobTitle?: string;
+  }>({ isOpen: false });
 
   const fetchCandidates = async () => {
     setLoading(true);
@@ -237,19 +247,6 @@ const ApplicationsPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <FileText className="h-6 w-6 text-blue-600" />
-            <span>Quản lý Đơn tuyển dụng & Phỏng vấn</span>
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Theo dõi hồ sơ ứng viên nộp đơn và chủ động thiết lập lịch phỏng vấn trực tuyến hoặc trực tiếp
-          </p>
-        </div>
-      </div>
-
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full max-w-md grid-cols-2 p-1 bg-slate-100 rounded-2xl">
           <TabsTrigger
@@ -492,18 +489,58 @@ const ApplicationsPage = () => {
                       </div>
 
                       {/* Action buttons */}
-                      <div className="flex items-center justify-between gap-2 pt-1">
-                        {item.format === "online" && item.status === "Scheduled" && (
-                          <a
-                            href={item.meetingUrl ?? "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
-                          >
-                            <span>Vào phòng phỏng vấn</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        )}
+                      <div className="flex items-center justify-between gap-2 pt-1 flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {item.format === "online" && item.status === "Scheduled" && (
+                            <a
+                              href={item.meetingUrl ?? "#"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline mr-1"
+                            >
+                              <span>Vào phòng</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+
+                          {item.status === "Scheduled" && (
+                            <>
+                              <a
+                                href={generateGoogleCalendarUrl({
+                                  title: `Phỏng vấn: ${item.candidateName} - Vị trí ${item.jobTitle}`,
+                                  description: `Buổi phỏng vấn tuyển dụng vị trí ${item.jobTitle}.\nỨng viên: ${item.candidateName}\nĐường dẫn: ${item.meetingUrl || "N/A"}\nGhi chú: ${item.notes || ""}`,
+                                  location: item.meetingUrl || "Trực tuyến",
+                                  startDate: item.scheduledAt,
+                                })}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600 hover:text-blue-600 px-2 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
+                                title="Thêm vào Google Calendar"
+                              >
+                                <Calendar className="w-3 h-3 text-blue-600" />
+                                <span>Google Cal</span>
+                              </a>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  downloadIcsFile({
+                                    title: `Phỏng vấn: ${item.candidateName} - ${item.jobTitle}`,
+                                    description: `Buổi phỏng vấn vị trí ${item.jobTitle}.\nỨng viên: ${item.candidateName}\nLink: ${item.meetingUrl || ""}\n${item.notes || ""}`,
+                                    location: item.meetingUrl || "Trực tuyến",
+                                    startDate: item.scheduledAt,
+                                    filename: `phong-van-${item.candidateName.replace(/\s+/g, "_")}.ics`,
+                                  })
+                                }
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600 hover:text-blue-600 px-2 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
+                                title="Tải file lịch .ics"
+                              >
+                                <Download className="w-3 h-3 text-slate-500" />
+                                <span>.ICS</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
 
                         <div className="flex items-center gap-2 ml-auto">
                           {item.status === "Scheduled" && (
@@ -635,15 +672,21 @@ const ApplicationsPage = () => {
                             </TableCell>
                             <TableCell>
                               {app.cvUrl ? (
-                                <a
-                                  href={toBackendUrl(app.cvUrl)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center text-blue-600 hover:text-blue-800 font-semibold underline"
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setPreviewCvState({
+                                      isOpen: true,
+                                      cvUrl: app.cvUrl,
+                                      candidateName: selectedCandidate?.fullName || "Ứng viên",
+                                      jobTitle: app.jobTitle,
+                                    })
+                                  }
+                                  className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 font-bold bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg border border-blue-200 transition-colors"
                                 >
-                                  <FileText className="h-3.5 w-3.5 mr-1" />
-                                  Xem CV
-                                </a>
+                                  <FileText className="h-3.5 w-3.5 text-blue-600" />
+                                  <span>Xem CV (PDF)</span>
+                                </button>
                               ) : (
                                 <span className="text-gray-400">-</span>
                               )}
@@ -790,6 +833,15 @@ const ApplicationsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* PDF Inline Preview Drawer */}
+      <PdfPreviewDrawer
+        isOpen={previewCvState.isOpen}
+        onClose={() => setPreviewCvState({ isOpen: false })}
+        cvUrl={previewCvState.cvUrl}
+        candidateName={previewCvState.candidateName}
+        jobTitle={previewCvState.jobTitle}
+      />
     </div>
   );
 };

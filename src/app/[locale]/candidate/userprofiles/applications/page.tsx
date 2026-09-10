@@ -39,7 +39,10 @@ import {
   Copy,
   RefreshCw,
   Building2,
+  Download,
+  XCircle,
 } from "lucide-react";
+import { generateGoogleCalendarUrl, downloadIcsFile } from "@/utils/calendar";
 
 type Application = {
   id: string;
@@ -53,6 +56,85 @@ type Application = {
   status: ApplicationStatus;
   version?: string;
 };
+
+function ApplicationStatusStepper({ status }: { status: ApplicationStatus }) {
+  const steps = [
+    { key: "Applied", label: "Đã nộp đơn" },
+    { key: "Screening", label: "Đang xem xét" },
+    { key: "Interview", label: "Phỏng vấn" },
+    { key: "Offer", label: "Đề nghị / Nhận việc" },
+  ];
+
+  const statusToStepIndex: Record<string, number> = {
+    Applied: 0,
+    Screening: 1,
+    Interview: 2,
+    Offer: 3,
+    Hired: 3,
+  };
+
+  const isRejected = status === "Rejected";
+  const isWithdrawn = status === "Withdrawn";
+
+  if (isRejected) {
+    return (
+      <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-medium flex items-center gap-2">
+        <XCircle className="w-4 h-4 text-rose-500 shrink-0" />
+        <span>Hồ sơ chưa phù hợp ở thời điểm hiện tại. Đừng nản lòng, hãy tiếp tục ứng tuyển các cơ hội khác!</span>
+      </div>
+    );
+  }
+
+  if (isWithdrawn) {
+    return (
+      <div className="p-3 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-600 font-medium flex items-center gap-2">
+        <Clock className="w-4 h-4 text-slate-400 shrink-0" />
+        <span>Bạn đã chủ động rút đơn ứng tuyển vị trí này.</span>
+      </div>
+    );
+  }
+
+  const currentStep = statusToStepIndex[status] ?? 0;
+
+  return (
+    <div className="w-full py-2">
+      <div className="flex items-center justify-between relative">
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-200 z-0"></div>
+        <div
+          className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-blue-600 z-0 transition-all duration-300"
+          style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+        ></div>
+
+        {steps.map((step, idx) => {
+          const isPassed = idx <= currentStep;
+          const isCurrent = idx === currentStep;
+          return (
+            <div key={step.key} className="flex flex-col items-center relative z-10">
+              <div
+                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                  isCurrent
+                    ? "bg-blue-600 text-white ring-4 ring-blue-100 shadow-xs"
+                    : isPassed
+                    ? "bg-blue-600 text-white"
+                    : "bg-white border-2 border-slate-300 text-slate-400"
+                }`}
+              >
+                {isPassed ? "✓" : idx + 1}
+              </div>
+              <span
+                className={`text-[11px] font-semibold mt-1.5 text-center ${
+                  isCurrent ? "text-blue-600 font-bold" : isPassed ? "text-slate-800" : "text-slate-400"
+                }`}
+              >
+                {step.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 const getStatusBadge = (status: Application["status"]) => {
   const statusConfig = {
@@ -441,22 +523,62 @@ export default function ApplicationsPage() {
                       </div>
 
                       {/* Action buttons */}
-                      <div className="flex items-center justify-between gap-2 pt-1">
-                        {item.format === "online" && item.status === "Scheduled" ? (
-                          <a
-                            href={item.meetingUrl ?? "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-colors shadow-xs"
-                          >
-                            <span>Tham gia phỏng vấn</span>
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                        ) : (
-                          <span className="text-xs text-slate-400 italic">
-                            Vui lòng có mặt đúng giờ theo lịch hẹn.
-                          </span>
-                        )}
+                      <div className="flex items-center justify-between gap-2 pt-1 flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {item.format === "online" && item.status === "Scheduled" ? (
+                            <a
+                              href={item.meetingUrl ?? "#"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-colors shadow-xs"
+                            >
+                              <span>Tham gia phỏng vấn</span>
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          ) : (
+                            <span className="text-xs text-slate-400 italic">
+                              Vui lòng có mặt đúng giờ theo lịch hẹn.
+                            </span>
+                          )}
+
+                          {item.status === "Scheduled" && (
+                            <>
+                              <a
+                                href={generateGoogleCalendarUrl({
+                                  title: `Phỏng vấn: ${item.jobTitle} - ${item.companyName}`,
+                                  description: `Lịch hẹn phỏng vấn vị trí ${item.jobTitle} tại ${item.companyName}.\nĐịa điểm / Link họp: ${item.meetingUrl || "Chưa có"}\nDặn dò: ${item.notes || ""}`,
+                                  location: item.meetingUrl || "Trực tuyến",
+                                  startDate: item.scheduledAt,
+                                })}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-700 hover:text-blue-600 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
+                                title="Thêm vào Google Calendar"
+                              >
+                                <Calendar className="w-3 h-3 text-blue-600" />
+                                <span>Google Cal</span>
+                              </a>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  downloadIcsFile({
+                                    title: `Phỏng vấn: ${item.jobTitle} - ${item.companyName}`,
+                                    description: `Buổi phỏng vấn vị trí ${item.jobTitle} tại ${item.companyName}.\nLink: ${item.meetingUrl || ""}\n${item.notes || ""}`,
+                                    location: item.meetingUrl || "Trực tuyến",
+                                    startDate: item.scheduledAt,
+                                    filename: `phong-van-${item.jobTitle.replace(/\s+/g, "_")}.ics`,
+                                  })
+                                }
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-700 hover:text-blue-600 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors"
+                                title="Tải file lịch .ics"
+                              >
+                                <Download className="w-3 h-3 text-slate-500" />
+                                <span>.ICS</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -469,9 +591,9 @@ export default function ApplicationsPage() {
 
       {/* Dialog xem chi tiết đơn */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="rounded-3xl p-6">
+        <DialogContent className="rounded-3xl p-6 sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold">Chi tiết đơn ứng tuyển</DialogTitle>
+            <DialogTitle className="text-lg font-bold">Tiến độ & Chi tiết đơn ứng tuyển</DialogTitle>
           </DialogHeader>
           {loadingDetail ? (
             <div className="py-8 text-center text-gray-500">Đang tải...</div>
@@ -479,48 +601,63 @@ export default function ApplicationsPage() {
             (() => {
               const d: Partial<Application> & { [key: string]: unknown } =
                 detail as Partial<Application> & { [key: string]: unknown };
+              const currentStatus =
+                (d.status as Application["status"]) ||
+                selected?.status ||
+                "Applied";
+
               return (
-                <div className="space-y-3 text-xs">
-                  <div>
-                    <b className="text-slate-700">Vị trí:</b> {String(d.jobTitle || selected?.title || "")}
+                <div className="space-y-4 text-xs">
+                  {/* Visual Status Stepper */}
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-2">
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                      Tiến trình xét duyệt hồ sơ:
+                    </p>
+                    <ApplicationStatusStepper status={currentStatus} />
                   </div>
-                  <div>
-                    <b className="text-slate-700">Địa điểm:</b>{" "}
-                    {String(d.location || selected?.location || "")}
-                  </div>
-                  <div>
-                    <b className="text-slate-700">Mức lương:</b>{" "}
-                    {String(d.salary || selected?.salary || "")}
-                  </div>
-                  <div>
-                    <b className="text-slate-700">Mô tả công việc:</b>{" "}
-                    {String(d.description || selected?.description || "")}
-                  </div>
-                  <div>
-                    <b className="text-slate-700">Yêu cầu kỹ năng:</b>{" "}
-                    {String(d.skillsRequired || selected?.skillsRequired || "")}
-                  </div>
-                  <div>
-                    <b className="text-slate-700">Trạng thái:</b>{" "}
-                    {getStatusBadge(
-                      (d.status as Application["status"]) ||
-                        selected?.status ||
-                        "Applied"
-                    )}
-                  </div>
-                  {typeof d.cvUrl === "string" && d.cvUrl ? (
-                    <div className="pt-2">
-                      <a
-                        href={toBackendUrl(d.cvUrl)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-blue-600 underline font-semibold inline-flex items-center gap-1"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>Xem CV đã nộp</span>
-                      </a>
+
+                  <div className="space-y-2.5 pt-1">
+                    <div>
+                      <b className="text-slate-700">Vị trí:</b> {String(d.jobTitle || selected?.title || "")}
                     </div>
-                  ) : null}
+                    <div>
+                      <b className="text-slate-700">Địa điểm:</b>{" "}
+                      {String(d.location || selected?.location || "")}
+                    </div>
+                    <div>
+                      <b className="text-slate-700">Mức lương:</b>{" "}
+                      {String(d.salary || selected?.salary || "")}
+                    </div>
+                    <div>
+                      <b className="text-slate-700">Mô tả công việc:</b>{" "}
+                      {String(d.description || selected?.description || "")}
+                    </div>
+                    <div>
+                      <b className="text-slate-700">Yêu cầu kỹ năng:</b>{" "}
+                      {String(d.skillsRequired || selected?.skillsRequired || "")}
+                    </div>
+                    <div>
+                      <b className="text-slate-700">Trạng thái:</b>{" "}
+                      {getStatusBadge(
+                        (d.status as Application["status"]) ||
+                          selected?.status ||
+                          "Applied"
+                      )}
+                    </div>
+                    {typeof d.cvUrl === "string" && d.cvUrl ? (
+                      <div className="pt-2">
+                        <a
+                          href={toBackendUrl(d.cvUrl)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-600 underline font-semibold inline-flex items-center gap-1"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>Xem CV đã nộp</span>
+                        </a>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               );
             })()
