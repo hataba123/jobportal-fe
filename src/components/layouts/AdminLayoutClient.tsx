@@ -21,6 +21,8 @@ import {
   ShieldCheck,
   ExternalLink,
   Settings,
+  FolderTree,
+  Newspaper,
 } from "lucide-react";
 
 export default function AdminLayoutClient({
@@ -74,6 +76,13 @@ export default function AdminLayoutClient({
       ],
     },
     {
+      title: "Nội dung & Danh mục",
+      items: [
+        { href: "/admin/category", label: "Ngành nghề & Danh mục", icon: FolderTree },
+        { href: "/admin/blog", label: "Bài viết & Cẩm nang", icon: Newspaper },
+      ],
+    },
+    {
       title: "Cấu hình hệ thống",
       items: [
         { href: "/admin/notification", label: "Thông báo hệ thống", icon: Bell },
@@ -98,6 +107,10 @@ export default function AdminLayoutClient({
         return { title: "Quản lý doanh nghiệp", subtitle: "Kiểm duyệt thông tin công ty và hồ sơ pháp lý" };
       case "/admin/review":
         return { title: "Kiểm duyệt đánh giá", subtitle: "Xem xét bình luận, chấm điểm sao và xử lý báo cáo vi phạm" };
+      case "/admin/category":
+        return { title: "Quản lý ngành nghề & danh mục", subtitle: "Chuẩn hóa các nhóm ngành nghề và lĩnh vực hoạt động" };
+      case "/admin/blog":
+        return { title: "Quản lý bài viết & cẩm nang", subtitle: "Biên tập, xuất bản bài viết và cẩm nang định hướng nghề nghiệp" };
       case "/admin/notification":
         return { title: "Thông báo hệ thống", subtitle: "Phát thông báo tới toàn thể người dùng hoặc cá nhân" };
       case "/admin/settings":

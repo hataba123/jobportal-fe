@@ -54,4 +54,49 @@ export const incrementBlogViews = async (id: number): Promise<void> => {
 export const toggleBlogLike = async (id: number): Promise<{ likes: number; isLiked: boolean }> => {
   const response = await axiosInstance.post(`/blogs/${id}/like`);
   return response.data;
+};
+
+// Create blog
+export const createBlog = async (data: {
+  title: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  tags?: string[];
+  readTime?: string;
+  image?: string;
+  featured?: boolean;
+  authorId?: number;
+}): Promise<Blog> => {
+  const response = await axiosInstance.post('/blogs', {
+    ...data,
+    tags: data.tags || [],
+    readTime: data.readTime || '5 min',
+    image: data.image || '/images/default-blog.jpg',
+    authorId: data.authorId || 1,
+  });
+  return response.data;
+};
+
+// Update blog
+export const updateBlog = async (
+  id: number,
+  data: Partial<{
+    title: string;
+    excerpt: string;
+    content: string;
+    category: string;
+    tags: string[];
+    readTime: string;
+    image: string;
+    featured: boolean;
+  }>
+): Promise<Blog> => {
+  const response = await axiosInstance.put(`/blogs/${id}`, data);
+  return response.data;
+};
+
+// Delete blog
+export const deleteBlog = async (id: number): Promise<void> => {
+  await axiosInstance.delete(`/blogs/${id}`);
 }; 
