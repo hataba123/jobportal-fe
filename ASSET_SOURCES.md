@@ -2,7 +2,16 @@
 
 ## Logo công ty
 
-Logo giả của `JobPortal Demo Company` được backend trả về từ `/uploads/logo/jobportal-demo.svg`; nguồn gốc và license được ghi trong tài liệu asset của từng backend.
+Backend seed trả về logo riêng cho từng công ty demo qua `/uploads/logo/...`:
+
+- `JobPortal Demo Company` — `/uploads/logo/jobportal-demo.svg`
+- `Microsoft Vietnam (Demo)` — `/uploads/logo/company-microsoft.svg`
+- `Google Vietnam (Demo)` — `/uploads/logo/company-google.svg`
+- `Amazon Web Services (Demo)` — `/uploads/logo/company-amazon.svg`
+- `GitHub Vietnam (Demo)` — `/uploads/logo/company-github.svg`
+- `Apple Developer (Demo)` — `/uploads/logo/company-apple.svg`
+
+Nguồn gốc CDN và license được ghi trong tài liệu asset của từng backend. Các tên có hậu tố `(Demo)` chỉ là dữ liệu minh họa.
 
 ## Ảnh blog
 
