@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import CandidateHeader from "@/components/candidate/CandidateHeader";
 import LanguageSwitcher from "@/components/common/LanguageSwitcher";
 import { changePassword } from "@/lib/api/auth";
+import { fetchUserSettings, updateUserSettings } from "@/lib/api/user-settings";
 import { useAuth } from "@/contexts/AuthContext";
 import { signOut } from "next-auth/react";
 import { useRouter } from "@/i18n/navigation";
@@ -34,22 +35,43 @@ export default function SettingsPage() {
     jobAlerts: true,
     marketingEmails: false,
     profileVisibility: true,
+    applicationUpdates: true,
   });
 
-  // Tải cài đặt đã lưu từ localStorage
   useEffect(() => {
-    if (typeof window !== "undefined" && user?.id) {
-      const savedPhone = localStorage.getItem(`cand_phone_${user.id}`);
-      if (savedPhone) setPhone(savedPhone);
-      const saved = localStorage.getItem(`cand_prefs_${user.id}`);
-      if (saved) {
-        try {
-          setSettings(JSON.parse(saved));
-        } catch {
-          // ignore
+    if (!user?.id) return;
+    let disposed = false;
+    const loadSettings = async () => {
+      try {
+        const remote = await fetchUserSettings();
+        if (disposed) return;
+        setPhone(remote.phone ?? "");
+        setSettings((current) => ({
+          ...current,
+          emailNotifications: remote.emailNotifications,
+          jobAlerts: remote.jobAlerts,
+          marketingEmails: remote.marketingEmails,
+          profileVisibility: remote.profileVisibility,
+          applicationUpdates: remote.applicationUpdates,
+        }));
+      } catch {
+        // Tương thích một lần với dữ liệu cũ còn ở localStorage.
+        if (typeof window === "undefined" || disposed) return;
+        const savedPhone = localStorage.getItem(`cand_phone_${user.id}`);
+        if (savedPhone) setPhone(savedPhone);
+        const saved = localStorage.getItem(`cand_prefs_${user.id}`);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved) as Partial<typeof settings>;
+            setSettings((current) => ({ ...current, ...parsed }));
+          } catch {
+            // Bỏ qua dữ liệu local cũ không hợp lệ.
+          }
         }
       }
-    }
+    };
+    void loadSettings();
+    return () => { disposed = true; };
   }, [user?.id]);
 
   const [passwordForm, setPasswordForm] = useState({
@@ -60,6 +82,7 @@ export default function SettingsPage() {
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
 
   const handlePasswordChange = async () => {
     setPasswordMessage(null);
@@ -92,23 +115,41 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveProfileSettings = () => {
-    if (user?.id && typeof window !== "undefined") {
-      localStorage.setItem(`cand_phone_${user.id}`, phone);
-      localStorage.setItem(`cand_prefs_${user.id}`, JSON.stringify(settings));
+  const handleSaveProfileSettings = async () => {
+    if (!user?.id) return;
+    setSavingSettings(true);
+    try {
+      const saved = await updateUserSettings({ phone: phone || null, ...settings });
+      setPhone(saved.phone ?? "");
+      setSettings({
+        emailNotifications: saved.emailNotifications,
+        jobAlerts: saved.jobAlerts,
+        marketingEmails: saved.marketingEmails,
+        profileVisibility: saved.profileVisibility,
+        applicationUpdates: saved.applicationUpdates,
+      });
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(`cand_phone_${user.id}`);
+        localStorage.removeItem(`cand_prefs_${user.id}`);
+      }
+      toast.success("Đã lưu thông tin tài khoản thành công!");
+    } catch {
+      toast.error("Không thể lưu cài đặt. Vui lòng thử lại.");
+    } finally {
+      setSavingSettings(false);
     }
-    toast.success("Đã lưu thông tin tài khoản thành công!");
   };
 
-  const handleSettingChange = (key: string, value: boolean) => {
-    setSettings((prev) => {
-      const next = { ...prev, [key]: value };
-      if (user?.id && typeof window !== "undefined") {
-        localStorage.setItem(`cand_prefs_${user.id}`, JSON.stringify(next));
-      }
-      return next;
-    });
-    toast.success("Đã cập nhật tùy chọn.");
+  const handleSettingChange = async (key: keyof typeof settings, value: boolean) => {
+    const nextSettings = { ...settings, [key]: value };
+    setSettings(nextSettings);
+    if (!user?.id) return;
+    try {
+      await updateUserSettings({ phone: phone || null, ...nextSettings });
+      toast.success("Đã cập nhật tùy chọn.");
+    } catch {
+      toast.error("Không thể cập nhật tùy chọn. Vui lòng thử lại.");
+    }
   };
 
   return (
@@ -162,9 +203,10 @@ export default function SettingsPage() {
               </div>
               <Button
                 onClick={handleSaveProfileSettings}
+                disabled={savingSettings}
                 className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs"
               >
-                Lưu thay đổi
+                {savingSettings ? "Đang lưu..." : "Lưu thay đổi"}
               </Button>
             </CardContent>
           </Card>
@@ -291,6 +333,42 @@ export default function SettingsPage() {
                   checked={settings.jobAlerts}
                   onCheckedChange={(checked) =>
                     handleSettingChange("jobAlerts", checked)
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <div>
+                  <Label htmlFor="applicationUpdates" className="text-sm font-bold text-slate-800">
+                    Cập nhật hồ sơ ứng tuyển
+                  </Label>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Nhận email khi trạng thái hồ sơ hoặc lịch phỏng vấn thay đổi
+                  </p>
+                </div>
+                <Switch
+                  id="applicationUpdates"
+                  checked={settings.applicationUpdates}
+                  onCheckedChange={(checked) =>
+                    handleSettingChange("applicationUpdates", checked)
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <div>
+                  <Label htmlFor="marketingEmails" className="text-sm font-bold text-slate-800">
+                    Tin tuyển dụng và ưu đãi
+                  </Label>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Cho phép gửi bản tin và thông tin chương trình phù hợp
+                  </p>
+                </div>
+                <Switch
+                  id="marketingEmails"
+                  checked={settings.marketingEmails}
+                  onCheckedChange={(checked) =>
+                    handleSettingChange("marketingEmails", checked)
                   }
                 />
               </div>

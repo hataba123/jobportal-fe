@@ -17,6 +17,7 @@ tags:
   - name: Notifications
   - name: Matches
   - name: Payments
+  - name: User Preferences
 paths:
   /auth/register:
     post:
@@ -143,6 +144,51 @@ paths:
       responses:
         '200': { description: Công ty đã được xác minh, content: { application/json: { schema: { $ref: '#/components/schemas/Company' } } } }
         '404': { $ref: '#/components/responses/NotFound' }
+  /user-settings:
+    get:
+      tags: [User Preferences]
+      operationId: getUserSettings
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Tùy chọn của người dùng hiện tại, content: { application/json: { schema: { $ref: '#/components/schemas/UserSettings' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    put:
+      tags: [User Preferences]
+      operationId: updateUserSettings
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserSettings' }
+      responses:
+        '200': { description: Đã cập nhật tùy chọn, content: { application/json: { schema: { $ref: '#/components/schemas/UserSettings' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /company-follows:
+    get:
+      tags: [User Preferences]
+      operationId: listFollowedCompanies
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Danh sách công ty đang theo dõi, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/CompanyFollow' } } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /company-follows/{companyId}:
+    parameters:
+      - { name: companyId, in: path, required: true, schema: { $ref: '#/components/schemas/Uuid' } }
+    post:
+      tags: [User Preferences]
+      operationId: followCompany
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Đã theo dõi công ty, content: { application/json: { schema: { $ref: '#/components/schemas/CompanyFollow' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [User Preferences]
+      operationId: unfollowCompany
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Đã bỏ theo dõi công ty }
   /admin/companies/{id}/verification:
     parameters: [{ $ref: '#/components/parameters/Id' }]
     patch:
@@ -592,6 +638,26 @@ components:
         email: { type: string, format: email }
         fullName: { type: string }
         role: { type: integer, enum: [0, 1, 2] }
+    UserSettings:
+      type: object
+      properties:
+        phone: { type: string, nullable: true, maxLength: 30 }
+        emailNotifications: { type: boolean, default: true }
+        jobAlerts: { type: boolean, default: true }
+        marketingEmails: { type: boolean, default: false }
+        profileVisibility: { type: boolean, default: true }
+        applicationUpdates: { type: boolean, default: true }
+    CompanyFollow:
+      type: object
+      required: [id, companyId, name, followedAt]
+      properties:
+        id: { $ref: '#/components/schemas/Uuid' }
+        companyId: { $ref: '#/components/schemas/Uuid' }
+        name: { type: string }
+        logo: { type: string, nullable: true }
+        industry: { type: string, nullable: true }
+        location: { type: string, nullable: true }
+        followedAt: { $ref: '#/components/schemas/DateTime' }
     JobPostWrite:
       type: object
       required: [title, description, location, salary, categoryId]
@@ -821,6 +887,7 @@ components:
         page: { type: integer }
         pageSize: { type: integer }
         total: { type: integer }
+        isPending: { type: boolean, description: Kết quả đang được worker cập nhật }
     ServicePlan:
       type: object
       required: [id, name, price, currency, entitlements]

@@ -15,8 +15,12 @@ import {
 } from "lucide-react";
 import { fetchSavedJobs, unsaveJob } from "@/lib/api/saved-job";
 import {
+  fetchFollowedCompanies,
+  clearFollowedCompanies,
+  followCompanyRemote,
   getFollowedCompanies,
   toggleFollowCompany,
+  unfollowCompanyRemote,
   FollowedCompany,
 } from "@/lib/api/company-follow";
 import { useAuth } from "@/contexts/AuthContext";
@@ -62,14 +66,46 @@ export default function SavedJobsAndCompaniesPage() {
       })
       .finally(() => setLoading(false));
 
-    // Load followed companies
-    setFollowedCompanies(getFollowedCompanies(user?.id));
+    // Tài khoản đăng nhập đọc dữ liệu bền vững từ backend; localStorage vẫn
+    // được dùng cho khách hoặc khi backend tạm thời không sẵn sàng.
+    let active = true;
+    const loadFollowedCompanies = async () => {
+      if (user?.id) {
+        try {
+          let remote = await fetchFollowedCompanies();
+          const local = getFollowedCompanies(user.id);
+          const migrationKey = `jobportal_follow_migrated_${user.id}`;
+          if (local.length > 0 && !localStorage.getItem(migrationKey)) {
+            const confirmed = window.confirm(
+              `Đồng bộ ${local.length} công ty đang theo dõi sang tài khoản của bạn?`,
+            );
+            localStorage.setItem(migrationKey, "1");
+            if (confirmed) {
+              await Promise.allSettled(
+                local.map((company) => followCompanyRemote(String(company.id))),
+              );
+              clearFollowedCompanies(user.id);
+              remote = await fetchFollowedCompanies();
+            }
+          }
+          if (active) setFollowedCompanies(remote);
+          return;
+        } catch {
+          // Fallback để không làm mất dữ liệu cũ trong lúc chuyển đổi.
+        }
+      }
+      if (active) setFollowedCompanies(getFollowedCompanies(user?.id));
+    };
+    void loadFollowedCompanies();
 
     const handleFollowChange = () => {
       setFollowedCompanies(getFollowedCompanies(user?.id));
     };
     window.addEventListener("company_follow_changed", handleFollowChange);
-    return () => window.removeEventListener("company_follow_changed", handleFollowChange);
+    return () => {
+      active = false;
+      window.removeEventListener("company_follow_changed", handleFollowChange);
+    };
   }, [user?.id]);
 
   const handleRemoveJob = async (jobPostId: string) => {
@@ -82,10 +118,15 @@ export default function SavedJobsAndCompaniesPage() {
     }
   };
 
-  const handleUnfollowCompany = (company: FollowedCompany) => {
-    toggleFollowCompany(company, user?.id);
-    setFollowedCompanies((prev) => prev.filter((c) => String(c.id) !== String(company.id)));
-    toast.success(`Đã bỏ theo dõi công ty ${company.name}.`);
+  const handleUnfollowCompany = async (company: FollowedCompany) => {
+    try {
+      if (user?.id) await unfollowCompanyRemote(String(company.id));
+      else toggleFollowCompany(company, user?.id);
+      setFollowedCompanies((prev) => prev.filter((c) => String(c.id) !== String(company.id)));
+      toast.success(`Đã bỏ theo dõi công ty ${company.name}.`);
+    } catch {
+      toast.error("Bỏ theo dõi thất bại. Vui lòng thử lại.");
+    }
   };
 
   return (
@@ -117,7 +158,13 @@ export default function SavedJobsAndCompaniesPage() {
 
         {/* Tab 1: Saved Jobs */}
         <TabsContent value="jobs" className="space-y-4">
-          {savedJobs.length === 0 ? (
+          {loading ? (
+            <Card className="rounded-3xl border border-slate-200">
+              <CardContent className="p-12 text-center text-sm text-slate-500">
+                Đang tải danh sách đã lưu...
+              </CardContent>
+            </Card>
+          ) : savedJobs.length === 0 ? (
             <Card className="rounded-3xl border border-slate-200">
               <CardContent className="p-12 text-center">
                 <Bookmark className="w-16 h-16 text-slate-300 mx-auto mb-4" />

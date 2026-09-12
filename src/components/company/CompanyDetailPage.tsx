@@ -34,7 +34,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { isCompanyFollowed, toggleFollowCompany } from "@/lib/api/company-follow";
+import {
+  fetchFollowedCompanies,
+  followCompanyRemote,
+  isCompanyFollowed,
+  toggleFollowCompany,
+  unfollowCompanyRemote,
+} from "@/lib/api/company-follow";
 
 interface CompanyDetailPageProps {
   companyId: string;
@@ -57,24 +63,53 @@ export default function CompanyDetailPage({
   const [isFollowed, setIsFollowed] = useState(false);
 
   useEffect(() => {
-    if (companyId) {
-      setIsFollowed(isCompanyFollowed(companyId, user?.id));
-    }
-  }, [companyId, user?.id]);
+    let cancelled = false;
+    if (!companyId) return;
 
-  const handleFollowToggle = () => {
+    if (!isAuthenticated) {
+      setIsFollowed(isCompanyFollowed(companyId, user?.id));
+      return;
+    }
+
+    fetchFollowedCompanies()
+      .then((companies) => {
+        if (!cancelled)
+          setIsFollowed(companies.some((item) => String(item.id) === String(companyId)));
+      })
+      .catch(() => {
+        if (!cancelled) setIsFollowed(isCompanyFollowed(companyId, user?.id));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [companyId, isAuthenticated, user?.id]);
+
+  const handleFollowToggle = async () => {
     if (!company) return;
-    const nextState = toggleFollowCompany(
-      {
-        id: String(company.id),
-        name: company.name,
-        logo: company.logo,
-        industry: company.industry,
-        location: company.location,
-      },
-      user?.id
-    );
+    const nextState = !isFollowed;
     setIsFollowed(nextState);
+    try {
+      if (isAuthenticated) {
+        if (nextState) await followCompanyRemote(String(company.id));
+        else await unfollowCompanyRemote(String(company.id));
+      } else {
+        toggleFollowCompany(
+          {
+            id: String(company.id),
+            name: company.name,
+            logo: company.logo,
+            industry: company.industry,
+            location: company.location,
+          },
+          user?.id
+        );
+      }
+    } catch {
+      setIsFollowed(!nextState);
+      toast.error("Không thể cập nhật theo dõi. Vui lòng thử lại.");
+      return;
+    }
     if (nextState) {
       toast.success(`Đã theo dõi ${company.name}.`);
     } else {

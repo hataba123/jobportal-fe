@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { changePassword } from "@/lib/api/auth";
+import { fetchUserSettings, updateUserSettings } from "@/lib/api/user-settings";
 import { signOut } from "next-auth/react";
 import { toast } from "sonner";
 import { Bell, Building2, Lock, ShieldCheck, KeyRound } from "lucide-react";
@@ -20,31 +21,70 @@ export default function RecruiterSettingsPage() {
   const [preferences, setPreferences] = useState({
     emailNotifications: true,
     applicationUpdates: true,
+    jobAlerts: true,
+    marketingEmails: false,
+    profileVisibility: true,
   });
+  const [phone, setPhone] = useState<string | null>(null);
+  const [savingPreferences, setSavingPreferences] = useState(false);
 
-  // Load preferences from localStorage if exists
   useEffect(() => {
-    if (typeof window !== "undefined" && user?.id) {
-      const saved = localStorage.getItem(`recruiter_prefs_${user.id}`);
-      if (saved) {
-        try {
-          setPreferences(JSON.parse(saved));
-        } catch {
-          // ignore
+    if (!user?.id) return;
+    let disposed = false;
+    const loadSettings = async () => {
+      try {
+        const remote = await fetchUserSettings();
+        if (disposed) return;
+        setPhone(remote.phone);
+        setPreferences({
+          emailNotifications: remote.emailNotifications,
+          applicationUpdates: remote.applicationUpdates,
+          jobAlerts: remote.jobAlerts,
+          marketingEmails: remote.marketingEmails,
+          profileVisibility: remote.profileVisibility,
+        });
+      } catch {
+        if (typeof window === "undefined" || disposed) return;
+        const saved = localStorage.getItem(`recruiter_prefs_${user.id}`);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved) as Partial<typeof preferences>;
+            setPreferences((current) => ({ ...current, ...parsed }));
+          } catch {
+            // Bỏ qua dữ liệu local cũ không hợp lệ.
+          }
         }
       }
-    }
+    };
+    void loadSettings();
+    return () => { disposed = true; };
   }, [user?.id]);
 
   const updatePreference = (key: keyof typeof preferences, value: boolean) => {
     setPreferences((current) => ({ ...current, [key]: value }));
   };
 
-  const handleSavePreferences = () => {
-    if (user?.id && typeof window !== "undefined") {
-      localStorage.setItem(`recruiter_prefs_${user.id}`, JSON.stringify(preferences));
+  const handleSavePreferences = async () => {
+    if (!user?.id) return;
+    setSavingPreferences(true);
+    try {
+      const saved = await updateUserSettings({ phone, ...preferences });
+      setPhone(saved.phone);
+      setPreferences({
+        emailNotifications: saved.emailNotifications,
+        applicationUpdates: saved.applicationUpdates,
+        jobAlerts: saved.jobAlerts,
+        marketingEmails: saved.marketingEmails,
+        profileVisibility: saved.profileVisibility,
+      });
+      if (typeof window !== "undefined")
+        localStorage.removeItem(`recruiter_prefs_${user.id}`);
+      toast.success("Đã lưu các tùy chọn thông báo nhà tuyển dụng!");
+    } catch {
+      toast.error("Không thể lưu tùy chọn. Vui lòng thử lại.");
+    } finally {
+      setSavingPreferences(false);
     }
-    toast.success("Đã lưu các tùy chọn thông báo nhà tuyển dụng!");
   };
 
   // Password change state
@@ -228,9 +268,39 @@ export default function RecruiterSettingsPage() {
               }
             />
           </div>
+          <div className="flex items-center justify-between gap-4 py-2 border-t border-slate-100">
+            <div>
+              <Label htmlFor="job-alerts" className="text-sm font-bold text-slate-800">
+                Cảnh báo việc làm
+              </Label>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Nhận thông tin về các cập nhật việc làm liên quan đến doanh nghiệp.
+              </p>
+            </div>
+            <Switch
+              id="job-alerts"
+              checked={preferences.jobAlerts}
+              onCheckedChange={(value) => updatePreference("jobAlerts", value)}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4 py-2">
+            <div>
+              <Label htmlFor="marketing-emails" className="text-sm font-bold text-slate-800">
+                Bản tin và ưu đãi
+              </Label>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Cho phép gửi bản tin sản phẩm và chương trình dành cho nhà tuyển dụng.
+              </p>
+            </div>
+            <Switch
+              id="marketing-emails"
+              checked={preferences.marketingEmails}
+              onCheckedChange={(value) => updatePreference("marketingEmails", value)}
+            />
+          </div>
           <div className="pt-2">
-            <Button onClick={handleSavePreferences} className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs">
-              Lưu tùy chọn
+            <Button onClick={handleSavePreferences} disabled={savingPreferences} className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs">
+              {savingPreferences ? "Đang lưu..." : "Lưu tùy chọn"}
             </Button>
           </div>
         </CardContent>

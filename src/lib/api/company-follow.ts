@@ -1,3 +1,5 @@
+import axiosInstance from "@/lib/axiosInstance";
+
 /**
  * Quản lý theo dõi công ty (Follow Company) cho ứng viên
  * Dữ liệu lưu trữ bền vững theo userId của ứng viên
@@ -12,10 +14,20 @@ export interface FollowedCompany {
   followedAt?: string;
 }
 
+type CompanyFollowResponse = FollowedCompany & {
+  companyId?: string;
+};
+
 const STORAGE_PREFIX = "jobportal_followed_companies_";
 
 function getStorageKey(userId?: string): string {
   return `${STORAGE_PREFIX}${userId || "guest"}`;
+}
+
+export function clearFollowedCompanies(userId?: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(getStorageKey(userId));
+  window.dispatchEvent(new CustomEvent("company_follow_changed"));
 }
 
 export function getFollowedCompanies(userId?: string): FollowedCompany[] {
@@ -68,4 +80,35 @@ export function toggleFollowCompany(
     console.error("Error toggling followed company:", error);
     return false;
   }
+}
+
+export async function fetchFollowedCompanies(): Promise<FollowedCompany[]> {
+  const response = await axiosInstance.get<CompanyFollowResponse[]>("/company-follows");
+  return response.data.map((item) => ({
+    id: String(item.companyId ?? item.id),
+    name: item.name,
+    logo: item.logo,
+    industry: item.industry,
+    location: item.location,
+    followedAt: item.followedAt,
+  }));
+}
+
+export async function followCompanyRemote(companyId: string): Promise<FollowedCompany> {
+  const response = await axiosInstance.post<CompanyFollowResponse>(
+    `/company-follows/${encodeURIComponent(companyId)}`,
+  );
+  const item = response.data;
+  return {
+    id: String(item.companyId ?? item.id),
+    name: item.name,
+    logo: item.logo,
+    industry: item.industry,
+    location: item.location,
+    followedAt: item.followedAt,
+  };
+}
+
+export async function unfollowCompanyRemote(companyId: string): Promise<void> {
+  await axiosInstance.delete(`/company-follows/${encodeURIComponent(companyId)}`);
 }
