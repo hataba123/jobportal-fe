@@ -28,7 +28,6 @@ import {
   BarChart3,
   SlidersHorizontal,
 } from "lucide-react";
-import { useFeaturedJobs } from "@/hooks/useFeaturedJobs";
 import { useCategories } from "@/hooks/useCategories";
 import { useJobPosts } from "@/hooks/useJobPosts";
 import { useCompanies } from "@/hooks/useCompanies";
@@ -77,9 +76,8 @@ export default function HomepageContent() {
 
   const searchBoxRef = useRef<HTMLDivElement>(null);
 
-  const { jobs: featuredJobs, loading } = useFeaturedJobs();
   const { categories, loading: loadingCategories } = useCategories();
-  const { jobPosts } = useJobPosts();
+  const { jobPosts, loading } = useJobPosts();
   const { companies, loading: loadingCompanies } = useCompanies();
   const { reviews, loading: loadingReviews } = useReviews();
 
@@ -352,7 +350,7 @@ export default function HomepageContent() {
               </div>
             ))}
           </div>
-        ) : featuredJobs.length === 0 ? (
+        ) : jobPosts.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl border border-slate-200/80 p-8">
             <Briefcase className="w-12 h-12 text-slate-300 mx-auto mb-3" />
             <p className="text-base font-semibold text-slate-700">{t("no_featured_jobs")}</p>
@@ -360,7 +358,7 @@ export default function HomepageContent() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredJobs.slice(0, 9).map((job) => (
+            {jobPosts.slice(0, 9).map((job) => (
               <div
                 key={job.id}
                 onClick={() => router.push(`/candidate/job/${job.id}`)}
