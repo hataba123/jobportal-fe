@@ -46,6 +46,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(false);
   }, [session]);
 
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      if (!user) return;
+      setUser(null);
+      void signOut({ redirect: false });
+      router.push("/candidate/auth/login");
+    };
+    window.addEventListener("jobportal:session-expired", handleSessionExpired);
+    return () => window.removeEventListener("jobportal:session-expired", handleSessionExpired);
+  }, [router, user]);
+
   const login = async (credentials: LoginCredentials) => {
     const result = await signIn("credentials", {
       ...credentials,

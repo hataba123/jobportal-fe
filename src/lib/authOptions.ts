@@ -147,8 +147,9 @@ export const authOptions: NextAuthOptions = {
         oauthUser.jwt = response.data.token;
         oauthUser.backendUser = normalizeBackendUser(response.data.user);
         return true;
-      } catch (error: unknown) {
-        console.error("OAuth login failed", error);
+      } catch {
+        // Không log object Axios vì có thể chứa access token hoặc header bí mật.
+        console.error("OAuth login failed");
         return false;
       }
     },

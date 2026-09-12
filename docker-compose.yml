@@ -6,6 +6,10 @@ services:
     environment:
       NODE_ENV: production
       BACKEND_API_URL: ${BACKEND_API_URL:?Set BACKEND_API_URL in the environment}
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:?Set NEXTAUTH_URL in the environment}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?Set NEXTAUTH_SECRET in the environment}
       OAUTH_EXCHANGE_SECRET: ${OAUTH_EXCHANGE_SECRET:?Set OAUTH_EXCHANGE_SECRET in the environment}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?Set GOOGLE_CLIENT_ID in the environment}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?Set GOOGLE_CLIENT_SECRET in the environment}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:?Set GITHUB_CLIENT_ID in the environment}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:?Set GITHUB_CLIENT_SECRET in the environment}

@@ -11,4 +11,17 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
+if (typeof window !== "undefined") {
+  axiosInstance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      const requestUrl = String(error.config?.url ?? "");
+      if (error.response?.status === 401 && !requestUrl.includes("/auth/")) {
+        window.dispatchEvent(new Event("jobportal:session-expired"));
+      }
+      return Promise.reject(error);
+    },
+  );
+}
+
 export default axiosInstance;

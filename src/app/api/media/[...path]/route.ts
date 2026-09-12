@@ -27,14 +27,23 @@ export async function GET(request: NextRequest, context: RouteContext) {
   if (accept) headers.set("accept", accept);
   if (token && typeof token.jwt === "string") headers.set("authorization", `Bearer ${token.jwt}`);
 
-  const response = await fetch(target, { headers, cache: "no-store" });
+  let response: Response;
+  try {
+    response = await fetch(target, { headers, cache: "no-store", signal: AbortSignal.timeout(30_000) });
+  } catch {
+    return NextResponse.json({ message: "Không thể tải ảnh từ dịch vụ API." }, { status: 502 });
+  }
   const responseHeaders = new Headers();
   for (const name of ["content-type", "cache-control", "etag", "last-modified"]) {
     const value = response.headers.get(name);
     if (value) responseHeaders.set(name, value);
   }
+  if (path.some((segment) => segment.toLowerCase().endsWith(".svg"))) {
+    responseHeaders.set("content-security-policy", "default-src 'none'; sandbox");
+    responseHeaders.set("content-disposition", "attachment");
+  }
 
-  return new NextResponse(await response.arrayBuffer(), {
+  return new NextResponse(response.body, {
     status: response.status,
     headers: responseHeaders,
   });
