@@ -35,4 +35,5 @@ export interface PagedMatches {
   page: number;
   pageSize: number;
   total: number;
+  isPending: boolean;
 }

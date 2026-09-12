@@ -1,23 +1,34 @@
 import { useEffect, useState } from "react";
 import { JobPost } from "@/types/JobPost";
-import axiosInstance from "@/lib/axiosInstance";
+import { fetchPagedJobPosts, type JobPostPageQuery } from "@/lib/api/jobpost";
 
-export function useJobPosts() {
+export function useJobPosts(options: JobPostPageQuery = {}) {
+  const { page = 1, pageSize = 100, search, location, type, categoryId, minSalary } = options;
   const [jobPosts, setJobPosts] = useState<JobPost[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    axiosInstance
-      .get<JobPost[] | { items: JobPost[] }>("/jobpost", {
-        params: { page: 1, pageSize: 100 },
+    let active = true;
+    setLoading(true);
+    setError(null);
+    fetchPagedJobPosts({ page, pageSize, search, location, type, categoryId, minSalary })
+      .then((result) => {
+        if (!active) return;
+        setJobPosts(result.items);
+        setTotalItems(result.totalItems);
+        setTotalPages(result.totalPages);
       })
-      .then((res) =>
-        setJobPosts(Array.isArray(res.data) ? res.data : res.data.items),
-      )
       .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [page, pageSize, search, location, type, categoryId, minSalary]);
 
-  return { jobPosts, loading, error };
+  return { jobPosts, totalItems, totalPages, loading, error };
 }

@@ -15,6 +15,7 @@ export default function CandidateMatchesPage() {
   const [minScore, setMinScore] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
   const loadMatches = useCallback(async () => {
     setLoading(true);
@@ -22,9 +23,14 @@ export default function CandidateMatchesPage() {
     try {
       const result = await fetchRecommendedJobs({ page: 1, pageSize: 50, minScore });
       setMatches(result.items);
+      setPending(result.isPending);
+      if (result.isPending) {
+        window.setTimeout(() => window.location.reload(), 3_000);
+      }
     } catch {
       setError("Không thể tải gợi ý việc làm. Hãy hoàn thiện hồ sơ rồi thử lại.");
       setMatches([]);
+      setPending(false);
     } finally {
       setLoading(false);
     }
@@ -69,6 +75,10 @@ export default function CandidateMatchesPage() {
 
       {loading ? (
         <div className="rounded-xl border bg-white p-10 text-center text-gray-500">Đang tính điểm phù hợp...</div>
+      ) : pending ? (
+        <div className="rounded-xl border border-dashed bg-white p-10 text-center text-gray-500">
+          Hệ thống đang cập nhật gợi ý từ hồ sơ của bạn. Trang sẽ tự làm mới trong ít giây.
+        </div>
       ) : matches.length === 0 ? (
         <div className="rounded-xl border border-dashed bg-white p-10 text-center text-gray-500">
           Chưa có gợi ý phù hợp. Hãy bổ sung kỹ năng và kinh nghiệm trong hồ sơ.

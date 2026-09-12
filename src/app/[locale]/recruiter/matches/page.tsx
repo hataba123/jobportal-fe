@@ -16,6 +16,7 @@ export default function RecruiterMatchesPage() {
   const [matches, setMatches] = useState<MatchResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
   const loadJobs = useCallback(async () => {
     try {
@@ -30,6 +31,7 @@ export default function RecruiterMatchesPage() {
   const loadMatches = useCallback(async () => {
     if (!selectedJobId) {
       setMatches([]);
+      setPending(false);
       setLoading(false);
       return;
     }
@@ -38,9 +40,14 @@ export default function RecruiterMatchesPage() {
     try {
       const result = await rankCandidatesForJob(selectedJobId, { page: 1, pageSize: 100 });
       setMatches(result.items);
+      setPending(result.isPending);
+      if (result.isPending) {
+        window.setTimeout(() => window.location.reload(), 3_000);
+      }
     } catch {
       setError("Không thể xếp hạng ứng viên cho tin này.");
       setMatches([]);
+      setPending(false);
     } finally {
       setLoading(false);
     }
@@ -67,7 +74,7 @@ export default function RecruiterMatchesPage() {
         </CardContent>
       </Card>
       {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
-      {loading ? <div className="rounded-xl border bg-white p-10 text-center text-gray-500">Đang tính điểm...</div> : matches.length === 0 ? <div className="rounded-xl border border-dashed bg-white p-10 text-center text-gray-500">Chưa có ứng viên có hồ sơ phù hợp.</div> : (
+      {loading ? <div className="rounded-xl border bg-white p-10 text-center text-gray-500">Đang tính điểm...</div> : pending ? <div className="rounded-xl border border-dashed bg-white p-10 text-center text-gray-500">Hệ thống đang xếp hạng ứng viên. Trang sẽ tự làm mới trong ít giây.</div> : matches.length === 0 ? <div className="rounded-xl border border-dashed bg-white p-10 text-center text-gray-500">Chưa có ứng viên có hồ sơ phù hợp.</div> : (
         <div className="space-y-4">
           {matches.map((match) => <Card key={match.candidateId}>
             <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">

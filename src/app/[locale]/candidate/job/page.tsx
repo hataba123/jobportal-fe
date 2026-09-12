@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -23,14 +23,14 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useJobPosts } from "@/hooks/useJobPosts";
+import { useCategories } from "@/hooks/useCategories";
 
 export default function AllJobsPage() {
   const router = useRouter();
   const t = useTranslations("AllJobsPage");
   const tHome = useTranslations("HomePage");
-  const { jobPosts, loading } = useJobPosts();
-
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [locationFilter, setLocationFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -38,6 +38,27 @@ export default function AllJobsPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 9;
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearchTerm(searchTerm), 300);
+    return () => window.clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
+
+  const { categories } = useCategories();
+  const selectedCategory = categories.find((category) => category.name === categoryFilter);
+  const { jobPosts, totalPages, loading } = useJobPosts({
+    page: currentPage,
+    pageSize: jobsPerPage,
+    search: debouncedSearchTerm.trim() || undefined,
+    location: locationFilter === "all" ? undefined : locationFilter,
+    type: typeFilter === "all" ? undefined : typeFilter,
+    categoryId: selectedCategory?.id ? String(selectedCategory.id) : undefined,
+    minSalary: salaryFilter ?? undefined,
+  });
 
   const hasActiveFilters =
     Boolean(searchTerm.trim()) ||
@@ -55,54 +76,17 @@ export default function AllJobsPage() {
     setCurrentPage(1);
   };
 
-  const filteredJobs = useMemo(() => {
-    let filtered = jobPosts;
-
-    if (searchTerm.trim()) {
-      const lower = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (job) =>
-          job.title?.toLowerCase().includes(lower) ||
-          job.description?.toLowerCase().includes(lower) ||
-          (Array.isArray(job.tags) && job.tags.some((tg) => tg.toLowerCase().includes(lower))) ||
-          job.employer?.fullName?.toLowerCase().includes(lower)
-      );
-    }
-
-    if (locationFilter !== "all") {
-      filtered = filtered.filter((job) => job.location === locationFilter);
-    }
-
-    if (typeFilter !== "all") {
-      filtered = filtered.filter((job) => job.type === typeFilter);
-    }
-
-    if (categoryFilter !== "all") {
-      filtered = filtered.filter((job) => job.categoryName === categoryFilter);
-    }
-
-    if (salaryFilter !== null) {
-      filtered = filtered.filter((job) => Number(job.salary || 0) >= salaryFilter);
-    }
-
-    return filtered;
-  }, [jobPosts, searchTerm, locationFilter, typeFilter, categoryFilter, salaryFilter]);
-
-  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
-  const currentJobs = useMemo(() => {
-    const startIndex = (currentPage - 1) * jobsPerPage;
-    return filteredJobs.slice(startIndex, startIndex + jobsPerPage);
-  }, [filteredJobs, currentPage, jobsPerPage]);
-
   const uniqueLocations = useMemo(() => {
     const locs = new Set(jobPosts.map((j) => j.location).filter((loc): loc is string => Boolean(loc)));
+    if (locationFilter !== "all") locs.add(locationFilter);
     return ["all", ...Array.from(locs)];
-  }, [jobPosts]);
+  }, [jobPosts, locationFilter]);
 
   const uniqueCategories = useMemo(() => {
-    const cats = new Set(jobPosts.map((j) => j.categoryName).filter((c): c is string => Boolean(c)));
+    const cats = new Set(categories.map((category) => category.name));
+    if (categoryFilter !== "all") cats.add(categoryFilter);
     return ["all", ...Array.from(cats)];
-  }, [jobPosts]);
+  }, [categories, categoryFilter]);
 
   const jobTypes = [
     { value: "all", label: t("all_types") },
@@ -332,7 +316,7 @@ export default function AllJobsPage() {
           {/* Results Summary */}
           <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
             <span>
-              {t("showing")} <strong className="text-slate-900">{filteredJobs.length}</strong> {t("jobs")}
+              {t("showing")} <strong className="text-slate-900">{jobPosts.length}</strong> {t("jobs")}
               {hasActiveFilters && ` (${t("filtering")})`}
             </span>
             {hasActiveFilters && (
@@ -362,7 +346,7 @@ export default function AllJobsPage() {
               </div>
             ))}
           </div>
-        ) : filteredJobs.length === 0 ? (
+        ) : jobPosts.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl border border-slate-200/80 p-8">
             <Briefcase className="w-16 h-16 text-slate-300 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-slate-800">{t("no_jobs")}</h3>
@@ -385,7 +369,7 @@ export default function AllJobsPage() {
                   : "grid grid-cols-1 gap-4"
               }
             >
-              {currentJobs.map((job) => (
+              {jobPosts.map((job) => (
                 <div
                   key={job.id}
                   onClick={() => router.push(`/candidate/job/${job.id}`)}
